@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { 
   Printer, ArrowLeft, Download, ShieldCheck, 
   CheckCircle2, Building2, Phone, Mail, Globe, 
@@ -17,6 +17,7 @@ import {
 
 export default function InvoicePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const invoiceId = (params?.id as string) || '';
 
@@ -30,10 +31,21 @@ export default function InvoicePage() {
 
   const printAreaRef = useRef<HTMLDivElement>(null);
 
-  // Find invoice by ID, Invoice Number, or Order ID
+  // Auto-trigger print if ?print=true in query
+  useEffect(() => {
+    if (typeof window !== 'undefined' && searchParams?.get('print') === 'true') {
+      const timer = setTimeout(() => {
+        window.print();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
+
+  // Find invoice by ID, Invoice Number, or Order ID (with instant localStorage sync)
   const invoice: Invoice = useMemo(() => {
-    // 1. Match from existing invoices
-    const decodedId = decodeURIComponent(invoiceId);
+    const decodedId = decodeURIComponent(invoiceId || '');
+
+    // 1. Match from existing StoreContext invoices
     const existing = invoices.find(
       (inv) => inv.id === decodedId || 
                inv.invoiceNumber === decodedId || 
@@ -42,7 +54,26 @@ export default function InvoicePage() {
     );
     if (existing) return existing;
 
-    // 2. Match from orders if invoice not yet indexed
+    // 2. Check direct localStorage 'ls_invoices'
+    if (typeof window !== 'undefined') {
+      try {
+        const savedInvoices: Invoice[] = JSON.parse(localStorage.getItem('ls_invoices') || '[]');
+        const match = savedInvoices.find(
+          (inv) => inv.id === decodedId || 
+                   inv.invoiceNumber === decodedId || 
+                   inv.invoiceNumber.replace(/\//g, '-') === decodedId ||
+                   inv.orderId === decodedId
+        );
+        if (match) return match;
+
+        const lastInv = JSON.parse(localStorage.getItem('ls_last_invoice') || 'null');
+        if (lastInv && (lastInv.id === decodedId || lastInv.orderId === decodedId || lastInv.invoiceNumber === decodedId)) {
+          return lastInv;
+        }
+      } catch (e) {}
+    }
+
+    // 3. Match from StoreContext orders
     const matchedOrder = orders.find(
       (o) => o.orderId === decodedId || o.id === decodedId
     );
@@ -53,26 +84,50 @@ export default function InvoicePage() {
       });
     }
 
-    // 3. Fallback demo invoice
+    // 4. Check direct localStorage 'ls_orders' and 'ls_last_order'
+    if (typeof window !== 'undefined') {
+      try {
+        const savedOrders = JSON.parse(localStorage.getItem('ls_orders') || '[]');
+        const match = savedOrders.find(
+          (o: any) => o.orderId === decodedId || o.id === decodedId
+        );
+        if (match) {
+          return buildInvoiceFromOrder({
+            order: match,
+            settings: invoiceSettings || DEFAULT_INVOICE_SETTINGS
+          });
+        }
+
+        const lastOrder = JSON.parse(localStorage.getItem('ls_last_order') || 'null');
+        if (lastOrder && (lastOrder.orderId === decodedId || lastOrder.id === decodedId)) {
+          return buildInvoiceFromOrder({
+            order: lastOrder,
+            settings: invoiceSettings || DEFAULT_INVOICE_SETTINGS
+          });
+        }
+      } catch (e) {}
+    }
+
+    // 5. If not found, build clean invoice for this order ID
     return buildInvoiceFromOrder({
       order: {
-        orderId: decodedId || 'LS-10248',
-        customerName: 'Rahul Kumar',
-        phone: '+91 94311 28941',
-        email: 'rahul.kumar@gmail.com',
-        address: 'Near Old Bus Stand, Chiniya Road, Garhwa, Jharkhand - 822114',
-        paymentMethod: 'UPI / Counter Settle',
+        orderId: decodedId || 'LS-28250',
+        customerName: 'Valued Customer',
+        phone: '+91 9608828288',
+        email: 'customer@lappysolution.com',
+        address: 'Chiniya Road, Garhwa, Jharkhand - 822114',
+        paymentMethod: 'UPI / Counter Verified',
         paymentStatus: 'Paid',
         totalAmount: 52999,
         date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
         items: [
           {
-            id: 'demo-1',
-            name: 'HP 15s Intel Core i5 12th Gen (16GB RAM / 512GB NVMe SSD / 15.6" FHD)',
+            id: 'item-1',
+            name: 'Genuine Computer Hardware & Electronics Package',
             category: 'Laptops',
             price: 52999,
             quantity: 1,
-            sku: 'LS-HP-15S-12TH'
+            sku: `LS-${decodedId || '10248'}`
           }
         ]
       },

@@ -6,7 +6,7 @@ import {
   Filter, Search, ArrowUpDown, ChevronDown, Check, X,
   Star, Laptop, Monitor, Camera, Printer, HardDrive, 
   Wifi, LayoutGrid, Sparkles, SlidersHorizontal, ChevronRight,
-  ShieldCheck, CheckCircle2
+  ShieldCheck, CheckCircle2, Tag
 } from 'lucide-react';
 import { Product } from '../data/products';
 import { ProductCard } from './ProductCard';
@@ -77,8 +77,8 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
     if (brandSearch.trim()) {
       list = list.filter((b) => b.name.toLowerCase().includes(brandSearch.toLowerCase()));
     }
-    return showAllBrands ? list : list.slice(0, 8);
-  }, [brandListWithCounts, brandSearch, showAllBrands]);
+    return list;
+  }, [brandListWithCounts, brandSearch]);
 
   // Filtered products
   const filteredProducts = useMemo(() => {
@@ -316,86 +316,6 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
               </div>
             </div>
 
-            {/* 2. Brand Filter with Search & Checkboxes */}
-            <div className="pt-3 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-                  Brand
-                </h3>
-                {selectedBrand !== 'All' && (
-                  <button 
-                    onClick={() => setSelectedBrand('All')} 
-                    className="text-[10px] font-bold text-[#1A56DB]"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-
-              {/* Brand Search input */}
-              <div className="relative mb-2">
-                <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search brand..."
-                  value={brandSearch}
-                  onChange={(e) => setBrandSearch(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-md pl-6.5 pr-2 py-1 text-[11px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#1A56DB]"
-                />
-              </div>
-
-              {/* Brand list with checkbox and count */}
-              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                {/* All Brands Option */}
-                <button
-                  onClick={() => setSelectedBrand('All')}
-                  className={`w-full text-left px-2 py-1.5 rounded text-xs flex justify-between items-center transition-colors ${
-                    selectedBrand === 'All' ? 'font-bold text-[#1A56DB]' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
-                      selectedBrand === 'All' ? 'bg-[#1A56DB] border-[#1A56DB] text-white' : 'border-gray-300 bg-white'
-                    }`}>
-                      {selectedBrand === 'All' && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                    </span>
-                    <span>All Brands</span>
-                  </div>
-                  <span className="text-[10px] text-gray-400">({products.length})</span>
-                </button>
-
-                {displayedBrands.map((b) => (
-                  <button
-                    key={b.name}
-                    onClick={() => setSelectedBrand(b.name)}
-                    className={`w-full text-left px-2 py-1.5 rounded text-xs flex justify-between items-center transition-colors ${
-                      selectedBrand === b.name ? 'font-bold text-[#1A56DB]' : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
-                        selectedBrand === b.name ? 'bg-[#1A56DB] border-[#1A56DB] text-white' : 'border-gray-300 bg-white'
-                      }`}>
-                        {selectedBrand === b.name && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                      </span>
-                      <span>{b.name}</span>
-                    </div>
-                    <span className="text-[10px] text-gray-400">({b.count})</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Expand / Collapse Brands */}
-              {brandListWithCounts.length > 8 && !brandSearch && (
-                <button
-                  onClick={() => setShowAllBrands(!showAllBrands)}
-                  className="mt-1.5 text-[11px] font-bold text-[#1A56DB] hover:text-[#1E40AF] flex items-center gap-1"
-                >
-                  <span>{showAllBrands ? 'Show Less' : `+ ${brandListWithCounts.length - 8} More Brands`}</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${showAllBrands ? 'rotate-180' : ''}`} />
-                </button>
-              )}
-            </div>
 
             {/* 3. Price Filter Slider & Quick Range Chips */}
             <div className="pt-3 border-t border-gray-100">
@@ -497,7 +417,95 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
           </aside>
 
           {/* Right Product Grid Area */}
-          <main className="lg:col-span-9 space-y-4">
+          <main className="lg:col-span-9 space-y-3.5">
+            
+            {/* Top Brand Filter Ribbon (Moved to Top as Requested) */}
+            <div className="bg-white border border-[#E5E7EB] rounded-xl p-3 sm:p-3.5 shadow-2xs space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-3.5 h-3.5 text-[#1A56DB]" />
+                  <span className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">
+                    Filter by Brand
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#1A56DB] border border-blue-100">
+                    {brandListWithCounts.length} Brands
+                  </span>
+                </div>
+
+                {/* Brand Search & Quick Reset */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 sm:w-52">
+                    <Search className="w-3 h-3 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Search brands (HP, Dell, Lapcare...)"
+                      value={brandSearch}
+                      onChange={(e) => setBrandSearch(e.target.value)}
+                      className="w-full h-7.5 pl-7 pr-6 bg-[#F9FAFB] border border-gray-200 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#1A56DB] focus:bg-white transition-colors"
+                    />
+                    {brandSearch && (
+                      <button
+                        onClick={() => setBrandSearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {selectedBrand !== 'All' && (
+                    <button
+                      onClick={() => setSelectedBrand('All')}
+                      className="h-7.5 px-2.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-[11px] font-bold flex items-center gap-1 transition-colors whitespace-nowrap"
+                    >
+                      <X className="w-3 h-3" />
+                      <span>Clear ({selectedBrand})</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Horizontal Scrollable Brand Chips Ribbon */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
+                <button
+                  onClick={() => setSelectedBrand('All')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                    selectedBrand === 'All'
+                      ? 'bg-[#1A56DB] text-white shadow-xs font-bold'
+                      : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>All Brands</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    selectedBrand === 'All' ? 'bg-blue-800/60 text-white' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {products.length}
+                  </span>
+                </button>
+
+                {displayedBrands.map((b) => {
+                  const isSelected = selectedBrand === b.name;
+                  return (
+                    <button
+                      key={b.name}
+                      onClick={() => setSelectedBrand(b.name)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                        isSelected
+                          ? 'bg-[#1A56DB] text-white shadow-xs font-bold border border-[#1A56DB]'
+                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      }`}
+                    >
+                      <span>{b.name}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        isSelected ? 'bg-blue-800/60 text-white' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {b.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             
             {/* Sorting & Result Controls Strip (Desktop) */}
             <div className="hidden lg:flex bg-white border border-[#E5E7EB] rounded-xl p-3 items-center justify-between gap-2 shadow-2xs">

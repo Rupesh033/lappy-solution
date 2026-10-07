@@ -345,6 +345,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     try {
       localStorage.setItem('ls_orders', JSON.stringify(updated));
+      localStorage.setItem('ls_last_order', JSON.stringify(newOrder));
+      localStorage.setItem('ls_last_invoice', JSON.stringify(newInvoice));
       localStorage.setItem('ls_cart', JSON.stringify([]));
       
       // Persist to SQLite Database via Server API

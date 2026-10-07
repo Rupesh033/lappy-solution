@@ -103,16 +103,20 @@ export default function CheckoutPage() {
       deliveryType,
       items: cart.map(item => ({
         id: item.product.id,
+        productId: item.product.id,
         name: item.product.name,
         price: item.product.price,
         quantity: item.quantity,
-        image: item.product.image
+        image: item.product.image,
+        category: item.product.category,
+        sku: item.product.sku || item.product.id
       })),
       totalAmount: finalTotal,
       paymentMethod: paymentMethod === 'upi_qr' ? 'UPI Dynamic QR (GPay/PhonePe)' : paymentMethod === 'cod' ? 'Cash on Delivery / Pickup' : `NetBanking (${selectedBank})`,
       paymentStatus: paymentMethod === 'upi_qr' ? 'Verification In Progress' : 'Pending Payment',
       utrNumber: utrNumber || null,
       orderDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
       gstin: needGst ? gstin : null,
       businessName: needGst ? businessName : null,
       notes: orderNotes || null,
@@ -124,6 +128,10 @@ export default function CheckoutPage() {
         { step: 'Delivered / Handed Over', time: 'Today', done: false }
       ]
     };
+
+    try {
+      localStorage.setItem('ls_last_order', JSON.stringify(newOrder));
+    } catch (e) {}
 
     setTimeout(() => {
       placeOrder(newOrder);
