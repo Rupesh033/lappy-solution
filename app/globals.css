@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Indian E-Commerce Typography */
+    --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Indian E-Commerce Core Brand Tokens */
+    --color-bg-canvas: #F1F3F6;        /* Iconic Indian E-commerce canvas (Flipkart/Croma style) */
+    --color-card-surface: #FFFFFF;     /* Crisp Pure White Surface */
+    
+    /* Brand Primary (Trust Royal Blue) */
+    --color-ecom-blue: #1A56DB;        /* Trust Blue */
+    --color-ecom-blue-hover: #1E40AF;
+    --color-ecom-blue-subtle: #EFF6FF;
+
+    /* High-Conversion Action (Indian Saffron / Festival Orange) */
+    --color-ecom-orange: #FB641B;      /* "Buy Now" & Flash Deal Orange */
+    --color-ecom-orange-hover: #E0530F;
+    --color-ecom-orange-subtle: #FFF7ED;
+
+    /* Indian Retail Savings (Deal Green) */
+    --color-ecom-green: #15803D;       /* 18% OFF, In Stock, GST Savings */
+    --color-ecom-green-dark: #166534;
+    --color-ecom-green-subtle: #ECFDF5;
+
+    /* Star Rating Amber */
+    --color-ecom-amber: #D97706;       /* Flipkart/Amazon gold rating */
+
+    /* High-Contrast Readable Slate Text Palette */
+    --color-text-primary: #111827;     /* Deep rich charcoal for crisp readability */
+    --color-text-secondary: #475569;   /* Clear neutral text */
+    --color-text-muted: #64748B;       /* Secondary specs & info */
+    --color-text-subtle: #94A3B8;
+
+    /* Borders & Dividers */
+    --color-border-light: #E5E7EB;
+    --color-border-card: #E2E8F0;
+    --color-border-hover: #CBD5E1;
+
+    /* Elevation Shadows */
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+    --shadow-card-hover: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #F1F3F6;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    color: #111827;
+  }
+}
+
+/* Indian E-Commerce Product Card */
+.ecom-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.ecom-card:hover {
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* Indian Rupee Price Display */
+.price-display {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Primary Indian Action Buttons */
+.btn-ecom-primary {
+  background-color: #1A56DB;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 13.5px;
+  border-radius: 8px;
+  transition: all 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-ecom-primary:hover {
+  background-color: #1E40AF;
+  box-shadow: 0 2px 8px rgba(26, 86, 219, 0.25);
+}
+
+.btn-ecom-orange {
+  background-color: #FB641B;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 13.5px;
+  border-radius: 8px;
+  transition: all 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-ecom-orange:hover {
+  background-color: #E0530F;
+  box-shadow: 0 2px 8px rgba(251, 100, 27, 0.25);
+}
+
+.btn-whatsapp-order {
+  background-color: #25D366;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 13.5px;
+  border-radius: 8px;
+  transition: all 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-whatsapp-order:hover {
+  background-color: #1EBE5B;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
+}
+
+/* Offer Pill / Savings Badge */
+.badge-deal {
+  background-color: #ECFDF5;
+  color: #15803D;
+  border: 1px solid #A7F3D0;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Star Rating Pill (Flipkart style 4.4 ★) */
+.badge-rating {
+  background-color: #15803D;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Clean Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F3F6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

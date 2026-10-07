@@ -1,0 +1,210 @@
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { 
+  X, Heart, ShoppingCart, MessageSquare, Star, 
+  ShieldCheck, Truck, Store, ExternalLink
+} from 'lucide-react';
+import { STORE_INFO } from '../data/storeData';
+import { useStore } from '../context/StoreContext';
+
+export const ProductDetailModal: React.FC = () => {
+  const router = useRouter();
+  const { 
+    selectedProduct, 
+    setSelectedProduct, 
+    addToCart, 
+    toggleWishlist, 
+    wishlistIds 
+  } = useStore();
+
+  const [activeImage, setActiveImage] = useState<string | null>(null);
+
+  if (!selectedProduct) return null;
+
+  const currentImg = activeImage || selectedProduct.image;
+  const isWishlisted = wishlistIds.includes(selectedProduct.id);
+
+  const imagesList = selectedProduct.images && selectedProduct.images.length > 0 
+    ? selectedProduct.images 
+    : [selectedProduct.image];
+
+  const handleWhatsApp = () => {
+    const text = `Hello Lappy Solution Garhwa, I want to inquire about:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nCan I inspect or pick this up at your Chiniya Road showroom?`;
+    window.open(`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const handleBuyNow = () => {
+    addToCart(selectedProduct);
+    setSelectedProduct(null);
+    router.push('/checkout');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div 
+        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 sm:p-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          onClick={() => {
+            setSelectedProduct(null);
+            setActiveImage(null);
+          }}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors z-10"
+          title="Close modal"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          
+          {/* Gallery (5 cols) */}
+          <div className="md:col-span-5 space-y-3">
+            <div className="relative aspect-square rounded-xl bg-slate-50 p-4 border border-slate-200 flex items-center justify-center overflow-hidden">
+              <img 
+                src={currentImg} 
+                alt={selectedProduct.name}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+
+            {imagesList.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {imagesList.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(img)}
+                    className={`w-14 h-14 rounded-lg bg-slate-50 p-1 border transition-all flex-shrink-0 ${
+                      currentImg === img ? 'border-blue-600 ring-2 ring-blue-600/20' : 'border-slate-200 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-contain" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Details (7 cols) */}
+          <div className="md:col-span-7 space-y-4">
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                  {selectedProduct.brand} • {selectedProduct.category}
+                </span>
+                <span className="text-[11px] font-mono text-slate-400">
+                  SKU: {selectedProduct.sku}
+                </span>
+              </div>
+
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-2 leading-snug">
+                {selectedProduct.name}
+              </h2>
+
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center text-amber-500">
+                  <Star className="w-4 h-4 fill-amber-400" />
+                  <span className="ml-1 text-xs font-bold text-slate-700">{selectedProduct.rating || '4.8'}</span>
+                </div>
+                <span className="text-slate-300">•</span>
+                <span className="text-xs text-slate-500">{selectedProduct.reviewsCount || 18} Verified Local Reviews</span>
+              </div>
+            </div>
+
+            {/* Price */}
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 font-mono">
+                  ₹{selectedProduct.price.toLocaleString('en-IN')}
+                </span>
+                {selectedProduct.mrp > selectedProduct.price && (
+                  <span className="text-sm text-slate-400 line-through font-mono">
+                    ₹{selectedProduct.mrp.toLocaleString('en-IN')}
+                  </span>
+                )}
+                {selectedProduct.discount > 0 && (
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                    {selectedProduct.discount}% OFF
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Inclusive of all taxes + GST 18% ITC Invoicing Available
+              </p>
+            </div>
+
+            {/* Specs */}
+            <div>
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Specifications</h4>
+              <p className="text-xs text-slate-600 bg-slate-50 rounded-lg p-2.5 border border-slate-100 font-mono">
+                {selectedProduct.specs}
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="space-y-2 pt-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => addToCart(selectedProduct)}
+                  className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-xs"
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  <span>Add to Cart</span>
+                </button>
+
+                <button
+                  onClick={handleBuyNow}
+                  className="h-10 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                >
+                  <span>Buy Now</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleWhatsApp}
+                  className="flex-1 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Inquire on WhatsApp</span>
+                </button>
+
+                <Link
+                  href={`/product/${selectedProduct.id}`}
+                  onClick={() => setSelectedProduct(null)}
+                  className="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <span>Full Page</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Guarantees */}
+            <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-2 text-[10px] text-slate-500 text-center">
+              <div className="flex flex-col items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>100% Genuine Boxed</span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <Store className="w-3.5 h-3.5 text-blue-600" />
+                <span>Counter Testing</span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <Truck className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Garhwa Express</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+};

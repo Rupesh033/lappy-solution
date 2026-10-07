@@ -1,0 +1,144 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SiteSettings {
+  id              String   @id @default("default")
+  siteName        String   @default("Lappy Solution")
+  tagline         String   @default("Technology • Security • Solutions")
+  logo            String   @default("/images/logo.png")
+  favicon         String   @default("/favicon.ico")
+  phone           String   @default("+91 9608828288")
+  whatsapp        String   @default("919608828288")
+  email           String   @default("lappysolution2018@gmail.com")
+  address         String   @default("In front of G P Plaza, Chiniya Road, Garhwa, Jharkhand - 822114")
+  timings         String   @default("Monday - Saturday: 10:00 AM - 8:30 PM")
+  announcementText String  @default("100% Asli Samaan • 18% GST Bill • Garhwa & Palamu Delivery")
+  maintenanceMode Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+}
+
+model ThemeSettings {
+  id              String   @id @default("default")
+  primaryColor    String   @default("#1A56DB")
+  secondaryColor  String   @default("#FB641B")
+  dealColor       String   @default("#15803D")
+  canvasBg        String   @default("#F1F3F6")
+  fontFamily      String   @default("Plus Jakarta Sans")
+  borderRadius    String   @default("12px")
+  updatedAt       DateTime @updatedAt
+}
+
+model PaymentSettings {
+  id              String   @id @default("default")
+  upiId           String   @default("9608828288@okbizaxis")
+  upiName         String   @default("LAPPY SOLUTION GARHWA")
+  codEnabled      Boolean  @default(true)
+  gstRate         Int      @default(18)
+  gstin           String   @default("20AABCL1234F1Z5")
+  updatedAt       DateTime @updatedAt
+}
+
+model Menu {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  parentId  String?
+  position  Int      @default(0)
+  status    String   @default("active")
+  isHot     Boolean  @default(false)
+  isSpecial Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Banner {
+  id             String   @id @default(cuid())
+  title          String
+  titleHighlight String?
+  subtitle       String?
+  badge          String?
+  desktopImage   String
+  mobileImage    String?
+  buttonText     String   @default("Shop Deals")
+  buttonUrl      String   @default("/shop")
+  whatsappMsg    String?
+  bgGradient     String   @default("from-[#0A1633] via-[#0F2960] to-[#1A56DB]")
+  position       Int      @default(0)
+  status         String   @default("active") // active | inactive
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Category {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  parentId      String?
+  image         String
+  startingPrice String?
+  position      Int      @default(0)
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  category      String
+  brand         String
+  price         Float
+  mrp           Float
+  discount      Int      @default(0)
+  specs         String
+  description   String
+  image         String
+  inStock       Boolean  @default(true)
+  stockQuantity Int      @default(10)
+  sku           String   @unique
+  rating        Float    @default(4.5)
+  featured      Boolean  @default(false)
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model HomepageSection {
+  id         String   @id @default(cuid())
+  sectionKey String   @unique // banners, hero, trust_bar, categories, featured, promo, brands, catalog_cta, showroom
+  title      String
+  position   Int      @default(0)
+  isVisible  Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  customerName  String
+  phone         String
+  email         String?
+  address       String
+  itemsJson     String
+  totalAmount   Float
+  paymentMethod String
+  paymentStatus String   @default("Pending") // Pending | Verification Pending | Paid
+  utrNumber     String?
+  orderStatus   String   @default("Confirmed") // Confirmed | Packed | Shipped | Delivered | Cancelled
+  date          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      String   @default("SUPER_ADMIN") // SUPER_ADMIN | ORDER_MANAGER | EDITOR
+  createdAt DateTime @default(now())
+}
