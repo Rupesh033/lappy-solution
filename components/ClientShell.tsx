@@ -11,6 +11,8 @@ import { CustomerAccountModal } from './CustomerAccountModal';
 import { MobileBottomNav } from './MobileBottomNav';
 import { CheckCircle2 } from 'lucide-react';
 
+import { usePathname } from 'next/navigation';
+
 const ToastNotification: React.FC = () => {
   const { toast } = useStore();
   if (!toast) return null;
@@ -24,6 +26,21 @@ const ToastNotification: React.FC = () => {
 };
 
 export const ClientShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
+  const isInvoicePage = pathname?.startsWith('/invoice');
+
+  // For invoice pages, render pure standalone document without website headers or footers
+  if (isInvoicePage) {
+    return (
+      <StoreProvider>
+        <div className="min-h-screen bg-[#F1F3F6] print:bg-white">
+          {children}
+          <ToastNotification />
+        </div>
+      </StoreProvider>
+    );
+  }
+
   return (
     <StoreProvider>
       <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A]">

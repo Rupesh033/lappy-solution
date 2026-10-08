@@ -21,17 +21,16 @@ export default function PortalAccessPage() {
   const [lockoutTimer, setLockoutTimer] = useState(0);
 
   useEffect(() => {
-    // If already authenticated in session, redirect to admin
-    if (typeof window !== 'undefined') {
-      const session = sessionStorage.getItem('ls_admin_session');
-      if (session === 'active') {
-        router.push('/admin');
-      }
-    }
+    fetch('/api/auth/session')
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.authenticated) router.replace('/admin');
+      })
+      .catch(() => undefined);
   }, [router]);
 
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (lockoutTimer > 0) {
       interval = setInterval(() => {
         setLockoutTimer((prev) => {
@@ -48,22 +47,17 @@ export default function PortalAccessPage() {
     return () => clearInterval(interval);
   }, [lockoutTimer]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLockedOut) return;
 
-    const trimmed = password.trim();
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
 
-    // High security passkeys
-    if (
-      trimmed === 'Lappy@Garhwa#2026' || 
-      trimmed === '822114' || 
-      trimmed === 'Admin@LS#822114' ||
-      trimmed === 'admin123'
-    ) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('ls_admin_session', 'active');
-      }
+    if (response.ok) {
       showToast('Master passkey accepted! Redirecting to Merchant Portal...');
       router.push('/admin');
     } else {
@@ -74,7 +68,8 @@ export default function PortalAccessPage() {
         setLockoutTimer(30);
         setError('Too many failed security attempts. Portal locked for 30 seconds.');
       } else {
-        setError(`Access Denied! Incorrect security passkey. (${5 - attempts} attempts left)`);
+        const data = await response.json().catch(() => null);
+        setError(data?.error || `Access denied. (${5 - attempts} attempts left)`);
       }
     }
   };
@@ -104,7 +99,7 @@ export default function PortalAccessPage() {
           </h1>
           
           <p className="text-xs text-blue-200/80 leading-relaxed">
-            Chiniya Road, Garhwa • 282 SKUs Inventory • 18% GST Invoicing. Please authenticate with high security passkey.
+            Chiniya Road, Garhwa • 413+ SKUs Inventory • 18% GST Invoicing. Please authenticate with high security passkey.
           </p>
         </div>
 

@@ -110,10 +110,41 @@ model Product {
 
 model HomepageSection {
   id         String   @id @default(cuid())
-  sectionKey String   @unique // banners, hero, trust_bar, categories, featured, promo, brands, catalog_cta, showroom
+  sectionKey String   @unique // banners, hero, trust_bar, categories, trending, bestsellers, premium, refurbished_laptops, cctv_spotlight, blogs_preview, promo, brands, catalog_cta, showroom
   title      String
+  subtitle   String?
+  badge      String?
+  productIds String?  // JSON string array of product IDs: e.g. ["prod-1", "prod-2"]
   position   Int      @default(0)
   isVisible  Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+}
+
+model CustomPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique // terms-and-conditions, privacy-policy, warranty, about-us, etc.
+  title     String
+  content   String
+  metaTitle String?
+  metaDesc  String?
+  status    String   @default("published") // published | draft
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogPost {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  title      String
+  excerpt    String
+  content    String
+  coverImage String
+  category   String   @default("Hardware Guide")
+  author     String   @default("Lappy Solution Team")
+  readTime   String   @default("4 min read")
+  tags       String?
+  status     String   @default("published") // published | draft
+  createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 

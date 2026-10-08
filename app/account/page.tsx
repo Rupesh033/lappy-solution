@@ -735,7 +735,7 @@ function AccountContent() {
                       href="/shop"
                       className="inline-flex h-9.5 px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs items-center gap-1.5 transition-colors shadow-xs"
                     >
-                      <span>Explore Catalog (282 Items)</span>
+                      <span>Explore Catalog ({products.length || 413} Items)</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>

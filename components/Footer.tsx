@@ -304,28 +304,33 @@ export const Footer: React.FC = () => {
                   </Link>
                 </li>
                 <li>
-                  <button onClick={() => setActivePolicy('gst')} className="hover:text-[#D97706] text-[#D97706] font-medium transition-colors text-left">
-                    GST 18% Input Tax Credit
-                  </button>
+                  <Link href="/blogs" className="text-[#2563EB] font-bold hover:underline block">
+                    Tech Guides & Blog
+                  </Link>
                 </li>
                 <li>
-                  <button onClick={() => setActivePolicy('refund')} className="hover:text-[#2563EB] transition-colors text-left">
-                    7-Day Replacement Policy
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActivePolicy('shipping')} className="hover:text-[#2563EB] transition-colors text-left">
-                    Garhwa & Palamu Delivery
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActivePolicy('privacy')} className="hover:text-[#2563EB] transition-colors text-left">
-                    Privacy Policy
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => setActivePolicy('terms')} className="hover:text-[#2563EB] transition-colors text-left">
+                  <Link href="/pages/terms-and-conditions" className="hover:text-[#2563EB] transition-colors block">
                     Terms & Conditions
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pages/privacy-policy" className="hover:text-[#2563EB] transition-colors block">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pages/warranty-policy" className="hover:text-[#2563EB] transition-colors block">
+                    Warranty & Replacement
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pages/about-us" className="hover:text-[#2563EB] transition-colors block">
+                    About Lappy Solution
+                  </Link>
+                </li>
+                <li>
+                  <button onClick={() => setActivePolicy('gst')} className="hover:text-[#D97706] text-[#D97706] font-medium transition-colors text-left cursor-pointer">
+                    GST 18% Input Tax Credit
                   </button>
                 </li>
               </ul>

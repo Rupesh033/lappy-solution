@@ -126,7 +126,7 @@ export const Hero: React.FC = () => {
                 href={`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent('Hello Lappy Solution Garhwa, I want to order / inquire about laptop and CCTV prices.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-11 px-5 rounded-lg bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-[14px] flex items-center gap-2 transition-all shadow-sm active:scale-[0.98]"
+                className="h-11 px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-[14px] flex items-center gap-2 transition-all shadow-sm active:scale-[0.98]"
               >
                 <MessageSquare className="w-4 h-4 fill-white" />
                 <span>Order on WhatsApp</span>
@@ -284,7 +284,7 @@ export const Hero: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button
                     onClick={handleInstantBuy}
-                    className="h-10 rounded-lg bg-[#FB641B] hover:bg-[#E0530F] text-white font-bold text-[13px] flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.98]"
+                    className="h-10 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-[13px] flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.98]"
                   >
                     <span>⚡ Buy Now</span>
                   </button>

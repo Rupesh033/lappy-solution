@@ -474,39 +474,63 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Sample Reviews */}
-              <div className="space-y-4">
-                {[
-                  {
-                    name: 'Amit Verma (Garhwa Sadar)',
-                    date: '3 days ago',
-                    rating: 5,
-                    comment: 'Purchased for my office work. Machine is super fast, boot time is under 8 seconds. Lappy Solution team provided free setup and installed essential software on the spot.'
-                  },
-                  {
-                    name: 'Dr. S. K. Pandey (Rehla)',
-                    date: '1 week ago',
-                    rating: 5,
-                    comment: 'Genuine original sealed box with warranty card and GST bill. Better price than online and got it delivered on the same day without waiting.'
-                  },
-                  {
-                    name: 'Vikas Kumar (Chiniya Road)',
-                    date: '2 weeks ago',
-                    rating: 5,
-                    comment: 'Excellent customer service. The staff helped me compare options and gave me the best deal. Highly recommended technology showroom in Garhwa.'
-                  }
-                ].map((rev, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2">
+              {/* Product Reviews List */}
+              <div className="space-y-3.5">
+                {(product.reviews && product.reviews.length > 0
+                  ? product.reviews
+                  : [
+                      {
+                        id: 'rev-def-1',
+                        author: 'Amit Verma',
+                        location: 'Garhwa Sadar',
+                        date: '3 days ago',
+                        rating: 5,
+                        title: 'Verified Genuine Purchase',
+                        comment: 'Purchased for my daily work. Quality is super reliable, works flawlessly right out of the box with proper bill and warranty. Lappy Solution team provided quick support.',
+                        verified: true
+                      },
+                      {
+                        id: 'rev-def-2',
+                        author: 'Dr. S. K. Pandey',
+                        location: 'Rehla, Palamu',
+                        date: '1 week ago',
+                        rating: 5,
+                        title: 'Verified Genuine Purchase',
+                        comment: 'Genuine original sealed box with warranty card and GST bill. Better price than online and got it delivered on the same day without waiting.',
+                        verified: true
+                      },
+                      {
+                        id: 'rev-def-3',
+                        author: 'Vikas Kumar',
+                        location: 'Chiniya Road, Garhwa',
+                        date: '2 weeks ago',
+                        rating: 5,
+                        title: 'Verified Genuine Purchase',
+                        comment: 'Excellent customer service. The staff helped me compare options and gave me the best deal. Highly recommended technology showroom in Garhwa.',
+                        verified: true
+                      }
+                    ]
+                ).map((rev, idx) => (
+                  <div key={rev.id || idx} className="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-900">{rev.name}</span>
-                      <span className="text-slate-400">{rev.date}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900">{rev.author}</span>
+                        {rev.location && (
+                          <span className="text-slate-400 text-[11px]">({rev.location})</span>
+                        )}
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                          <Check className="w-2.5 h-2.5" />
+                          <span>Verified Purchase</span>
+                        </span>
+                      </div>
+                      <span className="text-slate-400 text-[11px]">{rev.date}</span>
                     </div>
                     <div className="flex items-center text-amber-400">
-                      {[...Array(rev.rating)].map((_, i) => (
+                      {[...Array(rev.rating || 5)].map((_, i) => (
                         <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                       ))}
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-700 leading-relaxed">
                       "{rev.comment}"
                     </p>
                   </div>

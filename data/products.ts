@@ -1,11 +1,24 @@
 // Generated Lappy Solution Catalog Data
-// Scraped live from www.lappysolution.com + enriched with Showroom Flagships
+// Scraped live from www.lappysolution.com + enriched with Showroom Flagships & Official Frontech Catalog
+import frontechProductsData from './frontechProducts.json';
+
+export interface ProductReview {
+  id: string;
+  author: string;
+  location?: string;
+  rating: number;
+  date: string;
+  title: string;
+  comment: string;
+  verified?: boolean;
+}
 
 export interface Product {
   id: string;
   numericId?: number;
   name: string;
   category: 'Laptops' | 'Computers' | 'CCTV & Security' | 'Printers' | 'Accessories' | 'Storage & Parts' | 'Networking';
+  subcategory?: string;
   brand: string;
   price: number;
   mrp: number;
@@ -21,9 +34,11 @@ export interface Product {
   reviewsCount: number;
   featured?: boolean;
   isScraped?: boolean;
+  sourceUrl?: string;
+  reviews?: ProductReview[];
 }
 
-export const PRODUCTS: Product[] = [
+const BASE_PRODUCTS: Product[] = [
   {
     "id": "prod-flagship-1",
     "numericId": 90001,
@@ -6595,3 +6610,9 @@ export const PRODUCTS: Product[] = [
     "isScraped": true
   }
 ];
+
+export const PRODUCTS: Product[] = [
+  ...BASE_PRODUCTS,
+  ...(frontechProductsData as Product[])
+];
+

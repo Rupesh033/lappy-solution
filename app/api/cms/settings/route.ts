@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { hasAdminSession } from '@/lib/adminAuth';
 
 export async function GET() {
   try {
@@ -21,6 +22,7 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  if (!hasAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await request.json();
     const { siteSettings, paymentSettings } = body;
@@ -29,18 +31,22 @@ export async function PUT(request: Request) {
     let updatedPayment;
 
     if (siteSettings) {
+      const siteFields = ['siteName', 'tagline', 'logo', 'favicon', 'phone', 'whatsapp', 'email', 'address', 'timings', 'announcementText', 'maintenanceMode'];
+      const safeSiteSettings = Object.fromEntries(Object.entries(siteSettings).filter(([key]) => siteFields.includes(key)));
       updatedSite = await prisma.siteSettings.upsert({
         where: { id: 'default' },
-        update: siteSettings,
-        create: { id: 'default', ...siteSettings },
+        update: safeSiteSettings,
+        create: { id: 'default', ...safeSiteSettings },
       });
     }
 
     if (paymentSettings) {
+      const paymentFields = ['upiId', 'upiName', 'codEnabled', 'gstRate', 'gstin'];
+      const safePaymentSettings = Object.fromEntries(Object.entries(paymentSettings).filter(([key]) => paymentFields.includes(key)));
       updatedPayment = await prisma.paymentSettings.upsert({
         where: { id: 'default' },
-        update: paymentSettings,
-        create: { id: 'default', ...paymentSettings },
+        update: safePaymentSettings,
+        create: { id: 'default', ...safePaymentSettings },
       });
     }
 

@@ -182,3 +182,66 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
+
+/* Hide Next.js Dev overlay / Turbopack indicators to avoid blocking mobile bottom bar */
+nextjs-portal,
+#__next-build-watcher,
+[data-nextjs-toast],
+[data-nextjs-dialog-overlay] {
+  display: none !important;
+}
+
+/* -------------------------------------------------------------
+   STRICT PRINT STYLES FOR GST TAX INVOICES (CBIC RULE 46)
+   Guarantees 1-page A4 printout without any website header or footer
+   ------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely hide all site navigation, headers, footers, and chrome */
+  header, 
+  footer, 
+  nav, 
+  aside, 
+  [role="navigation"], 
+  .no-print, 
+  .print\:hidden,
+  #sq-panel-top,
+  .sq-ext {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+  }
+
+  /* Standalone A4 Invoice Container */
+  .invoice-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Force background colors and borders to print properly */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

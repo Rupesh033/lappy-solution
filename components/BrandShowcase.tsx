@@ -12,6 +12,18 @@ interface BrandItem {
 
 export const BrandShowcase: React.FC = () => {
   const brands: BrandItem[] = [
+    // 0. Frontech (Official Partner)
+    {
+      name: 'Frontech',
+      query: 'Frontech',
+      logo: (
+        <div className="bg-[#FEC907] text-black font-black px-2.5 py-1 rounded-[4px] flex items-center justify-center shadow-xs">
+          <span className="text-black font-black text-[13px] tracking-wider font-sans">
+            FRONTECH
+          </span>
+        </div>
+      )
+    },
     // 1. HP
     {
       name: 'HP',

@@ -17,7 +17,7 @@ export default function OrderSuccessPage() {
   const router = useRouter();
   const orderId = (params?.orderId as string) || '';
 
-  const { orders, siteSettings, paymentSettings } = useStore();
+  const { orders, siteSettings, paymentSettings, products } = useStore();
   const [localOrder, setLocalOrder] = useState<any>(null);
 
   // Read order from localStorage if state has not hydrated
@@ -42,35 +42,17 @@ export default function OrderSuccessPage() {
   }, [orderId]);
 
   // Priority order resolution
-  const order = orders.find(o => o.orderId === orderId) || localOrder || (orders.length > 0 ? orders[0] : null) || {
-    orderId: orderId || 'LS-28250',
-    customerName: 'Valued Customer',
-    phone: '+91 9608828288',
-    email: 'customer@lappysolution.com',
-    address: 'Chiniya Road, Garhwa, Jharkhand - 822114',
-    totalAmount: 52999,
-    paymentMethod: 'UPI Dynamic QR (PhonePe / GPay)',
-    paymentStatus: 'Payment Verified',
-    utrNumber: 'UPI-LS-' + Math.floor(1000000000 + Math.random() * 9000000000),
-    orderDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
-    items: [
-      {
-        id: 'item-1',
-        name: 'HP 15s Intel Core i5 12th Gen (16GB RAM / 512GB NVMe SSD)',
-        price: 52999,
-        quantity: 1,
-        category: 'Laptops',
-        image: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80'
-      }
-    ],
-    trackingSteps: [
-      { step: 'Order Placed', time: 'Just now', done: true },
-      { step: 'Showroom Verification', time: 'In Progress', done: true },
-      { step: 'Hardware Testing & Pack', time: 'Today', done: true },
-      { step: 'Out for Delivery / Ready', time: 'Today', done: false },
-      { step: 'Delivered / Handed Over', time: 'Today', done: false }
-    ]
-  };
+  const order = orders.find(o => o.orderId === orderId) || localOrder;
+
+  if (!order) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <h1 className="text-2xl font-black text-gray-900">Order not available</h1>
+        <p className="text-sm text-gray-600">This order is not stored in this browser session.</p>
+        <Link href="/shop" className="rounded-lg bg-[#1A56DB] px-5 py-3 text-sm font-bold text-white">Continue shopping</Link>
+      </div>
+    );
+  }
 
   const handlePrintA4 = () => {
     if (typeof window !== 'undefined') {
@@ -105,7 +87,7 @@ export default function OrderSuccessPage() {
 
           <div>
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200 px-3.5 py-1 rounded-full inline-block mb-2">
-              Payment & Order Successful
+              Order received
             </span>
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
               Thank You, {order.customerName}!
@@ -188,7 +170,7 @@ export default function OrderSuccessPage() {
             <div className="sm:text-right">
               <span className="font-bold text-gray-400 uppercase text-[10px] block">PAYMENT & SETTLEMENT</span>
               <strong className="font-bold text-emerald-700 block mt-0.5">
-                {order.paymentStatus || 'Payment Verified'}
+                {order.paymentStatus || 'Verification Pending'}
               </strong>
               <span className="text-gray-600 block font-mono text-[11px] mt-0.5">
                 Mode: {order.paymentMethod}
@@ -227,7 +209,7 @@ export default function OrderSuccessPage() {
                       <td className="py-2.5 px-3 font-mono text-gray-400">{idx + 1}</td>
                       <td className="py-2.5 px-3">
                         <span className="font-bold text-gray-900 block">{it.name}</span>
-                        <span className="text-[10.5px] text-gray-400">SKU: {it.sku || `LS-${Math.floor(100000 + Math.random() * 900000)}`}</span>
+                        <span className="text-[10.5px] text-gray-400">SKU: {it.sku || 'Not available'}</span>
                       </td>
                       <td className="py-2.5 px-2 text-center font-mono text-gray-500 text-[11px]">{hsnCode}</td>
                       <td className="py-2.5 px-2 text-center font-bold">{it.quantity}</td>
@@ -338,7 +320,7 @@ export default function OrderSuccessPage() {
             className="inline-flex items-center gap-2 text-xs font-bold text-[#1A56DB] hover:text-[#1E40AF]"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Continue Shopping (282 Hardware Items)</span>
+            <span>Continue Shopping ({products.length || 413}+ Hardware Items)</span>
           </Link>
         </div>
 

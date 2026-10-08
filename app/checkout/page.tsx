@@ -82,7 +82,7 @@ export default function CheckoutPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleFinalOrderSubmit = () => {
+  const handleFinalOrderSubmit = async () => {
     if (paymentMethod === 'upi_qr' && !utrNumber.trim()) {
       showToast('Please enter the 12-digit UPI UTR / Transaction Reference number after scanning the QR code');
       return;
@@ -130,14 +130,12 @@ export default function CheckoutPage() {
     };
 
     try {
-      localStorage.setItem('ls_last_order', JSON.stringify(newOrder));
-    } catch (e) {}
-
-    setTimeout(() => {
-      placeOrder(newOrder);
-      setIsSubmitting(false);
+      await placeOrder(newOrder);
       router.push(`/order-success/${tempOrderId}`);
-    }, 600);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to place the order. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   if (cart.length === 0) {

@@ -73,7 +73,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     { href: '/shop?cat=Accessories', label: 'Laptop Spares' },
     { href: '/shop?cat=Storage%20%26%20Parts', label: 'SSDs & RAM' },
     { href: '/shop?cat=Printers', label: 'Printers' },
-    { href: '/shop?search=Deal', label: 'Festival Deals 🔥', special: true },
+    { href: '/blogs', label: 'Tech Guides' },
+    { href: '/shop?search=Deal', label: 'Festival Deals', special: true },
   ];
 
   return (

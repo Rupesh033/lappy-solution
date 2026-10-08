@@ -25,7 +25,8 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [selectedBrand, setSelectedBrand] = useState<string>('All');
-  const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating'>('featured');
+  const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'discount'>('featured');
+  const [mobileSortOpen, setMobileSortOpen] = useState<boolean>(false);
   const [onlyInStock, setOnlyInStock] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
   const [displayLimit, setDisplayLimit] = useState<number>(24);
@@ -33,6 +34,16 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
   const [minRating, setMinRating] = useState<number>(0);
   const [brandSearch, setBrandSearch] = useState<string>('');
   const [showAllBrands, setShowAllBrands] = useState<boolean>(false);
+
+  const sortOptions = [
+    { id: 'featured', label: 'Featured Deals', desc: 'Curated & Trending at Showroom', icon: '🔥' },
+    { id: 'price-asc', label: 'Price: Low to High', desc: 'Budget & Affordable First', icon: '💰' },
+    { id: 'price-desc', label: 'Price: High to Low', desc: 'Premium Laptops & Rigs First', icon: '⚡' },
+    { id: 'rating', label: 'Top Customer Rating', desc: 'Highest Rated by Buyers', icon: '⭐' },
+    { id: 'discount', label: 'Biggest Discount', desc: 'Maximum % Savings (Up to 70% Off)', icon: '🏷️' },
+  ] as const;
+
+  const currentSortLabel = sortOptions.find(o => o.id === sortBy)?.label || 'Featured Deals';
 
   useEffect(() => {
     if (initialCategory) {
@@ -113,6 +124,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
       if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+      if (sortBy === 'discount') return (b.discount || 0) - (a.discount || 0);
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
   }, [products, selectedCategory, selectedBrand, onlyInStock, searchQuery, maxPrice, minRating, sortBy]);
@@ -217,12 +229,12 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
           })}
         </div>
 
-        {/* Mobile Filter & Sort Bar (Phone Optimized) */}
-        <div className="lg:hidden flex items-center justify-between gap-2 bg-white border border-[#E5E7EB] rounded-xl p-2.5 mb-3 shadow-2xs">
+        {/* Mobile Filter & Sort Bar (Phone Optimized Flipkart/Amazon Style) */}
+        <div className="lg:hidden flex items-center justify-between gap-2 bg-white border border-[#E5E7EB] rounded-xl p-2 mb-3 shadow-2xs">
           <button
             type="button"
             onClick={() => setMobileFilterOpen(true)}
-            className="flex-1 h-9 px-3 rounded-lg bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#111827] text-xs font-bold flex items-center justify-center gap-2 transition-colors border border-gray-200"
+            className="flex-1 h-9 px-3 rounded-lg bg-[#F8FAFC] hover:bg-[#F1F5F9] active:bg-[#E2E8F0] text-[#111827] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors border border-gray-200"
           >
             <Filter className="w-3.5 h-3.5 text-[#1A56DB]" />
             <span>Filters</span>
@@ -233,19 +245,81 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
             )}
           </button>
 
-          <div className="flex-1">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="w-full h-9 bg-[#F1F5F9] border border-gray-200 rounded-lg px-2.5 text-xs text-gray-800 font-semibold focus:outline-none focus:border-[#1A56DB]"
-            >
-              <option value="featured">Featured Deals</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="rating">Top Rated</option>
-            </select>
-          </div>
+          <button
+            type="button"
+            onClick={() => setMobileSortOpen(true)}
+            className="flex-1 h-9 px-3 rounded-lg bg-[#F8FAFC] hover:bg-[#F1F5F9] active:bg-[#E2E8F0] text-[#111827] text-xs font-bold flex items-center justify-between transition-colors border border-gray-200"
+          >
+            <div className="flex items-center gap-1.5 truncate">
+              <ArrowUpDown className="w-3.5 h-3.5 text-[#1A56DB] flex-shrink-0" />
+              <span className="truncate">{currentSortLabel}</span>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 ml-1" />
+          </button>
         </div>
+
+        {/* Mobile Sort Bottom Drawer (Touch-Optimized Bottom Sheet) */}
+        {mobileSortOpen && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center lg:hidden">
+            <div 
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+              onClick={() => setMobileSortOpen(false)}
+            />
+            <div className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-2xl p-4 pb-6 z-10 animate-in slide-in-from-bottom duration-200">
+              <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
+              
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4 text-[#1A56DB]" />
+                  <span className="font-extrabold text-sm text-gray-900 uppercase tracking-wide">Sort Products By</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileSortOpen(false)}
+                  className="w-7 h-7 rounded-full bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center font-bold text-xs"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="py-2 divide-y divide-gray-100">
+                {sortOptions.map((opt) => {
+                  const isSelected = sortBy === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setSortBy(opt.id as any);
+                        setMobileSortOpen(false);
+                      }}
+                      className={`w-full py-3 px-3 flex items-center justify-between text-left transition-colors rounded-xl ${
+                        isSelected ? 'bg-blue-50/80 text-[#1A56DB]' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{opt.icon}</span>
+                        <div>
+                          <p className={`text-xs font-bold ${isSelected ? 'text-[#1A56DB]' : 'text-gray-900'}`}>
+                            {opt.label}
+                          </p>
+                          <p className="text-[11px] text-gray-400 font-medium">
+                            {opt.desc}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected ? 'border-[#1A56DB] bg-[#1A56DB]' : 'border-gray-300'
+                      }`}>
+                        {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* E-Commerce Grid with Sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
@@ -278,7 +352,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
             <div>
               <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2 flex items-center justify-between">
                 <span>Categories</span>
-                <span className="text-[10px] font-semibold text-gray-400">282 Items</span>
+                <span className="text-[10px] font-semibold text-gray-400">{products.length} Items</span>
               </h3>
               <div className="space-y-1">
                 {categories.map((cat) => {
@@ -514,16 +588,17 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
               </span>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">Sort By:</span>
+                <span className="text-xs font-semibold text-gray-500">Sort By:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-800 font-semibold focus:outline-none focus:border-[#1A56DB]"
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-800 font-semibold focus:outline-none focus:border-[#1A56DB] cursor-pointer"
                 >
-                  <option value="featured">Featured Deals</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                  <option value="rating">Top Customer Rating</option>
+                  {sortOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

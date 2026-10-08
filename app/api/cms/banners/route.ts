@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { hasAdminSession } from '@/lib/adminAuth';
 
 export async function GET() {
   try {
@@ -14,6 +15,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!hasAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await request.json();
     const banner = await prisma.banner.create({
@@ -27,6 +29,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  if (!hasAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await request.json();
     const { id, ...data } = body;
@@ -42,6 +45,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!hasAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

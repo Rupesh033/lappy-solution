@@ -63,8 +63,39 @@ export interface CMSSection {
   id: string;
   sectionKey: string;
   title: string;
+  subtitle?: string | null;
+  badge?: string | null;
+  productIds?: string | string[] | null;
   position: number;
   isVisible: boolean;
+}
+
+export interface CMSCustomPage {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  metaTitle?: string | null;
+  metaDesc?: string | null;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CMSBlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  category: string;
+  author: string;
+  readTime: string;
+  tags?: string | null;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface StoreContextType {
@@ -78,6 +109,8 @@ interface StoreContextType {
   paymentSettings: PaymentSettings;
   banners: CMSBanner[];
   homepageSections: CMSSection[];
+  customPages: CMSCustomPage[];
+  blogPosts: CMSBlogPost[];
   invoices: Invoice[];
   invoiceSettings: InvoiceSettings;
   selectedProduct: Product | null;
@@ -118,6 +151,14 @@ interface StoreContextType {
   addProductToDb: (prod: Partial<Product>) => Promise<void>;
   deleteProductFromDb: (id: string) => Promise<void>;
   updateHomepageSections: (sections: CMSSection[]) => Promise<void>;
+  updateHomepageSectionDetails: (sectionKey: string, details: Partial<CMSSection>) => Promise<void>;
+  updateHomepageSectionProducts: (sectionKey: string, productIds: string[]) => Promise<void>;
+  addCustomPage: (page: Partial<CMSCustomPage>) => Promise<CMSCustomPage>;
+  editCustomPage: (page: CMSCustomPage) => Promise<void>;
+  deleteCustomPage: (id: string) => Promise<void>;
+  addBlogPost: (post: Partial<CMSBlogPost>) => Promise<CMSBlogPost>;
+  editBlogPost: (post: CMSBlogPost) => Promise<void>;
+  deleteBlogPost: (id: string) => Promise<void>;
   syncWithDatabase: () => Promise<void>;
 }
 
@@ -165,6 +206,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(defaultPaymentSettings);
   const [banners, setBanners] = useState<CMSBanner[]>([]);
   const [homepageSections, setHomepageSections] = useState<CMSSection[]>([]);
+  const [customPages, setCustomPages] = useState<CMSCustomPage[]>([]);
+  const [blogPosts, setBlogPosts] = useState<CMSBlogPost[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(DEFAULT_INVOICE_SETTINGS);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -230,6 +273,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           localStorage.setItem('ls_orders', JSON.stringify(data.orders));
         }
       }
+
+      // 7. Custom Pages
+      const resPages = await fetch('/api/cms/pages');
+      if (resPages.ok) {
+        const data = await resPages.json();
+        if (data.pages) {
+          setCustomPages(data.pages);
+          try {
+            localStorage.setItem('ls_custom_pages', JSON.stringify(data.pages));
+          } catch (e) {}
+        }
+      }
+
+      // 8. Blog Posts
+      const resBlogs = await fetch('/api/cms/blogs');
+      if (resBlogs.ok) {
+        const data = await resBlogs.json();
+        if (data.blogs) {
+          setBlogPosts(data.blogs);
+          try {
+            localStorage.setItem('ls_blog_posts', JSON.stringify(data.blogs));
+          } catch (e) {}
+        }
+      }
     } catch (e) {
       console.warn('CMS DB sync fallback to local cache:', e);
     }
@@ -251,7 +318,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedLeads) setLeads(JSON.parse(savedLeads));
 
       const savedProducts = localStorage.getItem('ls_products');
-      if (savedProducts) setProducts(JSON.parse(savedProducts));
+      if (savedProducts) {
+        try {
+          const parsed = JSON.parse(savedProducts);
+          const hasFrontech = Array.isArray(parsed) && parsed.some((p: any) => p.brand === 'Frontech');
+          if (hasFrontech && parsed.length >= PRODUCTS.length) {
+            setProducts(parsed);
+          } else {
+            setProducts(PRODUCTS);
+            try {
+              localStorage.setItem('ls_products', JSON.stringify(PRODUCTS));
+            } catch (e) {}
+          }
+        } catch {
+          setProducts(PRODUCTS);
+        }
+      } else {
+        setProducts(PRODUCTS);
+      }
 
       const savedInvoices = localStorage.getItem('ls_invoices');
       if (savedInvoices) {
@@ -271,6 +355,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedInvSettings) {
         setInvoiceSettings(JSON.parse(savedInvSettings));
       }
+
+      const savedPages = localStorage.getItem('ls_custom_pages');
+      if (savedPages) setCustomPages(JSON.parse(savedPages));
+
+      const savedBlogs = localStorage.getItem('ls_blog_posts');
+      if (savedBlogs) setBlogPosts(JSON.parse(savedBlogs));
     } catch (e) {
       console.error('LocalStorage load error:', e);
     }
@@ -336,30 +426,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const placeOrder = async (newOrder: any): Promise<Invoice> => {
-    const updated = [newOrder, ...orders];
-    setOrders(updated);
-    setCart([]);
-    
-    // Automatically generate dynamic GST tax invoice
-    const newInvoice = createInvoiceFromOrder(newOrder);
-
     try {
-      localStorage.setItem('ls_orders', JSON.stringify(updated));
-      localStorage.setItem('ls_last_order', JSON.stringify(newOrder));
-      localStorage.setItem('ls_last_invoice', JSON.stringify(newInvoice));
-      localStorage.setItem('ls_cart', JSON.stringify([]));
-      
-      // Persist to SQLite Database via Server API
-      await fetch('/api/cms/orders', {
+      const response = await fetch('/api/cms/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newOrder),
       });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Order could not be placed');
+
+      const savedOrder = data.order;
+      const updated = [savedOrder, ...orders];
+      setOrders(updated);
+      setCart([]);
+      const newInvoice = createInvoiceFromOrder(savedOrder);
+      localStorage.setItem('ls_orders', JSON.stringify(updated));
+      localStorage.setItem('ls_last_order', JSON.stringify(savedOrder));
+      localStorage.setItem('ls_last_invoice', JSON.stringify(newInvoice));
+      localStorage.setItem('ls_cart', JSON.stringify([]));
+      showToast(`Order #${savedOrder.orderId} placed. Payment verification is pending.`);
+      return newInvoice;
     } catch (e) {
       console.error('Order save error:', e);
+      throw e;
     }
-    showToast(`Order #${newOrder.orderId} placed & Invoice #${newInvoice.invoiceNumber} generated!`);
-    return newInvoice;
   };
 
   const createLead = (leadData: any) => {
@@ -390,6 +480,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setProducts(prods);
     try {
       localStorage.setItem('ls_products', JSON.stringify(prods));
+      const changes = prods.filter((product) => {
+        const previous = products.find((current) => current.id === product.id);
+        return previous && (previous.inStock !== product.inStock || previous.stockQuantity !== product.stockQuantity);
+      });
+      await Promise.all(changes.map((product) => fetch('/api/cms/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: product.id, inStock: product.inStock, stockQuantity: product.stockQuantity }),
+      })));
     } catch (e) {}
   };
 
@@ -397,6 +496,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setOrders(ords);
     try {
       localStorage.setItem('ls_orders', JSON.stringify(ords));
+      const changes = ords.filter((order) => {
+        const previous = orders.find((current) => current.orderId === order.orderId);
+        return previous && (previous.paymentStatus !== order.paymentStatus || previous.orderStatus !== order.orderStatus);
+      });
+      await Promise.all(changes.map((order) => fetch('/api/cms/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order.orderId,
+          paymentStatus: order.paymentStatus,
+          orderStatus: order.orderStatus,
+        }),
+      })));
     } catch (e) {}
   };
 
@@ -560,6 +672,145 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const updateHomepageSectionDetails = async (sectionKey: string, details: Partial<CMSSection>) => {
+    setHomepageSections((prev) =>
+      prev.map((s) => (s.sectionKey === sectionKey ? { ...s, ...details } : s))
+    );
+    try {
+      await fetch('/api/cms/homepage-sections', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionKey, ...details }),
+      });
+      showToast(`Section "${details.title || sectionKey}" updated!`);
+    } catch (e) {
+      console.error('Failed to update section:', e);
+    }
+  };
+
+  const updateHomepageSectionProducts = async (sectionKey: string, productIds: string[]) => {
+    setHomepageSections((prev) =>
+      prev.map((s) => (s.sectionKey === sectionKey ? { ...s, productIds } : s))
+    );
+    try {
+      await fetch('/api/cms/homepage-sections', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionKey, productIds }),
+      });
+      showToast(`Products updated for section!`);
+    } catch (e) {
+      console.error('Failed to update section products:', e);
+    }
+  };
+
+  const addCustomPage = async (page: Partial<CMSCustomPage>): Promise<CMSCustomPage> => {
+    try {
+      const res = await fetch('/api/cms/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(page),
+      });
+      const data = await res.json();
+      if (data.page) {
+        setCustomPages((prev) => [data.page, ...prev]);
+        showToast('Page published successfully!');
+        return data.page;
+      }
+    } catch (e) {
+      console.error('Failed to create page:', e);
+    }
+    const fallback: CMSCustomPage = {
+      id: `page-${Date.now()}`,
+      slug: page.slug || 'custom-page',
+      title: page.title || 'Untitled Page',
+      content: page.content || '',
+      status: page.status || 'published',
+    };
+    setCustomPages((prev) => [fallback, ...prev]);
+    return fallback;
+  };
+
+  const editCustomPage = async (page: CMSCustomPage) => {
+    setCustomPages((prev) => prev.map((p) => (p.id === page.id ? page : p)));
+    try {
+      await fetch('/api/cms/pages', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(page),
+      });
+      showToast('Page updated successfully!');
+    } catch (e) {
+      console.error('Failed to update page:', e);
+    }
+  };
+
+  const deleteCustomPage = async (id: string) => {
+    setCustomPages((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await fetch(`/api/cms/pages?id=${id}`, { method: 'DELETE' });
+      showToast('Page deleted!');
+    } catch (e) {
+      console.error('Failed to delete page:', e);
+    }
+  };
+
+  const addBlogPost = async (post: Partial<CMSBlogPost>): Promise<CMSBlogPost> => {
+    try {
+      const res = await fetch('/api/cms/blogs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post),
+      });
+      const data = await res.json();
+      if (data.blog) {
+        setBlogPosts((prev) => [data.blog, ...prev]);
+        showToast('Blog article published!');
+        return data.blog;
+      }
+    } catch (e) {
+      console.error('Failed to create blog:', e);
+    }
+    const fallback: CMSBlogPost = {
+      id: `blog-${Date.now()}`,
+      slug: post.slug || 'tech-article',
+      title: post.title || 'New Tech Article',
+      excerpt: post.excerpt || '',
+      content: post.content || '',
+      coverImage: post.coverImage || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=1000',
+      category: post.category || 'Hardware Guide',
+      author: post.author || 'Lappy Solution Team',
+      readTime: post.readTime || '4 min read',
+      status: post.status || 'published',
+    };
+    setBlogPosts((prev) => [fallback, ...prev]);
+    return fallback;
+  };
+
+  const editBlogPost = async (post: CMSBlogPost) => {
+    setBlogPosts((prev) => prev.map((b) => (b.id === post.id ? post : b)));
+    try {
+      await fetch('/api/cms/blogs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post),
+      });
+      showToast('Blog article updated!');
+    } catch (e) {
+      console.error('Failed to update blog:', e);
+    }
+  };
+
+  const deleteBlogPost = async (id: string) => {
+    setBlogPosts((prev) => prev.filter((b) => b.id !== id));
+    try {
+      await fetch(`/api/cms/blogs?id=${id}`, { method: 'DELETE' });
+      showToast('Blog article deleted!');
+    } catch (e) {
+      console.error('Failed to delete blog:', e);
+    }
+  };
+
   // Invoicing Engine Methods
   const createInvoiceFromOrder = (order: any, buyerGstin?: string, isInterstate: boolean = false): Invoice => {
     const currentSettings = { ...invoiceSettings };
@@ -700,6 +951,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         paymentSettings,
         banners,
         homepageSections,
+        customPages,
+        blogPosts,
         invoices,
         invoiceSettings,
         selectedProduct,
@@ -740,6 +993,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addProductToDb,
         deleteProductFromDb,
         updateHomepageSections,
+        updateHomepageSectionDetails,
+        updateHomepageSectionProducts,
+        addCustomPage,
+        editCustomPage,
+        deleteCustomPage,
+        addBlogPost,
+        editBlogPost,
+        deleteBlogPost,
         syncWithDatabase,
       }}
     >

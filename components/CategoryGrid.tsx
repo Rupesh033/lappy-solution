@@ -17,6 +17,14 @@ export const CategoryGrid: React.FC = () => {
   const categories: CategoryItem[] = [
     // Row 1 (Desktop)
     {
+      id: 'frontech-monitors',
+      title: 'Frontech Monitors',
+      fullTitle: 'Frontech Ultima & Curved Monitors',
+      image: 'https://cdn.shopify.com/s/files/1/0854/3227/1149/files/24.5_inch_mon_0087v_01.jpg?v=1772186717',
+      href: '/shop?search=Monitor',
+      startingPrice: 'From ₹5,999'
+    },
+    {
       id: 'laptop-adapters',
       title: 'Laptop Adapters',
       image: '/images/categories/laptop-adapters.png',
@@ -120,7 +128,7 @@ export const CategoryGrid: React.FC = () => {
 
         {/* 5 columns x 2 rows on desktop, 2 columns on mobile */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-          {categories.map((cat) => (
+          {categories.filter((cat) => cat.id !== 'frontech-monitors').map((cat) => (
             <Link
               key={cat.id}
               href={cat.href}

@@ -9,9 +9,10 @@ import {
   RefreshCw, Plus, Edit2, ArrowRight, BarChart3, Layers, 
   QrCode, Receipt, Store, Sparkles, Copy, Eye, EyeOff, 
   ArrowUp, ArrowDown, Palette, Sliders, Image as ImageIcon, 
-  Trash2, Save, Lock, Key, FileText, Printer, Building2, Percent, DollarSign
+  Trash2, Save, Lock, Key, FileText, Printer, Building2, Percent, DollarSign,
+  BookOpen, Star, Crown, Laptop
 } from 'lucide-react';
-import { useStore, CMSBanner, CMSSection } from '../../context/StoreContext';
+import { useStore, CMSBanner, CMSSection, CMSCustomPage, CMSBlogPost } from '../../context/StoreContext';
 import { STORE_INFO } from '../../data/storeData';
 import { Product } from '../../data/products';
 
@@ -29,6 +30,16 @@ export default function AdminPage() {
     deleteBanner,
     homepageSections,
     updateHomepageSections,
+    updateHomepageSectionDetails,
+    updateHomepageSectionProducts,
+    customPages,
+    blogPosts,
+    addCustomPage,
+    editCustomPage,
+    deleteCustomPage,
+    addBlogPost,
+    editBlogPost,
+    deleteBlogPost,
     siteSettings,
     updateSiteSettings,
     themeSettings,
@@ -47,7 +58,7 @@ export default function AdminPage() {
     showToast 
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'orders' | 'inventory' | 'billing' | 'banners' | 'homepage' | 'theme' | 'settings' | 'leads'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'inventory' | 'billing' | 'banners' | 'homepage' | 'pages' | 'blogs' | 'theme' | 'settings' | 'leads'>('orders');
   
   // Orders Filter
   const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'verified' | 'packed' | 'shipped' | 'delivered'>('all');
@@ -139,12 +150,10 @@ export default function AdminPage() {
   const [lockoutTimer, setLockoutTimer] = useState(0);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const session = sessionStorage.getItem('ls_admin_session');
-      if (session === 'active') {
-        setIsAuthenticated(true);
-      }
-    }
+    fetch('/api/auth/session')
+      .then((response) => response.json())
+      .then((data) => setIsAuthenticated(Boolean(data.authenticated)))
+      .catch(() => setIsAuthenticated(false));
   }, []);
 
   useEffect(() => {
@@ -165,23 +174,20 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [lockoutTimer]);
 
-  const handleUnlockPortal = (e: React.FormEvent) => {
+  const handleUnlockPortal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLockedOut) return;
 
-    const trimmed = authPassword.trim();
-    if (
-      trimmed === 'Lappy@Garhwa#2026' || 
-      trimmed === '822114' || 
-      trimmed === 'Admin@LS#822114' ||
-      trimmed === 'admin123'
-    ) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('ls_admin_session', 'active');
-      }
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: authPassword }),
+    });
+    if (response.ok) {
       setIsAuthenticated(true);
       setAuthPassword('');
       setAuthError('');
+      await syncWithDatabase();
       showToast('Welcome Store Owner! Console unlocked.');
     } else {
       const attempts = failedAttempts + 1;
@@ -191,7 +197,8 @@ export default function AdminPage() {
         setLockoutTimer(30);
         setAuthError('Too many failed attempts! Portal locked for 30s.');
       } else {
-        setAuthError(`Invalid security passkey! (${5 - attempts} attempts left)`);
+        const data = await response.json().catch(() => null);
+        setAuthError(data?.error || `Invalid credentials. (${5 - attempts} attempts left)`);
       }
     }
   };
@@ -429,6 +436,217 @@ export default function AdminPage() {
     await updateHomepageSections(updated);
   };
 
+  // Section Editing Modal States
+  const [isEditSectionOpen, setIsEditSectionOpen] = useState(false);
+  const [editingSectionKey, setEditingSectionKey] = useState('');
+  const [editingSectionTitle, setEditingSectionTitle] = useState('');
+  const [editingSectionSubtitle, setEditingSectionSubtitle] = useState('');
+  const [editingSectionBadge, setEditingSectionBadge] = useState('');
+
+  const handleOpenEditSection = (section: CMSSection) => {
+    setEditingSectionKey(section.sectionKey);
+    setEditingSectionTitle(section.title);
+    setEditingSectionSubtitle(section.subtitle || '');
+    setEditingSectionBadge(section.badge || '');
+    setIsEditSectionOpen(true);
+  };
+
+  const handleSaveSectionDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateHomepageSectionDetails(editingSectionKey, {
+      title: editingSectionTitle,
+      subtitle: editingSectionSubtitle,
+      badge: editingSectionBadge,
+    });
+    setIsEditSectionOpen(false);
+  };
+
+  // Section Products Management Modal States
+  const [isManageSectionProductsOpen, setIsManageSectionProductsOpen] = useState(false);
+  const [managingSectionKey, setManagingSectionKey] = useState('');
+  const [managingSectionTitle, setManagingSectionTitle] = useState('');
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [sectionProductSearch, setSectionProductSearch] = useState('');
+  const [sectionProductCategory, setSectionProductCategory] = useState('All');
+
+  const handleOpenManageProducts = (section: CMSSection) => {
+    setManagingSectionKey(section.sectionKey);
+    setManagingSectionTitle(section.title);
+    let ids: string[] = [];
+    if (section.productIds) {
+      if (Array.isArray(section.productIds)) {
+        ids = section.productIds;
+      } else if (typeof section.productIds === 'string') {
+        try {
+          ids = JSON.parse(section.productIds);
+        } catch {
+          ids = [];
+        }
+      }
+    }
+    setSelectedProductIds(ids);
+    setSectionProductSearch('');
+    setSectionProductCategory('All');
+    setIsManageSectionProductsOpen(true);
+  };
+
+  const handleToggleProductForSection = (productId: string) => {
+    if (selectedProductIds.includes(productId)) {
+      setSelectedProductIds(selectedProductIds.filter(id => id !== productId));
+    } else {
+      setSelectedProductIds([...selectedProductIds, productId]);
+    }
+  };
+
+  const handleSaveSectionProducts = async () => {
+    await updateHomepageSectionProducts(managingSectionKey, selectedProductIds);
+    setIsManageSectionProductsOpen(false);
+  };
+
+  // Custom Pages Management States
+  const [isPageModalOpen, setIsPageModalOpen] = useState(false);
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [pageTitle, setPageTitle] = useState('');
+  const [pageSlug, setPageSlug] = useState('');
+  const [pageContent, setPageContent] = useState('');
+  const [pageStatus, setPageStatus] = useState('published');
+  const [pageMetaTitle, setPageMetaTitle] = useState('');
+  const [pageMetaDesc, setPageMetaDesc] = useState('');
+
+  const handleOpenCreatePage = () => {
+    setEditingPageId(null);
+    setPageTitle('');
+    setPageSlug('');
+    setPageContent('');
+    setPageStatus('published');
+    setPageMetaTitle('');
+    setPageMetaDesc('');
+    setIsPageModalOpen(true);
+  };
+
+  const handleOpenEditPage = (page: CMSCustomPage) => {
+    setEditingPageId(page.id);
+    setPageTitle(page.title);
+    setPageSlug(page.slug);
+    setPageContent(page.content);
+    setPageStatus(page.status);
+    setPageMetaTitle(page.metaTitle || '');
+    setPageMetaDesc(page.metaDesc || '');
+    setIsPageModalOpen(true);
+  };
+
+  const handleSavePage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pageTitle.trim() || !pageSlug.trim()) {
+      alert('Please enter page title and slug');
+      return;
+    }
+    const cleanSlug = pageSlug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-');
+    if (editingPageId) {
+      await editCustomPage({
+        id: editingPageId,
+        title: pageTitle,
+        slug: cleanSlug,
+        content: pageContent,
+        status: pageStatus,
+        metaTitle: pageMetaTitle,
+        metaDesc: pageMetaDesc,
+      });
+    } else {
+      await addCustomPage({
+        title: pageTitle,
+        slug: cleanSlug,
+        content: pageContent,
+        status: pageStatus,
+        metaTitle: pageMetaTitle,
+        metaDesc: pageMetaDesc,
+      });
+    }
+    setIsPageModalOpen(false);
+  };
+
+  // Blog Management States
+  const [isBlogModalOpen, setIsBlogModalOpen] = useState(false);
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
+  const [blogTitle, setBlogTitle] = useState('');
+  const [blogSlug, setBlogSlug] = useState('');
+  const [blogCategory, setBlogCategory] = useState('Refurbished Guides');
+  const [blogCoverImage, setBlogCoverImage] = useState('/images/banners/refurbished-laptops-printers.png');
+  const [blogAuthor, setBlogAuthor] = useState('Lappy Solution Tech Team');
+  const [blogReadTime, setBlogReadTime] = useState('5 min');
+  const [blogTags, setBlogTags] = useState('refurbished, laptops, garhwa');
+  const [blogExcerpt, setBlogExcerpt] = useState('');
+  const [blogContent, setBlogContent] = useState('');
+  const [blogStatus, setBlogStatus] = useState('published');
+
+  const handleOpenCreateBlog = () => {
+    setEditingBlogId(null);
+    setBlogTitle('');
+    setBlogSlug('');
+    setBlogCategory('Refurbished Guides');
+    setBlogCoverImage('/images/banners/refurbished-laptops-printers.png');
+    setBlogAuthor('Lappy Solution Tech Team');
+    setBlogReadTime('5 min');
+    setBlogTags('refurbished, laptops, garhwa');
+    setBlogExcerpt('');
+    setBlogContent('');
+    setBlogStatus('published');
+    setIsBlogModalOpen(true);
+  };
+
+  const handleOpenEditBlog = (blog: CMSBlogPost) => {
+    setEditingBlogId(blog.id);
+    setBlogTitle(blog.title);
+    setBlogSlug(blog.slug);
+    setBlogCategory(blog.category);
+    setBlogCoverImage(blog.coverImage);
+    setBlogAuthor(blog.author);
+    setBlogReadTime(blog.readTime);
+    setBlogTags(blog.tags || '');
+    setBlogExcerpt(blog.excerpt);
+    setBlogContent(blog.content);
+    setBlogStatus(blog.status);
+    setIsBlogModalOpen(true);
+  };
+
+  const handleSaveBlog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!blogTitle.trim() || !blogSlug.trim()) {
+      alert('Please enter blog title and slug');
+      return;
+    }
+    const cleanSlug = blogSlug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-');
+    if (editingBlogId) {
+      await editBlogPost({
+        id: editingBlogId,
+        title: blogTitle,
+        slug: cleanSlug,
+        category: blogCategory,
+        coverImage: blogCoverImage,
+        author: blogAuthor,
+        readTime: blogReadTime,
+        tags: blogTags,
+        excerpt: blogExcerpt,
+        content: blogContent,
+        status: blogStatus,
+      });
+    } else {
+      await addBlogPost({
+        title: blogTitle,
+        slug: cleanSlug,
+        category: blogCategory,
+        coverImage: blogCoverImage,
+        author: blogAuthor,
+        readTime: blogReadTime,
+        tags: blogTags,
+        excerpt: blogExcerpt,
+        content: blogContent,
+        status: blogStatus,
+      });
+    }
+    setIsBlogModalOpen(false);
+  };
+
   // Save Theme Form
   const handleSaveTheme = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -622,8 +840,8 @@ export default function AdminPage() {
               </button>
 
               <button
-                onClick={() => {
-                  sessionStorage.removeItem('ls_admin_session');
+                onClick={async () => {
+                  await fetch('/api/auth/logout', { method: 'POST' });
                   setIsAuthenticated(false);
                   showToast('Admin Portal locked securely.');
                 }}
@@ -701,9 +919,11 @@ export default function AdminPage() {
             {[
               { id: 'orders', label: 'Orders & UTR', count: orders.length },
               { id: 'billing', label: 'GST Invoices & Billing', count: invoices.length },
-              { id: 'inventory', label: 'Inventory (282 SKUs)', count: products.length },
+              { id: 'inventory', label: `Inventory (${products.length} SKUs)`, count: products.length },
               { id: 'banners', label: 'Hero Banners', count: banners.length },
-              { id: 'homepage', label: 'Page Builder', count: homepageSections.length },
+              { id: 'homepage', label: 'Page Builder & Sections', count: homepageSections.length },
+              { id: 'pages', label: 'Custom Pages CMS', count: customPages.length },
+              { id: 'blogs', label: 'Tech Blogs', count: blogPosts.length },
               { id: 'theme', label: 'Theme & Colors' },
               { id: 'settings', label: 'Store & UPI Settings' },
               { id: 'leads', label: 'Quotes & Inquiries', count: leads.length }
@@ -1284,7 +1504,7 @@ export default function AdminPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                     <div className="sm:col-span-6">
                       <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Select Item from 282 Showroom Inventory
+                        Select Item from Showroom Inventory ({products.length} Items)
                       </label>
                       <select
                         value={manualSelectedProductId}
@@ -1984,17 +2204,17 @@ export default function AdminPage() {
         )}
 
         {/* ========================================================= */}
-        {/* TAB: HOMEPAGE BUILDER (Page Builder Architecture)        */}
+        {/* TAB: HOMEPAGE BUILDER & SECTION CUSTOMIZER               */}
         {/* ========================================================= */}
         {activeTab === 'homepage' && (
           <div className="space-y-4">
             <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="font-extrabold text-base text-[#111827]">
-                  Homepage Page Builder & Sections ({homepageSections.length})
+                  Homepage Sections & Product Curations ({homepageSections.length})
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Change the order or visibility of sections on the live homepage. Like WordPress Elementor, all changes are saved to the database.
+                  Rename any section (e.g. Trending Products, Best Seller, Premium Segment, Laptops), select custom products from inventory, or reorder sections live.
                 </p>
               </div>
 
@@ -2009,90 +2229,343 @@ export default function AdminPage() {
             <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden shadow-2xs">
               {[...homepageSections]
                 .sort((a, b) => a.position - b.position)
-                .map((section, idx, arr) => (
-                  <div
-                    key={section.id || section.sectionKey}
-                    className={`p-3.5 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
-                      section.isVisible ? 'bg-white' : 'bg-gray-50/70 opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Position Badge */}
-                      <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center font-extrabold text-xs text-gray-700 flex-shrink-0">
-                        #{idx + 1}
+                .map((section, idx, arr) => {
+                  let productCount = 0;
+                  if (section.productIds) {
+                    if (Array.isArray(section.productIds)) {
+                      productCount = section.productIds.length;
+                    } else if (typeof section.productIds === 'string') {
+                      try {
+                        productCount = JSON.parse(section.productIds).length;
+                      } catch {
+                        productCount = 0;
+                      }
+                    }
+                  }
+
+                  const isProductSection = [
+                    'trending', 'bestsellers', 'premium', 'refurbished_laptops', 
+                    'cctv_spotlight', 'featured'
+                  ].includes(section.sectionKey) || !['banners', 'hero', 'trust_bar', 'categories', 'promo', 'brands', 'catalog_cta', 'showroom', 'blogs_preview'].includes(section.sectionKey);
+
+                  return (
+                    <div
+                      key={section.id || section.sectionKey}
+                      className={`p-3.5 sm:p-4.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 transition-colors ${
+                        section.isVisible ? 'bg-white' : 'bg-gray-50/70 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Position Badge */}
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center font-extrabold text-xs text-gray-700 flex-shrink-0 mt-0.5">
+                          #{idx + 1}
+                        </div>
+
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="font-bold text-sm text-gray-900">
+                              {section.title}
+                            </h4>
+                            {section.badge && (
+                              <span className="text-[10px] font-extrabold uppercase bg-blue-50 text-[#1A56DB] border border-blue-200 px-2 py-0.5 rounded-full">
+                                {section.badge}
+                              </span>
+                            )}
+                            <span className="font-mono text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.2 rounded">
+                              {section.sectionKey}
+                            </span>
+                          </div>
+
+                          {section.subtitle && (
+                            <p className="text-xs text-gray-500 line-clamp-1">
+                              {section.subtitle}
+                            </p>
+                          )}
+
+                          {isProductSection && (
+                            <div className="flex items-center gap-2 pt-0.5">
+                              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1 ${
+                                productCount > 0 
+                                  ? 'bg-purple-50 text-purple-700 border border-purple-200' 
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                <ShoppingBag className="w-3 h-3" />
+                                <span>{productCount > 0 ? `${productCount} Custom Products Selected` : 'Using Smart Fallback (No manual products)'}</span>
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-gray-900 truncate">
-                            {section.title}
-                          </h4>
-                          <span className="font-mono text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.2 rounded">
-                            {section.sectionKey}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {section.sectionKey === 'banners' && 'Interactive 4-slide banner carousel with festival deals and direct WhatsApp links.'}
-                          {section.sectionKey === 'hero' && 'Primary hero showcase with festival countdown & Deal of the Day.'}
-                          {section.sectionKey === 'trust_bar' && 'GST invoicing, Brand Warranty, 30-min store pickup & local delivery badges.'}
-                          {section.sectionKey === 'categories' && 'Visual hardware category grid (Laptops, Adapters, CCTV, Keyboards).'}
-                          {section.sectionKey === 'featured' && '2-col mobile / 4-col desktop grid of top in-stock laptops and hardware.'}
-                          {section.sectionKey === 'promo' && 'Dual spotlight promo banners (SSD 10X speed upgrade & Business laptops).'}
-                          {section.sectionKey === 'brands' && 'Showcase of official partners (HP, Dell, Lenovo, CP-PLUS, Asus, Epson).'}
-                          {section.sectionKey === 'catalog_cta' && 'Quick-chip discovery bar linking directly to all 282 showroom SKUs.'}
-                          {section.sectionKey === 'showroom' && 'Showroom counter pickup, physical test reassurance, phone & WhatsApp buttons.'}
-                        </p>
+                      {/* Actions */}
+                      <div className="flex flex-wrap items-center justify-end gap-2 flex-shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100">
+                        
+                        {/* Edit Name & Details */}
+                        <button
+                          onClick={() => handleOpenEditSection(section)}
+                          className="h-8 px-2.5 rounded-lg bg-blue-50 text-[#1A56DB] hover:bg-blue-100 text-xs font-bold flex items-center gap-1 border border-blue-200 cursor-pointer transition-colors"
+                          title="Rename section or change badge & subtitle"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Rename & Edit</span>
+                        </button>
+
+                        {/* Select Products */}
+                        {isProductSection && (
+                          <button
+                            onClick={() => handleOpenManageProducts(section)}
+                            className="h-8 px-2.5 rounded-lg bg-purple-50 text-[#7C3AED] hover:bg-purple-100 text-xs font-bold flex items-center gap-1 border border-purple-200 cursor-pointer transition-colors"
+                            title="Select which products appear in this section"
+                          >
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            <span>Select Products</span>
+                          </button>
+                        )}
+
+                        {/* Move Up */}
+                        <button
+                          onClick={() => handleMoveSection(idx, 'up')}
+                          disabled={idx === 0}
+                          className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 transition-colors"
+                          title="Move Up"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Move Down */}
+                        <button
+                          onClick={() => handleMoveSection(idx, 'down')}
+                          disabled={idx === arr.length - 1}
+                          className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 transition-colors"
+                          title="Move Down"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Visibility Toggle */}
+                        <button
+                          onClick={() => handleToggleSection(section.id)}
+                          className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                            section.isVisible
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          }`}
+                        >
+                          {section.isVisible ? (
+                            <>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Visible</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5" />
+                              <span>Hidden</span>
+                            </>
+                          )}
+                        </button>
+
                       </div>
                     </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
 
-                    {/* Actions: Reorder and Toggle Visibility */}
-                    <div className="flex items-center justify-end gap-2 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                      
-                      {/* Move Up */}
-                      <button
-                        onClick={() => handleMoveSection(idx, 'up')}
-                        disabled={idx === 0}
-                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 transition-colors"
-                        title="Move Up"
-                      >
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </button>
+        {/* ========================================================= */}
+        {/* TAB: CUSTOM PAGES BUILDER (CMS)                           */}
+        {/* ========================================================= */}
+        {activeTab === 'pages' && (
+          <div className="space-y-4">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-extrabold text-base text-[#111827]">
+                  Custom Pages & Policies CMS ({customPages.length})
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Create, edit, and publish store pages such as Terms and Conditions, Privacy Policy, Warranty Policy, About Us, or any custom content.
+                </p>
+              </div>
 
-                      {/* Move Down */}
-                      <button
-                        onClick={() => handleMoveSection(idx, 'down')}
-                        disabled={idx === arr.length - 1}
-                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 transition-colors"
-                        title="Move Down"
-                      >
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </button>
+              <button
+                onClick={handleOpenCreatePage}
+                className="h-9 px-4 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create New Page</span>
+              </button>
+            </div>
 
-                      {/* Visibility Toggle */}
-                      <button
-                        onClick={() => handleToggleSection(section.id)}
-                        className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                          section.isVisible
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                        }`}
-                      >
-                        {section.isVisible ? (
-                          <>
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Visible</span>
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="w-3.5 h-3.5" />
-                            <span>Hidden</span>
-                          </>
-                        )}
-                      </button>
-
+            <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden shadow-2xs">
+              {customPages.map((page) => (
+                <div
+                  key={page.id}
+                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#1A56DB]" />
+                      <h4 className="font-bold text-sm text-gray-900">{page.title}</h4>
+                      <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                        page.status === 'published' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {page.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 flex items-center gap-2">
+                      <span>URL: <code className="text-[#1A56DB] bg-blue-50/50 px-1 py-0.5 rounded">/pages/{page.slug}</code></span>
+                      {page.updatedAt && <span>• Updated {new Date(page.updatedAt).toLocaleDateString()}</span>}
                     </div>
                   </div>
-                ))}
+
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`/pages/${page.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-8 px-3 rounded-lg border border-gray-200 hover:bg-gray-100 text-gray-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>View Live</span>
+                    </a>
+
+                    <button
+                      onClick={() => handleOpenEditPage(page)}
+                      className="h-8 px-3 rounded-lg bg-blue-50 text-[#1A56DB] hover:bg-blue-100 border border-blue-200 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit Page</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to delete the page "${page.title}"?`)) {
+                          deleteCustomPage(page.id);
+                        }
+                      }}
+                      className="h-8 w-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Delete Page"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB: TECH BLOGS MANAGER (CMS)                             */}
+        {/* ========================================================= */}
+        {activeTab === 'blogs' && (
+          <div className="space-y-4">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-extrabold text-base text-[#111827]">
+                  Tech Blogs & Hardware Buying Guides ({blogPosts.length})
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Publish expert tutorials, refurbished laptop reviews, and buying guides. They appear directly on the homepage and at <code className="text-[#1A56DB]">/blogs</code>.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href="/blogs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-3.5 rounded-lg border border-gray-200 hover:bg-gray-100 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Public Blog Page</span>
+                </a>
+
+                <button
+                  onClick={handleOpenCreateBlog}
+                  className="h-9 px-4 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Write New Blog</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {blogPosts.map((blog) => (
+                <div
+                  key={blog.id}
+                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="h-40 bg-slate-900 relative overflow-hidden">
+                      <img
+                        src={blog.coverImage}
+                        alt={blog.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                      <span className="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-[#1A56DB] text-white">
+                        {blog.category}
+                      </span>
+                      <span className={`absolute top-3 right-3 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                        blog.status === 'published' ? 'bg-green-600 text-white' : 'bg-amber-500 text-white'
+                      }`}>
+                        {blog.status}
+                      </span>
+                    </div>
+
+                    <div className="p-4 space-y-2">
+                      <h4 className="font-bold text-sm text-gray-900 line-clamp-2 leading-snug">
+                        {blog.title}
+                      </h4>
+                      <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                        {blog.excerpt}
+                      </p>
+                      <div className="text-[11px] text-gray-400 flex items-center justify-between pt-1">
+                        <span>{blog.author}</span>
+                        <span>{blog.readTime} read</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                    <a
+                      href={`/blogs/${blog.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-[#1A56DB] hover:underline flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Live Post</span>
+                    </a>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleOpenEditBlog(blog)}
+                        className="h-7 px-2.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <Edit2 className="w-3 h-3 text-[#1A56DB]" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete article "${blog.title}"?`)) {
+                            deleteBlogPost(blog.id);
+                          }
+                        }}
+                        className="h-7 w-7 rounded-lg bg-white border border-gray-200 hover:bg-rose-50 text-rose-600 flex items-center justify-center cursor-pointer transition-colors"
+                        title="Delete Blog"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -2682,6 +3155,582 @@ export default function AdminPage() {
                 </button>
               </div>
 
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 1: EDIT HOMEPAGE SECTION DETAILS                    */}
+      {/* ========================================================= */}
+      {isEditSectionOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div>
+                <h3 className="font-extrabold text-base text-[#111827]">
+                  Rename & Customize Section
+                </h3>
+                <span className="font-mono text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.2 rounded">
+                  Key: {editingSectionKey}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsEditSectionOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSectionDetails} className="space-y-3.5 text-xs">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Section Title *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Trending Products, Best Seller, Premium Segment, Laptops"
+                  value={editingSectionTitle}
+                  onChange={(e) => setEditingSectionTitle(e.target.value)}
+                  className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Badge Text (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 🔥 HOT TRENDING, ⭐ BESTSELLERS, 👑 PREMIUM"
+                  value={editingSectionBadge}
+                  onChange={(e) => setEditingSectionBadge(e.target.value)}
+                  className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Subtitle / Description</label>
+                <textarea
+                  rows={3}
+                  placeholder="Short tagline explaining what products are in this section..."
+                  value={editingSectionSubtitle}
+                  onChange={(e) => setEditingSectionSubtitle(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditSectionOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs shadow-xs cursor-pointer"
+                >
+                  Save Section Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 2: MANAGE PRODUCTS FOR SECTION                      */}
+      {/* ========================================================= */}
+      {isManageSectionProductsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            
+            {/* Header */}
+            <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gray-50/50">
+              <div>
+                <h3 className="font-extrabold text-base text-[#111827] flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-[#1A56DB]" />
+                  <span>Select Products for &quot;{managingSectionTitle}&quot;</span>
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Choose specific products from your 413-item inventory to display in this homepage section.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsManageSectionProductsOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-200/80 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
+              
+              {/* Selected Products Strip */}
+              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-xs text-[#1E3A8A] flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#1A56DB]" />
+                    <span>Currently Assigned Products ({selectedProductIds.length})</span>
+                  </h4>
+                  {selectedProductIds.length > 0 && (
+                    <button
+                      onClick={() => setSelectedProductIds([])}
+                      className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+
+                {selectedProductIds.length === 0 ? (
+                  <p className="text-xs text-gray-500 italic py-1">
+                    No custom products selected. This section will automatically use smart category fallbacks until you select products below.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
+                    {selectedProductIds.map((id) => {
+                      const prod = products.find((p) => p.id === id);
+                      if (!prod) return null;
+                      return (
+                        <div
+                          key={id}
+                          className="bg-white border border-blue-200 rounded-lg pl-2 pr-1.5 py-1 flex items-center gap-2 text-xs shadow-2xs"
+                        >
+                          <img
+                            src={prod.image}
+                            alt={prod.name}
+                            className="w-6 h-6 object-contain rounded"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/images/products/laptop-dell.png';
+                            }}
+                          />
+                          <span className="font-bold text-gray-800 max-w-[140px] truncate">{prod.name}</span>
+                          <span className="text-[11px] font-extrabold text-[#1A56DB]">₹{prod.price.toLocaleString('en-IN')}</span>
+                          <button
+                            onClick={() => handleToggleProductForSection(id)}
+                            className="w-5 h-5 rounded hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center cursor-pointer ml-1"
+                            title="Remove"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Search & Filter Bar */}
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <div className="relative flex-1 w-full">
+                  <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search by title, brand, or specs in 413 products..."
+                    value={sectionProductSearch}
+                    onChange={(e) => setSectionProductSearch(e.target.value)}
+                    className="w-full h-9 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+
+                <select
+                  value={sectionProductCategory}
+                  onChange={(e) => setSectionProductCategory(e.target.value)}
+                  className="h-9 px-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:border-[#1A56DB] w-full sm:w-48"
+                >
+                  <option value="All">All Categories ({products.length})</option>
+                  <option value="Laptops">Laptops</option>
+                  <option value="Computers">Computers & Desktops</option>
+                  <option value="CCTV & Security">CCTV & Security</option>
+                  <option value="Printers">Printers & Inks</option>
+                  <option value="Accessories">Accessories</option>
+                  <option value="Storage & Parts">Storage & Parts</option>
+                </select>
+              </div>
+
+              {/* Available Products Grid */}
+              <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                {products
+                  .filter((p) => {
+                    if (sectionProductCategory !== 'All' && p.category !== sectionProductCategory) return false;
+                    if (sectionProductSearch.trim()) {
+                      const q = sectionProductSearch.toLowerCase();
+                      const matchName = p.name.toLowerCase().includes(q);
+                      const matchBrand = p.brand.toLowerCase().includes(q);
+                      const matchSpecs = (p.specs || '').toLowerCase().includes(q);
+                      if (!matchName && !matchBrand && !matchSpecs) return false;
+                    }
+                    return true;
+                  })
+                  .slice(0, 60)
+                  .map((product) => {
+                    const isSelected = selectedProductIds.includes(product.id);
+                    return (
+                      <div
+                        key={product.id}
+                        className={`p-3 flex items-center justify-between gap-3 transition-colors ${
+                          isSelected ? 'bg-blue-50/30' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 p-1 flex items-center justify-center shrink-0">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/images/products/laptop-dell.png';
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold uppercase text-gray-400">{product.brand}</span>
+                              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-1 rounded">{product.category}</span>
+                            </div>
+                            <h5 className="font-bold text-xs text-gray-900 truncate max-w-md">{product.name}</h5>
+                            <span className="text-xs font-black text-[#1A56DB]">₹{product.price.toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleToggleProductForSection(product.id)}
+                          className={`h-8 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
+                            isSelected
+                              ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'
+                              : 'bg-[#1A56DB] text-white hover:bg-[#1E40AF]'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Remove</span>
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Add to Section</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-100 flex items-center justify-between shrink-0 bg-gray-50/50">
+              <span className="text-xs font-bold text-gray-600">
+                {selectedProductIds.length} Products Chosen for &quot;{managingSectionTitle}&quot;
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsManageSectionProductsOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveSectionProducts}
+                  className="px-5 py-2 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs shadow-xs cursor-pointer"
+                >
+                  Save Section Products
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 3: CREATE / EDIT CUSTOM PAGE                        */}
+      {/* ========================================================= */}
+      {isPageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            
+            <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gray-50/50">
+              <h3 className="font-extrabold text-base text-[#111827] flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#1A56DB]" />
+                <span>{editingPageId ? 'Edit Custom Page' : 'Create New Custom Page'}</span>
+              </h3>
+              <button
+                onClick={() => setIsPageModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-200/80 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePage} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto flex-1 text-xs">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Page Title *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Terms and Conditions, Return Policy, Laptop Repairing"
+                      value={pageTitle}
+                      onChange={(e) => {
+                        setPageTitle(e.target.value);
+                        if (!editingPageId) {
+                          setPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+                        }
+                      }}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">URL Slug *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. terms-and-conditions, return-policy"
+                      value={pageSlug}
+                      onChange={(e) => setPageSlug(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Status</label>
+                    <select
+                      value={pageStatus}
+                      onChange={(e) => setPageStatus(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    >
+                      <option value="published">Published (Live at /pages/[slug])</option>
+                      <option value="draft">Draft (Hidden)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Meta Title (SEO)</label>
+                    <input
+                      type="text"
+                      placeholder="Title for Google and social sharing"
+                      value={pageMetaTitle}
+                      onChange={(e) => setPageMetaTitle(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-gray-700 block">Page Content (Markdown / Text) *</label>
+                    <span className="text-[11px] text-gray-400">
+                      Supports <code>## Heading</code>, <code>* Bullets</code>, <code>&gt; Notes</code>
+                    </span>
+                  </div>
+                  <textarea
+                    rows={12}
+                    placeholder="Write detailed policy text, warranty coverage terms, contact details, or company information..."
+                    value={pageContent}
+                    onChange={(e) => setPageContent(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-900 leading-relaxed focus:outline-none focus:border-[#1A56DB]"
+                    required
+                  />
+                </div>
+
+              </div>
+
+              <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 shrink-0 bg-gray-50/50">
+                <button
+                  type="button"
+                  onClick={() => setIsPageModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs shadow-xs cursor-pointer"
+                >
+                  Save & Publish Page
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 4: CREATE / EDIT BLOG POST                          */}
+      {/* ========================================================= */}
+      {isBlogModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            
+            <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gray-50/50">
+              <h3 className="font-extrabold text-base text-[#111827] flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-[#1A56DB]" />
+                <span>{editingBlogId ? 'Edit Tech Blog' : 'Write New Tech Blog'}</span>
+              </h3>
+              <button
+                onClick={() => setIsBlogModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-200/80 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBlog} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto flex-1 text-xs">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Article Title *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Best Refurbished Laptops Under ₹25,000 in Garhwa"
+                      value={blogTitle}
+                      onChange={(e) => {
+                        setBlogTitle(e.target.value);
+                        if (!editingBlogId) {
+                          setBlogSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+                        }
+                      }}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Slug *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. best-refurbished-laptops-under-25000"
+                      value={blogSlug}
+                      onChange={(e) => setBlogSlug(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Category</label>
+                    <select
+                      value={blogCategory}
+                      onChange={(e) => setBlogCategory(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    >
+                      <option value="Refurbished Guides">Refurbished Guides</option>
+                      <option value="Monitors & Displays">Monitors & Displays</option>
+                      <option value="CCTV & Security">CCTV & Security</option>
+                      <option value="Hardware Repair">Hardware Repair</option>
+                      <option value="Buying Guides">Buying Guides</option>
+                      <option value="Printers & Inks">Printers & Inks</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Author</label>
+                    <input
+                      type="text"
+                      value={blogAuthor}
+                      onChange={(e) => setBlogAuthor(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Read Time</label>
+                    <input
+                      type="text"
+                      value={blogReadTime}
+                      onChange={(e) => setBlogReadTime(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Cover Image URL</label>
+                    <input
+                      type="text"
+                      value={blogCoverImage}
+                      onChange={(e) => setBlogCoverImage(e.target.value)}
+                      placeholder="/images/banners/refurbished-laptops-printers.png"
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Tags (Comma-separated)</label>
+                    <input
+                      type="text"
+                      placeholder="refurbished, dell, hp, garhwa, warranty"
+                      value={blogTags}
+                      onChange={(e) => setBlogTags(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Short Excerpt (Summary for preview) *</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Short 1-2 sentence preview for search engines and homepage cards..."
+                    value={blogExcerpt}
+                    onChange={(e) => setBlogExcerpt(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-gray-700 block">Article Body (Markdown Formatted) *</label>
+                    <span className="text-[11px] text-gray-400">
+                      Use <code>## Heading</code>, <code>### Subhead</code>, <code>* Bullets</code>, <code>&gt; Quote</code>
+                    </span>
+                  </div>
+                  <textarea
+                    rows={12}
+                    placeholder="Write the full guide, technical analysis, comparisons, benchmark tests, or step-by-step tutorial..."
+                    value={blogContent}
+                    onChange={(e) => setBlogContent(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-900 leading-relaxed focus:outline-none focus:border-[#1A56DB]"
+                    required
+                  />
+                </div>
+
+              </div>
+
+              <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 shrink-0 bg-gray-50/50">
+                <button
+                  type="button"
+                  onClick={() => setIsBlogModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs shadow-xs cursor-pointer"
+                >
+                  Publish Article
+                </button>
+              </div>
             </form>
 
           </div>

@@ -26,11 +26,133 @@ interface BannerSlide {
   ctaLink: string;
   whatsappMessage: string;
   image: string;
+  fullBleedImage?: boolean;
   bgGradient: string;
   accentBorder: string;
 }
 
 const DEFAULT_BANNERS: BannerSlide[] = [
+    // 00. OFFICIAL REFURBISHED LAPTOPS & PRINTERS BANNER (USER ASSET)
+    {
+      id: 'banner-refurbished-official',
+      badge: 'CERTIFIED REFURBISHED • WORK SMARTER SPEND LESS',
+      badgeIcon: <Laptop className="w-3.5 h-3.5 text-amber-400" />,
+      badgeBg: 'bg-amber-500/20 border-amber-400/40 text-amber-200',
+      badgeText: 'text-amber-300',
+      title: 'Refurbished Laptops & Printers',
+      titleHighlight: 'Tested Quality • Reliable Performance • Smart Prices',
+      subtitle: 'Dell, HP, Lenovo, Acer, ASUS Grade-A business laptops & commercial Canon, Epson, HP printers. 100% quality checked, fast delivery and warranty support in Garhwa.',
+      perks: [
+        '28-Point Quality Checked Hardware',
+        'Testing Warranty + Showroom Lab Support',
+        'CBIC Rule 46 GST 18% Tax Bill'
+      ],
+      priceTag: 'Tested Laptops from ₹14,999',
+      priceNote: 'Printers starting from ₹3,499',
+      ctaText: 'Shop Refurbished Now',
+      ctaLink: '/shop?cat=Laptops',
+      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to inquire about certified refurbished laptops and printers.',
+      image: '/images/banners/refurbished-laptops-printers.png',
+      fullBleedImage: true,
+      bgGradient: 'from-[#0A1633] via-[#0E2A68] to-[#1E3A8A]',
+      accentBorder: 'border-amber-400/40'
+    },
+    // 0. FRONTECH OFFICIAL HARDWARE ECOSYSTEM
+    {
+      id: 'banner-frontech-ecosystem',
+      badge: "INDIA'S TRUSTED HARDWARE BRAND • 131+ ITEMS IN STOCK",
+      badgeIcon: <ShieldCheck className="w-3.5 h-3.5 text-[#6EE7B7]" />,
+      badgeBg: 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200',
+      badgeText: 'text-emerald-300',
+      title: 'Complete Frontech Hardware & Gaming Store',
+      titleHighlight: 'Monitors, Keyboards, CCTV, Audio & Spares',
+      subtitle: 'Official Frontech brand catalog in Garhwa! High-refresh curved gaming monitors, mechanical RGB keyboards, deep-bass soundbars, and CCTV kits with 18% GST bill.',
+      perks: [
+        '100% Brand Sealed Pack & Official Warranty',
+        'GST 18% ITC Invoicing for Businesses',
+        'Instant Counter Pickup on Chiniya Road'
+      ],
+      priceTag: 'Frontech Hardware from ₹199',
+      priceNote: 'Direct brand warranty across India',
+      ctaText: 'Explore All 131 Frontech Items',
+      ctaLink: '/shop?brand=Frontech',
+      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to explore the official Frontech product range.',
+      image: 'https://frontechonline.com/cdn/shop/files/Banner_900x240_v2_a2d0c753-543d-472d-816a-d810a97f08c1.jpg?v=1791359069&width=3840',
+      bgGradient: 'from-[#051F20] via-[#0B3C35] to-[#047857]',
+      accentBorder: 'border-emerald-400/30'
+    },
+    // 0B. FRONTECH CURVED GAMING DISPLAYS
+    {
+      id: 'banner-frontech-monitors',
+      badge: 'OFFICIAL FRONTECH STORE • 3-YEAR WARRANTY',
+      badgeIcon: <Zap className="w-3.5 h-3.5 text-yellow-400" />,
+      badgeBg: 'bg-yellow-500/20 border-yellow-400/40 text-yellow-200',
+      badgeText: 'text-yellow-300',
+      title: 'Frontech Ultima Curved Gaming Displays',
+      titleHighlight: '100Hz & 165Hz Frameless Monitors from ₹5,999',
+      subtitle: 'Experience ultra-immersive curved viewing with 99% sRGB color gamut, low blue light eye care & built-in stereo speakers. Tested on showroom counter.',
+      perks: [
+        'Frameless Curved IPS Display Panel',
+        'Dual HDMI + VGA Connectivity',
+        '3-Year All-India On-Site Warranty'
+      ],
+      priceTag: 'Frontech Displays from ₹5,999',
+      priceNote: '18% GST tax invoice included',
+      ctaText: 'Shop Frontech Monitors',
+      ctaLink: '/shop?brand=Frontech&cat=Computers',
+      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to inquire about Frontech curved gaming monitors.',
+      image: 'https://frontechonline.com/cdn/shop/files/Curved_MON_Banner_900x240_4d9d539a-9786-4acc-a586-25da2266c152.jpg?v=1776420392&width=3840',
+      bgGradient: 'from-[#0A1633] via-[#0D224E] to-[#1E3A8A]',
+      accentBorder: 'border-yellow-400/30'
+    },
+    // 0C. FRONTECH KEYBOARDS & MICE
+    {
+      id: 'banner-frontech-keyboards',
+      badge: 'HIGH-PRECISION ERGONOMIC PERIPHERALS',
+      badgeIcon: <Sparkles className="w-3.5 h-3.5 text-[#C084FC]" />,
+      badgeBg: 'bg-purple-500/20 border-purple-400/40 text-purple-200',
+      badgeText: 'text-purple-300',
+      title: 'Frontech RGB Gaming Keyboards & Wireless Combos',
+      titleHighlight: 'Durable Mechanical Feel • Starting @ ₹449',
+      subtitle: 'Spill-resistant ergonomic typing, multi-DPI gaming optical sensors, and silent wireless office combos with 1-year brand warranty.',
+      perks: [
+        'Spill-Resistant Ergonomic Design',
+        'High-Speed USB Plug & Play',
+        '1-Year Frontech Brand Replacement'
+      ],
+      priceTag: 'Combos Starting @ ₹449',
+      priceNote: 'Up to 65% OFF MRP',
+      ctaText: 'Shop Keyboards & Mice',
+      ctaLink: '/shop?brand=Frontech&cat=Accessories',
+      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to buy Frontech keyboard and mouse combo.',
+      image: 'https://frontechonline.com/cdn/shop/files/KEYBOARD_MOUSE__3840_x_1000_v2.jpg?v=1782379136&width=3840',
+      bgGradient: 'from-[#1E0836] via-[#35105D] to-[#5B21B6]',
+      accentBorder: 'border-purple-400/30'
+    },
+    // 0D. FRONTECH AUDIO & SOUNDBARS
+    {
+      id: 'banner-frontech-audio',
+      badge: 'THUNDEROUS SOUND • PARTY & HOME THEATER',
+      badgeIcon: <Flame className="w-3.5 h-3.5 text-[#F43F5E]" />,
+      badgeBg: 'bg-rose-500/20 border-rose-400/40 text-rose-200',
+      badgeText: 'text-rose-300',
+      title: 'Frontech Soundbars, Tower & Trolley Speakers',
+      titleHighlight: 'Deep Bass Bluetooth 5.0 Audio from ₹999',
+      subtitle: 'Fill your home with heavy bass! Powerful wireless soundbars with subwoofer, karaoke party trolley speakers, and sleek multimedia desktop speakers.',
+      perks: [
+        'Bluetooth 5.0 Wireless + AUX/USB',
+        'Deep Bass Woofer Acoustics',
+        'Remote Control & Karaoke Mic Included'
+      ],
+      priceTag: 'Audio Systems from ₹999',
+      priceNote: 'Heavy wooden cabinet sound',
+      ctaText: 'Explore Frontech Audio',
+      ctaLink: '/shop?brand=Frontech&search=Speaker',
+      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to inquire about Frontech soundbars and trolley speakers.',
+      image: 'https://frontechonline.com/cdn/shop/files/SPEAKER_3840_x_1000_v2.jpg?v=1782379243&width=3840',
+      bgGradient: 'from-[#2B091B] via-[#4C0E31] to-[#9F1239]',
+      accentBorder: 'border-rose-400/30'
+    },
     // 1. MEGA LAPTOP FESTIVAL
     {
       id: 'banner-laptop-fest',
@@ -142,7 +264,7 @@ export const TopBannerSlider: React.FC = () => {
         .filter((b) => b.status !== 'inactive')
         .sort((a, b) => a.position - b.position);
       if (active.length > 0) {
-        return active.map((b, idx) => ({
+        return [DEFAULT_BANNERS[0], ...active.map((b, idx) => ({
           id: b.id || `banner-${idx}`,
           badge: b.badge || 'FESTIVAL SPECIAL • GARHWA SHOWROOM',
           badgeIcon: <Flame className="w-3.5 h-3.5 fill-[#EF4444] text-[#EF4444]" />,
@@ -164,7 +286,7 @@ export const TopBannerSlider: React.FC = () => {
           image: b.desktopImage || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80',
           bgGradient: b.bgGradient || 'from-[#0A1633] via-[#0F2960] to-[#1A56DB]',
           accentBorder: 'border-blue-400/30'
-        }));
+        }))];
       }
     }
     return DEFAULT_BANNERS;
@@ -230,7 +352,26 @@ export const TopBannerSlider: React.FC = () => {
             className="flex transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${currentSlide * 100}%)` }}
           >
-            {banners.map((slide, index) => (
+            {banners.map((slide, index) => {
+              if (slide.fullBleedImage) {
+                return (
+                  <Link
+                    key={slide.id}
+                    href={slide.ctaLink}
+                    aria-label={slide.ctaText}
+                    className="min-w-full block bg-white"
+                  >
+                    <img
+                      src={slide.image}
+                      alt={slide.title}
+                      className="w-full h-auto object-cover"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                    />
+                  </Link>
+                );
+              }
+
+              return (
               <div 
                 key={slide.id}
                 className={`min-w-full relative bg-gradient-to-r ${slide.bgGradient} text-white p-4 sm:p-7 md:p-9 lg:p-10 flex flex-col justify-between overflow-hidden min-h-[250px] sm:min-h-[320px] md:min-h-[350px]`}
@@ -287,7 +428,7 @@ export const TopBannerSlider: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1.5 sm:pt-2">
                       <Link
                         href={slide.ctaLink}
-                        className="h-8.5 sm:h-11 px-3.5 sm:px-6 rounded-lg bg-[#FB641B] hover:bg-[#E0530F] text-white font-extrabold text-[12px] sm:text-[14px] flex items-center gap-1.5 sm:gap-2 transition-all shadow-md active:scale-[0.98]"
+                        className="h-8.5 sm:h-11 px-3.5 sm:px-6 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-extrabold text-[12px] sm:text-[14px] flex items-center gap-1.5 sm:gap-2 transition-all shadow-md active:scale-[0.98]"
                       >
                         <span>{slide.ctaText}</span>
                         <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -297,7 +438,7 @@ export const TopBannerSlider: React.FC = () => {
                         href={`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent(slide.whatsappMessage)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="h-8.5 sm:h-11 px-3 sm:px-5 rounded-lg bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-[12px] sm:text-[13.5px] flex items-center gap-1.5 sm:gap-2 transition-all shadow-md active:scale-[0.98]"
+                        className="h-8.5 sm:h-11 px-3 sm:px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-[12px] sm:text-[13.5px] flex items-center gap-1.5 sm:gap-2 transition-all shadow-md active:scale-[0.98]"
                       >
                         <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white" />
                         <span className="hidden sm:inline">WhatsApp Order</span>
@@ -338,7 +479,8 @@ export const TopBannerSlider: React.FC = () => {
                 </div>
 
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Left Arrow Navigation Button */}

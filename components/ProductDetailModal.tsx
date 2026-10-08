@@ -145,6 +145,29 @@ export const ProductDetailModal: React.FC = () => {
               </p>
             </div>
 
+            {/* Top Verified Review */}
+            {selectedProduct.reviews && selectedProduct.reviews.length > 0 && (
+              <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-lg p-2.5 text-xs">
+                <div className="flex items-center justify-between text-[11px] mb-1">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-950">
+                    <span>{selectedProduct.reviews[0].author}</span>
+                    {selectedProduct.reviews[0].location && (
+                      <span className="text-slate-400 font-normal text-[10px]">({selectedProduct.reviews[0].location})</span>
+                    )}
+                    <span className="text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded text-[9.5px] font-semibold">Verified Buyer</span>
+                  </div>
+                  <div className="flex items-center text-amber-500">
+                    {[...Array(selectedProduct.reviews[0].rating || 5)].map((_, i) => (
+                      <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-700 italic leading-relaxed">
+                  "{selectedProduct.reviews[0].comment}"
+                </p>
+              </div>
+            )}
+
             {/* Buttons */}
             <div className="space-y-2 pt-2">
               <div className="grid grid-cols-2 gap-2">

@@ -167,7 +167,7 @@ async function main() {
       { sectionKey: 'hero', title: 'Hero Festival Spotlight & Deal of the Day', position: 2, isVisible: true },
       { sectionKey: 'trust_bar', title: 'Indian E-Commerce 4 Trust Pillars', position: 3, isVisible: true },
       { sectionKey: 'categories', title: 'Shop by Hardware Category Grid', position: 4, isVisible: true },
-      { sectionKey: 'featured', title: 'Featured In-Stock Products Grid', position: 5, isVisible: true },
+      { sectionKey: 'featured', title: 'Trending Products', position: 5, isVisible: true },
       { sectionKey: 'promo', title: 'Dual Spotlight Promo Banners (SSD & Laptops)', position: 6, isVisible: true },
       { sectionKey: 'brands', title: 'Top Brands We Deal In', position: 7, isVisible: true },
       { sectionKey: 'catalog_cta', title: 'Complete Showroom Catalog Quick-Chips Card', position: 8, isVisible: true },
@@ -181,37 +181,49 @@ async function main() {
   }
 
   // 8. Products
-  const prodCount = await prisma.product.count();
-  if (prodCount === 0) {
-    console.log(`📦 Seeding ${PRODUCTS.length} products into SQLite database...`);
-    for (const p of PRODUCTS) {
-      const slug = p.sku.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + p.id;
-      await prisma.product.upsert({
-        where: { sku: p.sku },
-        update: {},
-        create: {
-          id: p.id,
-          name: p.name,
-          slug,
-          category: p.category,
-          brand: p.brand,
-          price: p.price,
-          mrp: p.mrp,
-          discount: p.discount,
-          specs: p.specs,
-          description: p.description || p.specs,
-          image: p.image,
-          inStock: p.inStock,
-          stockQuantity: p.stockQuantity || 10,
-          sku: p.sku,
-          rating: p.rating || 4.5,
-          featured: p.featured || false,
-          status: 'active'
-        }
-      });
-    }
-    console.log(`✅ ${PRODUCTS.length} Products seeded successfully.`);
+  console.log(`📦 Upserting ${PRODUCTS.length} products into SQLite database...`);
+  for (const p of PRODUCTS) {
+    const slug = (p.sku || p.id).toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + p.id;
+    await prisma.product.upsert({
+      where: { sku: p.sku },
+      update: {
+        name: p.name,
+        category: p.category,
+        brand: p.brand,
+        price: p.price,
+        mrp: p.mrp,
+        discount: p.discount,
+        specs: p.specs,
+        description: p.description || p.specs,
+        image: p.image,
+        inStock: p.inStock,
+        stockQuantity: p.stockQuantity || 10,
+        rating: p.rating || 4.5,
+        featured: p.featured || false,
+        status: 'active'
+      },
+      create: {
+        id: p.id,
+        name: p.name,
+        slug,
+        category: p.category,
+        brand: p.brand,
+        price: p.price,
+        mrp: p.mrp,
+        discount: p.discount,
+        specs: p.specs,
+        description: p.description || p.specs,
+        image: p.image,
+        inStock: p.inStock,
+        stockQuantity: p.stockQuantity || 10,
+        sku: p.sku,
+        rating: p.rating || 4.5,
+        featured: p.featured || false,
+        status: 'active'
+      }
+    });
   }
+  console.log(`✅ ${PRODUCTS.length} Products synced successfully in DB.`);
 
   // 9. Initial Orders
   const orderCount = await prisma.order.count();

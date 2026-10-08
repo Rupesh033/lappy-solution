@@ -42,7 +42,7 @@ export default function InvoicePage() {
   }, [searchParams]);
 
   // Find invoice by ID, Invoice Number, or Order ID (with instant localStorage sync)
-  const invoice: Invoice = useMemo(() => {
+  const invoice: Invoice | null = useMemo(() => {
     const decodedId = decodeURIComponent(invoiceId || '');
 
     // 1. Match from existing StoreContext invoices
@@ -108,32 +108,18 @@ export default function InvoicePage() {
       } catch (e) {}
     }
 
-    // 5. If not found, build clean invoice for this order ID
-    return buildInvoiceFromOrder({
-      order: {
-        orderId: decodedId || 'LS-28250',
-        customerName: 'Valued Customer',
-        phone: '+91 9608828288',
-        email: 'customer@lappysolution.com',
-        address: 'Chiniya Road, Garhwa, Jharkhand - 822114',
-        paymentMethod: 'UPI / Counter Verified',
-        paymentStatus: 'Paid',
-        totalAmount: 52999,
-        date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        items: [
-          {
-            id: 'item-1',
-            name: 'Genuine Computer Hardware & Electronics Package',
-            category: 'Laptops',
-            price: 52999,
-            quantity: 1,
-            sku: `LS-${decodedId || '10248'}`
-          }
-        ]
-      },
-      settings: invoiceSettings || DEFAULT_INVOICE_SETTINGS
-    });
+    return null;
   }, [invoiceId, invoices, orders, invoiceSettings]);
+
+  if (!invoice) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <h1 className="text-2xl font-black text-gray-900">Invoice not found</h1>
+        <p className="text-sm text-gray-600">Open the invoice from the order placed in this browser.</p>
+        <Link href="/account" className="rounded-lg bg-[#1A56DB] px-5 py-3 text-sm font-bold text-white">View account</Link>
+      </div>
+    );
+  }
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -200,60 +186,58 @@ export default function InvoicePage() {
       {/* 2. A4 PRINT-READY INVOICE CONTAINER */}
       <div 
         ref={printAreaRef}
-        className="max-w-4xl mx-auto bg-white border border-gray-200 print:border-none shadow-md print:shadow-none rounded-2xl print:rounded-none p-6 sm:p-10 font-sans"
+        className="invoice-container max-w-4xl mx-auto bg-white border border-gray-300 print:border-none shadow-sm print:shadow-none rounded-xl print:rounded-none p-5 sm:p-8 print:p-0 font-sans text-gray-900"
         style={{
           boxSizing: 'border-box'
         }}
       >
         
-        {/* HEADER: Business Info & Title */}
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 pb-5 border-b-2 border-gray-800">
+        {/* HEADER: Business Info & Title (Matching Image 2) */}
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 pb-4">
           <div className="space-y-1 max-w-lg">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-[#1A56DB] text-white font-extrabold flex items-center justify-center text-sm shadow-xs print:border print:border-black">
+              <div className="w-10 h-10 rounded-lg border-2 border-gray-900 bg-white text-gray-900 font-extrabold flex items-center justify-center text-sm shadow-xs print:border print:border-black">
                 LS
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 leading-tight">
                   {invoice.sellerName || siteSettings?.siteName || 'Lappy Solution'}
                 </h1>
-                <p className="text-[11px] font-semibold text-gray-500">
+                <p className="text-[11px] font-semibold text-gray-600">
                   {invoiceSettings?.tagline || 'Technology • Security • Complete Hardware Solutions'}
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-gray-700 leading-relaxed pt-1">
+            <p className="text-xs text-gray-700 leading-relaxed pt-0.5">
               {invoice.sellerAddress}
             </p>
             
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 pt-0.5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-700 pt-0.5">
               <span><strong>Phone:</strong> {invoice.sellerPhone}</span>
               <span><strong>Email:</strong> {invoice.sellerEmail}</span>
             </div>
 
             {invoiceSettings?.showGstin && (
-              <div className="flex flex-wrap items-center gap-x-4 text-xs font-bold text-gray-900 pt-0.5">
-                <span className="text-[#1A56DB] bg-blue-50 print:bg-transparent print:text-black px-1.5 py-0.5 rounded border border-blue-200 print:border-none">
-                  GSTIN: {invoice.sellerGstin}
-                </span>
+              <div className="flex flex-wrap items-center gap-x-3 text-xs font-bold text-gray-900 pt-0.5">
+                <span>GSTIN: {invoice.sellerGstin}</span>
                 <span>PAN: {invoice.sellerPan}</span>
               </div>
             )}
           </div>
 
-          <div className="sm:text-right space-y-1.5 min-w-[200px]">
-            <div className="inline-block px-3 py-1 bg-gray-900 text-white font-extrabold text-xs tracking-wider uppercase rounded print:border print:border-black">
+          <div className="sm:text-right space-y-1.5 min-w-[210px]">
+            <div className="inline-block px-3 py-1 bg-white border border-gray-700 text-gray-900 font-extrabold text-xs tracking-wider uppercase rounded print:border print:border-black">
               TAX INVOICE
             </div>
-            <div className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider block">
+            <div className="text-[10.5px] font-extrabold text-emerald-700 uppercase tracking-wider block">
               ORIGINAL FOR RECIPIENT
             </div>
 
-            <div className="text-xs space-y-0.5 pt-1">
+            <div className="text-xs space-y-0.5 pt-0.5">
               <div>
                 <span className="text-gray-500">Invoice No: </span>
-                <strong className="text-gray-900 font-mono text-[13px]">{invoice.invoiceNumber}</strong>
+                <strong className="text-[#1A56DB] print:text-black font-mono font-bold text-[13px]">{invoice.invoiceNumber}</strong>
               </div>
               <div>
                 <span className="text-gray-500">Date: </span>
@@ -262,7 +246,7 @@ export default function InvoicePage() {
               {invoice.orderId && (
                 <div>
                   <span className="text-gray-500">Order Ref: </span>
-                  <strong className="text-gray-900 font-mono">#{invoice.orderId}</strong>
+                  <strong className="text-[#1A56DB] print:text-black font-mono">#{invoice.orderId}</strong>
                 </div>
               )}
               <div>
@@ -277,29 +261,32 @@ export default function InvoicePage() {
           </div>
         </div>
 
+        {/* THICK DIVIDING LINE */}
+        <div className="border-b-2 border-gray-900 mb-3.5"></div>
+
         {/* BUYER & CONSIGNEE DETAILS (BILL TO / SHIP TO) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-b border-gray-200 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-3.5 text-xs">
           
           {/* Bill To */}
-          <div className="bg-gray-50 print:bg-transparent p-3.5 rounded-lg border border-gray-200 print:border-gray-300 space-y-1">
+          <div className="bg-white p-3 rounded-lg border border-gray-300 space-y-1">
             <span className="font-extrabold uppercase tracking-wider text-gray-500 text-[10px] block">
               BILLED TO (BUYER DETAILS)
             </span>
             <div className="text-sm font-bold text-gray-900">
               {invoice.buyerName}
             </div>
-            <div className="text-gray-600">
+            <div className="text-gray-700">
               Phone: <strong>{invoice.buyerPhone}</strong>
             </div>
             {invoice.buyerEmail && (
-              <div className="text-gray-600 truncate">
+              <div className="text-gray-700 truncate">
                 Email: {invoice.buyerEmail}
               </div>
             )}
             <div className="text-gray-700 leading-snug">
               Address: {invoice.buyerAddress}
             </div>
-            <div className="text-gray-600">
+            <div className="text-gray-700">
               State: <strong>{invoice.buyerState} (Code: {invoice.buyerStateCode})</strong>
             </div>
             {invoice.buyerGstin && (
@@ -310,7 +297,7 @@ export default function InvoicePage() {
           </div>
 
           {/* Ship To / Settlement */}
-          <div className="bg-gray-50 print:bg-transparent p-3.5 rounded-lg border border-gray-200 print:border-gray-300 space-y-1">
+          <div className="bg-white p-3 rounded-lg border border-gray-300 space-y-1">
             <span className="font-extrabold uppercase tracking-wider text-gray-500 text-[10px] block">
               SHIPPED TO & PAYMENT SETTLEMENT
             </span>
@@ -320,21 +307,21 @@ export default function InvoicePage() {
             <div className="text-gray-700 leading-snug">
               Delivery Destination: {invoice.buyerAddress}
             </div>
-            <div className="pt-1 space-y-0.5">
+            <div className="pt-0.5 space-y-0.5">
               <div className="flex justify-between">
-                <span className="text-gray-500">Payment Mode:</span>
+                <span className="text-gray-600">Payment Mode:</span>
                 <strong className="text-gray-900">{invoice.paymentMethod}</strong>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Payment Status:</span>
+                <span className="text-gray-600">Payment Status:</span>
                 <span className={`font-bold px-1.5 py-0.2 rounded text-[10.5px] ${
-                  invoice.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                  invoice.paymentStatus === 'Paid' ? 'text-green-700 bg-green-50' : 'text-amber-700 bg-amber-50'
                 }`}>
                   {invoice.paymentStatus}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Dispatch Hub:</span>
+                <span className="text-gray-600">Dispatch Hub:</span>
                 <strong className="text-gray-900">Chiniya Road Showroom, Garhwa</strong>
               </div>
             </div>
@@ -343,27 +330,27 @@ export default function InvoicePage() {
         </div>
 
         {/* ITEMS TABLE (CBIC Rule 46 Compliant) */}
-        <div className="py-4">
+        <div className="mb-3.5">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-gray-100 print:bg-gray-200 text-gray-800 font-extrabold uppercase text-[10.5px] border-y border-gray-300">
-                  <th className="py-2.5 px-2 text-center w-8">#</th>
-                  <th className="py-2.5 px-3">Description of Goods</th>
-                  <th className="py-2.5 px-2 text-center">HSN/SAC</th>
-                  <th className="py-2.5 px-2 text-center">Qty</th>
-                  <th className="py-2.5 px-2.5 text-right">Unit Rate</th>
-                  <th className="py-2.5 px-2 text-right">Discount</th>
-                  <th className="py-2.5 px-2.5 text-right">Taxable Val</th>
-                  <th className="py-2.5 px-2 text-center">GST %</th>
-                  <th className="py-2.5 px-3 text-right">Amount (₹)</th>
+                <tr className="bg-transparent text-gray-800 font-extrabold uppercase text-[10px] border-t border-b border-gray-300">
+                  <th className="py-2 px-2 text-center w-8">#</th>
+                  <th className="py-2 px-3">DESCRIPTION OF GOODS</th>
+                  <th className="py-2 px-2 text-center">HSN/SAC</th>
+                  <th className="py-2 px-2 text-center">QTY</th>
+                  <th className="py-2 px-2.5 text-right">UNIT RATE</th>
+                  <th className="py-2 px-2 text-right">DISCOUNT</th>
+                  <th className="py-2 px-2.5 text-right">TAXABLE VAL</th>
+                  <th className="py-2 px-2 text-center">GST %</th>
+                  <th className="py-2 px-3 text-right">AMOUNT (₹)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {invoice.items.map((item, idx) => (
                   <tr key={item.id || idx} className="hover:bg-gray-50/50 print:hover:bg-transparent">
-                    <td className="py-3 px-2 text-center text-gray-500">{idx + 1}</td>
-                    <td className="py-3 px-3">
+                    <td className="py-2 px-2 text-center text-gray-500">{idx + 1}</td>
+                    <td className="py-2 px-3">
                       <div className="font-bold text-gray-900 leading-snug">
                         {item.productName}
                       </div>
@@ -373,25 +360,26 @@ export default function InvoicePage() {
                         </div>
                       )}
                     </td>
-                    <td className="py-3 px-2 text-center font-mono text-gray-700">
+                    <td className="py-2 px-2 text-center font-mono text-[#1A56DB] print:text-black font-semibold">
                       {item.hsn}
                     </td>
-                    <td className="py-3 px-2 text-center font-bold text-gray-900">
-                      {item.quantity} {item.unit || 'PCS'}
+                    <td className="py-2 px-2 text-center font-bold text-gray-900 leading-tight">
+                      <div>{item.quantity}</div>
+                      <div className="text-[9px] text-gray-500 font-medium">{item.unit || 'PCS'}</div>
                     </td>
-                    <td className="py-3 px-2.5 text-right text-gray-700 font-mono">
+                    <td className="py-2 px-2.5 text-right text-gray-700 font-mono">
                       ₹{item.unitPrice.toLocaleString('en-IN')}
                     </td>
-                    <td className="py-3 px-2 text-right text-gray-500 font-mono">
+                    <td className="py-2 px-2 text-right text-gray-500 font-mono">
                       {item.discount > 0 ? `₹${item.discount.toLocaleString('en-IN')}` : '—'}
                     </td>
-                    <td className="py-3 px-2.5 text-right font-bold text-gray-900 font-mono">
+                    <td className="py-2 px-2.5 text-right font-bold text-gray-900 font-mono">
                       ₹{item.taxableValue.toLocaleString('en-IN')}
                     </td>
-                    <td className="py-3 px-2 text-center font-semibold text-gray-700">
+                    <td className="py-2 px-2 text-center font-semibold text-gray-700">
                       {item.gstRate}%
                     </td>
-                    <td className="py-3 px-3 text-right font-extrabold text-gray-900 font-mono">
+                    <td className="py-2 px-3 text-right font-extrabold text-gray-900 font-mono">
                       ₹{item.total.toLocaleString('en-IN')}
                     </td>
                   </tr>
@@ -402,51 +390,51 @@ export default function InvoicePage() {
         </div>
 
         {/* TAX SUMMARY & GRAND TOTAL CALCULATION */}
-        <div className="pt-2 pb-4 border-t-2 border-gray-200">
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+        <div className="pt-2 pb-3 border-t border-gray-300">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
             
             {/* Amount in words & Bank info (span 7) */}
-            <div className="sm:col-span-7 space-y-3">
+            <div className="sm:col-span-7 space-y-2">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 block mb-0.5">
-                  Invoice Amount in Words:
+                  INVOICE AMOUNT IN WORDS:
                 </span>
-                <div className="text-xs font-extrabold text-gray-900 bg-gray-50 print:bg-transparent p-2.5 rounded border border-gray-200 italic">
+                <div className="text-xs font-extrabold text-gray-900 bg-white p-2 rounded border border-gray-300 italic">
                   {invoice.amountInWords}
                 </div>
               </div>
 
               {/* Dynamic UPI Payment QR + Bank Details */}
-              <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/70 print:bg-transparent flex flex-col sm:flex-row items-center gap-3">
+              <div className="border border-gray-300 rounded-lg p-2.5 bg-white flex items-center gap-3">
                 {invoiceSettings?.showUpiQr && invoice.upiQrData && (
                   <div className="flex-shrink-0 text-center">
                     <img 
                       src={invoice.upiQrData} 
                       alt="UPI Payment QR Code" 
-                      className="w-24 h-24 rounded border border-gray-300 bg-white p-1 mx-auto"
+                      className="w-20 h-20 rounded border border-gray-300 bg-white p-1 mx-auto"
                     />
-                    <span className="text-[9px] font-extrabold text-gray-500 block mt-0.5 uppercase tracking-wider">
-                      Scan to Pay ₹{invoice.grandTotal}
+                    <span className="text-[8.5px] font-extrabold text-gray-700 block mt-0.5 uppercase tracking-wider">
+                      SCAN TO PAY ₹{invoice.grandTotal}
                     </span>
                   </div>
                 )}
 
                 <div className="text-[11px] space-y-0.5 text-gray-700 min-w-0">
-                  <div className="font-extrabold text-gray-900 text-xs flex items-center gap-1">
-                    <Building2 className="w-3 h-3 text-[#1A56DB]" />
+                  <div className="font-extrabold text-gray-900 text-xs flex items-center gap-1.5 pb-0.5">
+                    <Building2 className="w-3.5 h-3.5 text-[#1A56DB]" />
                     <span>Bank & UPI Settlement Details</span>
                   </div>
-                  <div><strong>UPI VPA:</strong> <span className="font-mono text-blue-700">{invoice.upiId}</span></div>
+                  <div><strong>UPI VPA:</strong> <span className="font-mono text-blue-700 font-bold">{invoice.upiId}</span></div>
                   <div><strong>Bank:</strong> {invoiceSettings?.bankName || 'State Bank of India'}</div>
                   <div><strong>A/C No:</strong> <span className="font-mono">{invoiceSettings?.accountNumber || '38947291048'}</span></div>
-                  <div><strong>IFSC Code:</strong> <span className="font-mono">{invoiceSettings?.ifscCode || 'SBIN0000080'}</span> ({invoiceSettings?.branch || 'Garhwa'})</div>
+                  <div><strong>IFSC Code:</strong> <span className="font-mono">{invoiceSettings?.ifscCode || 'SBIN0000080'}</span> ({invoiceSettings?.branch || 'Garhwa Main Branch'})</div>
                 </div>
               </div>
 
             </div>
 
             {/* Calculations breakdown (span 5) */}
-            <div className="sm:col-span-5 bg-gray-50 print:bg-transparent p-3.5 rounded-lg border border-gray-200 space-y-1.5 text-xs">
+            <div className="sm:col-span-5 bg-white p-3 rounded-lg border border-gray-300 space-y-1.5 text-xs">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal (Gross):</span>
                 <span className="font-mono">₹{invoice.subtotal.toLocaleString('en-IN')}</span>
@@ -497,9 +485,9 @@ export default function InvoicePage() {
                 </div>
               )}
 
-              <div className="flex justify-between items-center border-t-2 border-gray-900 pt-2 text-base font-black text-gray-900">
+              <div className="flex justify-between items-center border-t-2 border-gray-900 pt-1.5 text-base font-black text-gray-900">
                 <span>Grand Total:</span>
-                <span className="text-[#1A56DB] print:text-black font-mono text-lg">
+                <span className="text-[#1A56DB] print:text-black font-mono text-lg font-black">
                   ₹{invoice.grandTotal.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -511,44 +499,39 @@ export default function InvoicePage() {
           </div>
         </div>
 
-        {/* TERMS & SIGNATURE FOOTER */}
-        <div className="pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-12 gap-4 items-end text-xs">
+        {/* TERMS & SIGNATURE FOOTER (Compact, Fits on 1 Page) */}
+        <div className="pt-2 border-t border-gray-300 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end text-[10.5px]">
           
-          <div className="sm:col-span-8 space-y-1.5 text-gray-600">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 block">
+          <div className="sm:col-span-8 space-y-1 text-gray-600">
+            <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-gray-500 block">
               TERMS & CONDITIONS:
             </span>
-            <ol className="list-decimal pl-4 space-y-0.5 text-[11px] leading-relaxed text-gray-600">
-              {(invoice.terms || DEFAULT_INVOICE_SETTINGS.termsAndConditions).map((t, idx) => (
+            <ol className="list-decimal pl-3 space-y-0.5 text-[10px] leading-tight text-gray-600">
+              {(invoice.terms || DEFAULT_INVOICE_SETTINGS.termsAndConditions).slice(0, 3).map((t, idx) => (
                 <li key={idx}>{t}</li>
               ))}
             </ol>
-            <p className="text-[10px] text-gray-400 italic pt-1">
-              {invoice.declaration}
+            <p className="text-[9.5px] text-gray-400 italic pt-0.5">
+              This is a computer generated legal tax invoice under Rule 46 of CGST Rules 2017.
             </p>
           </div>
 
-          <div className="sm:col-span-4 text-center sm:text-right space-y-2 pt-4 sm:pt-0">
-            <div className="h-14 flex items-end justify-center sm:justify-end">
-              <div className="border-b-2 border-gray-400 w-44 pb-1 text-center font-serif italic text-gray-700 font-bold text-sm">
+          <div className="sm:col-span-4 text-center sm:text-right space-y-1 pt-2 sm:pt-0">
+            <div className="h-10 flex items-end justify-center sm:justify-end">
+              <div className="border-b border-gray-400 w-36 pb-0.5 text-center font-serif italic text-gray-700 font-bold text-xs">
                 Rupesh Kumar
               </div>
             </div>
-            <div className="space-y-0.5">
-              <div className="font-extrabold text-gray-900 text-[11.5px]">
+            <div className="space-y-0">
+              <div className="font-extrabold text-gray-900 text-[10.5px]">
                 For LAPPY SOLUTION
               </div>
-              <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+              <div className="text-[9px] text-gray-500 uppercase tracking-wider">
                 {invoice.signatoryTitle || 'Authorized Signatory'}
               </div>
             </div>
           </div>
 
-        </div>
-
-        {/* SYSTEM GENERATED AUDIT STAMP */}
-        <div className="mt-6 pt-3 border-t border-gray-200 text-center text-[10px] text-gray-400">
-          This is a computer generated legal tax invoice under Rule 46 of CGST Rules 2017. Original brand manufacturer warranty honored across India.
         </div>
 
       </div>
@@ -558,15 +541,29 @@ export default function InvoicePage() {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 8mm 10mm;
           }
-          body {
+          html, body {
             background: #ffffff !important;
             color: #000000 !important;
-            font-size: 12pt;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
           }
-          nav, footer, .print\\:hidden {
+          header, footer, nav, aside, [role="navigation"], .no-print, .print\:hidden, #sq-panel-top, .sq-ext {
             display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+          }
+          .invoice-container {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
       `}</style>

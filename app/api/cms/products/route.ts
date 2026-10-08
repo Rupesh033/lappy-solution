@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { hasAdminSession } from '@/lib/adminAuth';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const search = searchParams.get('search');
-    const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined;
+    const requestedLimit = Number(searchParams.get('limit'));
+    const limit = Number.isInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 100) : undefined;
 
-    const where: any = { status: 'active' };
+    const where: Prisma.ProductWhereInput = { status: 'active' };
     if (category && category !== 'All' && category !== 'All Products') {
       where.category = category;
     }
@@ -27,16 +30,39 @@ export async function GET(request: Request) {
       take: limit,
     });
 
-    return NextResponse.json({ products });
+    // Enrich with gallery images, verified reviews & subcategory metadata
+    const { PRODUCTS } = await import('@/data/products');
+    const richMap = new Map(PRODUCTS.map(p => [p.sku, p]));
+    const idMap = new Map(PRODUCTS.map(p => [p.id, p]));
+
+    const enrichedProducts = products.map((p) => {
+      const rich = richMap.get(p.sku) || idMap.get(p.id);
+      return {
+        ...p,
+        images: rich?.images && rich.images.length > 0 ? rich.images : [p.image],
+        reviews: rich?.reviews || [],
+        subcategory: rich?.subcategory || p.category,
+        isScraped: rich?.isScraped || false,
+        sourceUrl: rich?.sourceUrl || '',
+      };
+    });
+
+    return NextResponse.json({ products: enrichedProducts });
   } catch (error) {
     console.error('Error fetching products:', error);
-    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+    // Fallback to static PRODUCTS
+    const { PRODUCTS } = await import('@/data/products');
+    return NextResponse.json({ products: PRODUCTS });
   }
 }
 
 export async function POST(request: Request) {
+  if (!hasAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await request.json();
+    if (typeof body.name !== 'string' || typeof body.category !== 'string' || typeof body.brand !== 'string' || !Number.isFinite(Number(body.price)) || Number(body.price) < 0) {
+      return NextResponse.json({ error: 'Name, category, brand, and a valid price are required.' }, { status: 400 });
+    }
     const slug = body.slug || (body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now());
     const sku = body.sku || (`LS-${body.category.substring(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`);
 
@@ -69,9 +95,14 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  if (!hasAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await request.json();
-    const { id, ...data } = body;
+    const { id } = body;
+    if (typeof id !== 'string') return NextResponse.json({ error: 'Product ID is required.' }, { status: 400 });
+    const allowedFields = ['name', 'slug', 'category', 'brand', 'price', 'mrp', 'discount', 'specs', 'description', 'image', 'inStock', 'stockQuantity', 'sku', 'rating', 'featured', 'status'];
+    const data = Object.fromEntries(Object.entries(body).filter(([key]) => allowedFields.includes(key)));
+    if (Object.keys(data).length === 0) return NextResponse.json({ error: 'No valid product fields provided.' }, { status: 400 });
 
     const product = await prisma.product.update({
       where: { id },
@@ -86,6 +117,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!hasAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
