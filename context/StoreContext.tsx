@@ -11,6 +11,8 @@ import {
   buildInvoiceFromOrder, 
   formatInvoiceNumber 
 } from '../lib/invoiceUtils';
+import { supabase, signInWithGoogle, signOutCustomer, User } from '../lib/supabase';
+
 
 export interface SiteSettings {
   siteName: string;
@@ -160,7 +162,12 @@ interface StoreContextType {
   editBlogPost: (post: CMSBlogPost) => Promise<void>;
   deleteBlogPost: (id: string) => Promise<void>;
   syncWithDatabase: () => Promise<void>;
+  customer: User | null;
+  isCustomerLoading: boolean;
+  signInWithGoogle: (redirectTo?: string) => Promise<void>;
+  signOutCustomer: () => Promise<void>;
 }
+
 
 const defaultSiteSettings: SiteSettings = {
   siteName: STORE_INFO.name,
@@ -216,11 +223,51 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [accountTab, setAccountTab] = useState<'orders' | 'wishlist'>('orders');
   const [toast, setToast] = useState<string | null>(null);
+  const [customer, setCustomer] = useState<User | null>(null);
+  const [isCustomerLoading, setIsCustomerLoading] = useState(true);
+
+  // Monitor Supabase Customer Auth State
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCustomer(session?.user ?? null);
+      setIsCustomerLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCustomer(session?.user ?? null);
+      setIsCustomerLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignInWithGoogle = async (redirectTo?: string) => {
+    try {
+      await signInWithGoogle(redirectTo);
+    } catch (err: any) {
+      showToast(err?.message || 'Google sign-in failed');
+      throw err;
+    }
+  };
+
+  const handleSignOutCustomer = async () => {
+    try {
+      await signOutCustomer();
+      setCustomer(null);
+      showToast('Signed out of customer account');
+    } catch (err: any) {
+      showToast(err?.message || 'Sign out failed');
+      throw err;
+    }
+  };
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2800);
   };
+
 
   // Synchronize state with Database via CMS API routes
   const syncWithDatabase = useCallback(async () => {
@@ -1002,8 +1049,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         editBlogPost,
         deleteBlogPost,
         syncWithDatabase,
+        customer,
+        isCustomerLoading,
+        signInWithGoogle: handleSignInWithGoogle,
+        signOutCustomer: handleSignOutCustomer,
       }}
     >
+
       {children}
     </StoreContext.Provider>
   );

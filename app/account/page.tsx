@@ -9,8 +9,9 @@ import {
   Store, ExternalLink, Search, Filter, ChevronRight, 
   FileText, CheckCircle2, AlertCircle, Sparkles, Star, 
   Tag, CreditCard, HelpCircle, Download, Check, X, 
-  Printer, ArrowLeft, RefreshCw, MessageSquare, QrCode
+  Printer, ArrowLeft, RefreshCw, MessageSquare, QrCode, LogOut
 } from 'lucide-react';
+
 import { useStore } from '../../context/StoreContext';
 import { STORE_INFO } from '../../data/storeData';
 import { Product } from '../../data/products';
@@ -76,8 +77,12 @@ function AccountContent() {
     toggleWishlist, 
     siteSettings,
     paymentSettings,
-    showToast 
+    showToast,
+    customer,
+    signInWithGoogle,
+    signOutCustomer
   } = useStore();
+
 
   const initialTab = (searchParams.get('tab') as AccountTab) || 'orders';
   const [activeTab, setActiveTab] = useState<AccountTab>(initialTab);
@@ -91,12 +96,30 @@ function AccountContent() {
 
   // Profile State
   const [profile, setProfile] = useState({
-    firstName: 'Rupesh',
-    lastName: 'Kumar',
-    email: 'rupesh.kumar@gmail.com',
-    phone: '9608828288',
+    firstName: 'Customer',
+    lastName: '',
+    email: '',
+    phone: '',
     gender: 'Male',
   });
+
+  // Sync profile when Google customer logs in
+  useEffect(() => {
+    if (customer) {
+      const fullName = (customer.user_metadata?.full_name || customer.user_metadata?.name || '').trim();
+      const parts = fullName ? fullName.split(' ') : [];
+      const firstName = parts[0] || customer.email?.split('@')[0] || 'Customer';
+      const lastName = parts.slice(1).join(' ') || '';
+      setProfile((prev) => ({
+        ...prev,
+        firstName,
+        lastName,
+        email: customer.email || prev.email,
+        phone: customer.phone || customer.user_metadata?.phone || prev.phone,
+      }));
+    }
+  }, [customer]);
+
 
   // Saved Addresses State
   const [addresses, setAddresses] = useState<SavedAddress[]>(DEFAULT_ADDRESSES);
@@ -267,17 +290,58 @@ function AccountContent() {
           <div className="lg:col-span-4 xl:col-span-3 space-y-3">
             
             {/* User Greeting Card */}
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-3.5 sm:p-4 shadow-2xs flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#1A56DB] to-[#3B82F6] flex items-center justify-center text-white font-extrabold text-lg shadow-sm flex-shrink-0">
-                {profile.firstName.charAt(0).toUpperCase() || 'U'}
-              </div>
-              <div className="min-w-0">
-                <span className="text-[11px] text-[#6B7280] block">Hello,</span>
-                <h3 className="font-extrabold text-[15px] text-[#111827] truncate">
-                  {profile.firstName} {profile.lastName}
-                </h3>
+            <div className="bg-white rounded-xl border border-[#E5E7EB] p-3.5 sm:p-4 shadow-2xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {customer?.user_metadata?.avatar_url ? (
+                  <img
+                    src={customer.user_metadata.avatar_url}
+                    alt="Customer Avatar"
+                    className="w-12 h-12 rounded-full border-2 border-blue-400 object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#1A56DB] to-[#3B82F6] flex items-center justify-center text-white font-extrabold text-lg shadow-sm flex-shrink-0">
+                    {profile.firstName.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <span className="text-[11px] text-[#6B7280] block">Hello,</span>
+                  <h3 className="font-extrabold text-[15px] text-[#111827] truncate">
+                    {profile.firstName} {profile.lastName}
+                  </h3>
+                  {customer ? (
+                    <span className="inline-block text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded mt-0.5">
+                      Google Verified
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
+
+            {/* Google Sign In / Sign Up Card if not authenticated */}
+            {!customer && (
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/70 rounded-xl border border-blue-200/90 p-3.5 shadow-2xs">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 mb-1">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Google Quick Sign-in</span>
+                </div>
+                <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
+                  Sign in with Google to automatically sync orders, save delivery addresses, and track GST invoices.
+                </p>
+                <button
+                  onClick={() => signInWithGoogle('/account')}
+                  className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-lg border border-slate-300 shadow-xs hover:shadow transition-all flex items-center justify-center gap-2.5 active:scale-[0.99]"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                  <span>Sign in with Google</span>
+                </button>
+              </div>
+            )}
+
 
             {/* Navigation Menu Card */}
             <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-2xs divide-y divide-[#F3F4F6] overflow-hidden text-xs">
@@ -417,11 +481,26 @@ function AccountContent() {
                     <HelpCircle className="w-3.5 h-3.5 text-[#15803D]" />
                     <span>24x7 Help & Warranty Desk</span>
                   </div>
-                  <ChevronRight className="w-3 h-3 text-gray-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                 </button>
               </div>
 
+              {/* LOG OUT BUTTON (Shown when signed in) */}
+              {customer && (
+                <div className="p-2 border-t border-gray-100">
+                  <button
+                    onClick={() => signOutCustomer()}
+                    className="w-full py-2.5 px-3 text-left font-bold text-red-600 hover:bg-red-50 rounded-lg flex items-center justify-between transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <LogOut className="w-4 h-4 text-red-500" />
+                      <span>LOG OUT</span>
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
+
 
             {/* Showroom Direct Connect Card */}
             <div className="bg-gradient-to-br from-[#EFF6FF] to-[#DBEAFE] border border-[#BFDBFE] rounded-xl p-3.5 shadow-2xs space-y-2">

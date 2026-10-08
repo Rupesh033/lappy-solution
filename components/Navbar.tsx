@@ -30,12 +30,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     setSelectedProduct,
     setIsAccountOpen,
     setAccountTab,
-    siteSettings
+    siteSettings,
+    customer
   } = useStore();
 
   const handleOpenAccount = () => {
     router.push('/account');
   };
+
 
   const handleOpenWishlist = () => {
     router.push('/account?tab=wishlist');
@@ -218,11 +220,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={handleOpenAccount}
               className="h-8 sm:h-9 px-2 sm:px-3 rounded-lg text-[#374151] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors flex items-center gap-1.5 text-[12.5px] sm:text-[13px] font-semibold"
-              title="My Account & Orders"
+              title={customer ? `Signed in as ${customer.user_metadata?.full_name || customer.email}` : "My Account & Orders"}
             >
-              <User className="w-4 h-4 text-[#4B5563]" />
-              <span className="hidden sm:inline">Account</span>
+              {customer?.user_metadata?.avatar_url ? (
+                <img 
+                  src={customer.user_metadata.avatar_url} 
+                  alt="Account" 
+                  className="w-5 h-5 rounded-full object-cover border border-blue-400"
+                />
+              ) : (
+                <User className="w-4 h-4 text-[#4B5563]" />
+              )}
+              <span className="hidden sm:inline">
+                {customer?.user_metadata?.full_name ? customer.user_metadata.full_name.split(' ')[0] : 'Account'}
+              </span>
             </button>
+
 
             {/* Wishlist */}
             <button
