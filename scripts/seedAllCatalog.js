@@ -13,7 +13,7 @@ async function main() {
     update: {},
     create: {
       id: 'default',
-      siteName: 'Lappy Solution',
+      siteName: 'Lapiez',
       tagline: 'Technology • Security • Solutions',
       logo: '/images/logo.png',
       favicon: '/favicon.ico',
@@ -51,7 +51,7 @@ async function main() {
     create: {
       id: 'default',
       upiId: '9608828288@okbizaxis',
-      upiName: 'LAPPY SOLUTION GARHWA',
+      upiName: 'LAPIEZ GARHWA',
       codEnabled: true,
       gstRate: 18,
       gstin: '20AABCL1234F1Z5'

@@ -15,7 +15,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { 
     addToCart, 
     toggleWishlist, 
-    wishlistIds 
+    wishlistIds,
+    siteSettings
   } = useStore();
 
   const isWishlisted = wishlistIds.includes(product.id);
@@ -26,8 +27,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleWhatsAppInquiry = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const text = `Hello Lappy Solution Garhwa, I want to purchase:\n*${product.name}*\nPrice: ₹${product.price.toLocaleString('en-IN')}\nSKU: ${product.sku}\nIs this in stock at your Chiniya Road showroom?`;
-    window.open(`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+    const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
+    const text = `Hello ${storeTitle}, I want to purchase:\n*${product.name}*\nPrice: ₹${product.price.toLocaleString('en-IN')}\nSKU: ${product.sku}\nIs this in stock at your Chiniya Road showroom?`;
+    window.open(`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (

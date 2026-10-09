@@ -23,7 +23,6 @@ type AccountTab =
   | 'wishlist' 
   | 'gst' 
   | 'payments' 
-  | 'coupons' 
   | 'support';
 
 interface SavedAddress {
@@ -54,7 +53,7 @@ const DEFAULT_ADDRESSES: SavedAddress[] = [
   },
   {
     id: 'addr-2',
-    name: 'Lappy Solution Showroom Counter',
+    name: 'Lapiez Showroom Counter',
     phone: '9608828288',
     pincode: '822114',
     locality: 'In front of G P Plaza',
@@ -79,8 +78,8 @@ function AccountContent() {
     paymentSettings,
     showToast,
     customer,
-    signInWithGoogle,
-    signOutCustomer
+    loginCustomerManually,
+    signOutCustomer,
   } = useStore();
 
 
@@ -89,7 +88,7 @@ function AccountContent() {
 
   useEffect(() => {
     const tabParam = searchParams.get('tab') as AccountTab;
-    if (tabParam && ['orders', 'profile', 'addresses', 'wishlist', 'gst', 'payments', 'coupons', 'support'].includes(tabParam)) {
+    if (tabParam && ['orders', 'profile', 'addresses', 'wishlist', 'gst', 'payments', 'support'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -102,6 +101,105 @@ function AccountContent() {
     phone: '',
     gender: 'Male',
   });
+
+  // Guest Access States
+  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
+  const [quickName, setQuickName] = useState('');
+  const [quickPhone, setQuickPhone] = useState('');
+
+  // Client-side Google Identity Services (GSI)
+  useEffect(() => {
+    if (typeof window === 'undefined' || customer) return;
+
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '888729719943-farrlhra2vsr5dvgmdl4te3226g469l7.apps.googleusercontent.com';
+
+    const parseJwt = (token: string) => {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const initGsi = () => {
+      const google = (window as any).google;
+      if (google?.accounts?.id) {
+        try {
+          google.accounts.id.initialize({
+            client_id: clientId,
+            callback: (response: any) => {
+              if (response?.credential) {
+                const payload = parseJwt(response.credential);
+                if (payload?.email) {
+                  loginCustomerManually({
+                    id: payload.sub,
+                    email: payload.email,
+                    name: payload.name,
+                    picture: payload.picture,
+                  });
+                }
+              }
+            },
+          });
+
+          const btnEl = document.getElementById('google-gsi-container');
+          if (btnEl) {
+            google.accounts.id.renderButton(btnEl, {
+              theme: 'outline',
+              size: 'large',
+              width: '280',
+              text: 'continue_with',
+              shape: 'rectangular',
+            });
+          }
+        } catch (err) {
+          console.log('Google Identity init note:', err);
+        }
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      initGsi();
+    } else {
+      const interval = setInterval(() => {
+        if ((window as any).google?.accounts?.id) {
+          clearInterval(interval);
+          initGsi();
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [customer, loginCustomerManually]);
+
+  const handleQuickSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickName.trim() || !quickPhone.trim()) {
+      showToast('Please enter your name and phone number');
+      return;
+    }
+    const updatedProfile = {
+      ...profile,
+      firstName: quickName.trim(),
+      phone: quickPhone.trim(),
+    };
+    setProfile(updatedProfile);
+    loginCustomerManually({
+      email: `${quickPhone.trim()}@guest.lapiez.in`,
+      name: quickName.trim(),
+    });
+    try {
+      localStorage.setItem('ls_customer_profile', JSON.stringify(updatedProfile));
+    } catch (e) {}
+    setIsGuestModalOpen(false);
+  };
 
   // Sync profile when Google customer logs in
   useEffect(() => {
@@ -261,7 +359,6 @@ function AccountContent() {
       case 'wishlist': return `My Wishlist (${wishlistProducts.length})`;
       case 'gst': return 'PAN Card & GST Invoicing';
       case 'payments': return 'Saved UPI & Payment Methods';
-      case 'coupons': return 'My Coupons & Festive Offers';
       case 'support': return '24x7 Help Center & Warranty Desk';
     }
   };
@@ -319,26 +416,27 @@ function AccountContent() {
 
             {/* Google Sign In / Sign Up Card if not authenticated */}
             {!customer && (
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/70 rounded-xl border border-blue-200/90 p-3.5 shadow-2xs">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 mb-1">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/70 rounded-xl border border-blue-200/90 p-3.5 shadow-2xs space-y-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
                   <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Google Quick Sign-in</span>
+                  <span>Customer Quick Access</span>
                 </div>
-                <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
+                <p className="text-[11px] text-slate-600 leading-relaxed">
                   Sign in with Google to automatically sync orders, save delivery addresses, and track GST invoices.
                 </p>
-                <button
-                  onClick={() => signInWithGoogle('/account')}
-                  className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-lg border border-slate-300 shadow-xs hover:shadow transition-all flex items-center justify-center gap-2.5 active:scale-[0.99]"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                  </svg>
-                  <span>Sign in with Google</span>
-                </button>
+
+                {/* Google Native GSI Button Mount */}
+                <div id="google-gsi-container" className="min-h-[40px] flex items-center justify-center overflow-hidden" />
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => setIsGuestModalOpen(true)}
+                    className="w-full py-2.5 px-3 bg-blue-50 hover:bg-blue-100 text-[#1A56DB] font-bold text-xs rounded-lg border border-blue-200 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>Instant Customer / Guest Sign-in</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -452,18 +550,6 @@ function AccountContent() {
                   <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-red-100 text-red-600">
                     {wishlistProducts.length}
                   </span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('coupons')}
-                  className={`w-full py-2 px-3 rounded-lg text-left flex items-center justify-between transition-colors ${
-                    activeTab === 'coupons'
-                      ? 'bg-[#EFF6FF] text-[#1A56DB] font-bold'
-                      : 'text-[#4B5563] hover:bg-gray-50'
-                  }`}
-                >
-                  <span>My Coupons & Festive Offers</span>
-                  {activeTab === 'coupons' && <ChevronRight className="w-3 h-3 text-[#1A56DB]" />}
                 </button>
               </div>
 
@@ -770,7 +856,7 @@ function AccountContent() {
                               </button>
 
                               <a
-                                href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello Lappy Solution Garhwa, I need help with my Order #${ord.orderId}`)}`}
+                                href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello Lapiez Garhwa, I need help with my Order #${ord.orderId}`)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="h-8 px-3 rounded-lg bg-green-50 hover:bg-green-100 border border-green-200 text-[#15803D] font-bold text-xs flex items-center gap-1.5 transition-colors"
@@ -808,7 +894,7 @@ function AccountContent() {
                     <Package className="w-12 h-12 text-gray-300 mx-auto" />
                     <h3 className="font-extrabold text-gray-900 text-base">No Orders Found</h3>
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      {orderSearch ? 'No orders match your search keyword.' : 'You have not placed any orders yet on Lappy Solution Garhwa.'}
+                      {orderSearch ? 'No orders match your search keyword.' : 'You have not placed any orders yet on Lapiez Garhwa.'}
                     </p>
                     <Link
                       href="/shop"
@@ -1337,13 +1423,13 @@ function AccountContent() {
                       </span>
                     </div>
                     <span className="font-mono font-extrabold text-sm text-blue-900 block">
-                      {paymentSettings?.upiId || '9608828288@okbizaxis'}
+                      {paymentSettings?.upiId || 'lappy.solution@ybl'}
                     </span>
                     <span className="text-gray-600 block">
-                      Payee: {paymentSettings?.upiName || 'LAPPY SOLUTION GARHWA'}
+                      Payee: {paymentSettings?.upiName || 'LAPIEZ GARHWA'}
                     </span>
                     <button
-                      onClick={() => copyToClipboard(paymentSettings?.upiId || '9608828288@okbizaxis', 'UPI ID')}
+                      onClick={() => copyToClipboard(paymentSettings?.upiId || 'lappy.solution@ybl', 'UPI ID')}
                       className="mt-2 text-[#1A56DB] hover:underline font-bold text-[11px] block"
                     >
                       Copy Official UPI ID
@@ -1370,64 +1456,6 @@ function AccountContent() {
               </div>
             )}
 
-            {/* ======================================================= */}
-            {/* TAB 7: MY COUPONS & FESTIVE OFFERS                      */}
-            {/* ======================================================= */}
-            {activeTab === 'coupons' && (
-              <div className="space-y-4">
-                <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 shadow-2xs">
-                  <h3 className="font-extrabold text-base text-[#111827]">
-                    My Festive Coupons & Offers
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Available instant discount codes for your hardware and laptop purchases.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    {
-                      code: 'LAPPYFEST10',
-                      discount: '10% Instant Discount',
-                      desc: 'Save 10% on all laptop adapters, NVMe SSDs, laptop batteries and mechanical keyboards.',
-                      expiry: 'Valid till 31 Oct 2026',
-                    },
-                    {
-                      code: 'SHOWROOM500',
-                      discount: 'Flat ₹500 OFF',
-                      desc: 'Applicable on any 12th/13th Gen laptop or custom workstation above ₹20,000.',
-                      expiry: 'Valid till 15 Nov 2026',
-                    },
-                    {
-                      code: 'CCTVSECURE',
-                      discount: 'Flat ₹1,000 OFF on CCTV',
-                      desc: 'Free 1TB surveillance hard disk guidance + discount on 4-Camera CP-PLUS kits.',
-                      expiry: 'Showroom Special',
-                    },
-                  ].map((coupon) => (
-                    <div
-                      key={coupon.code}
-                      className="bg-white border border-dashed border-blue-300 rounded-xl p-4 shadow-2xs space-y-2.5 relative overflow-hidden"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono font-extrabold text-sm text-[#1A56DB] bg-blue-50 px-2.5 py-1 rounded border border-blue-200">
-                          {coupon.code}
-                        </span>
-                        <button
-                          onClick={() => copyToClipboard(coupon.code, 'Coupon Code')}
-                          className="text-xs font-bold text-[#FB641B] hover:underline"
-                        >
-                          Copy Code
-                        </button>
-                      </div>
-                      <h4 className="font-extrabold text-sm text-gray-900">{coupon.discount}</h4>
-                      <p className="text-xs text-gray-600 leading-snug">{coupon.desc}</p>
-                      <span className="text-[10.5px] text-gray-400 block pt-1">{coupon.expiry}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* ======================================================= */}
             {/* TAB 8: 24x7 CUSTOMER HELP & WARRANTY DESK               */}
@@ -1473,7 +1501,7 @@ function AccountContent() {
                     </div>
 
                     <a
-                      href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello Lappy Solution Garhwa, I need warranty support for my hardware.')}`}
+                      href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello Lapiez Garhwa, I need warranty support for my hardware.')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-9 px-4 rounded-lg bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-2xs"
@@ -1655,7 +1683,7 @@ function AccountContent() {
               {/* Footer Note */}
               <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-[10.5px] text-gray-400">
                 <span>Computer generated tax invoice. Original brand warranty honored across India.</span>
-                <span className="font-bold text-gray-600">Lappy Solution Garhwa</span>
+                <span className="font-bold text-gray-600">Lapiez Garhwa</span>
               </div>
 
             </div>
@@ -1750,6 +1778,68 @@ function AccountContent() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Quick Guest Profile Modal */}
+      {isGuestModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-gray-200">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="font-extrabold text-sm text-gray-900">
+                Quick Customer Sign-in
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsGuestModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleQuickSignIn} className="space-y-3.5 mt-4 text-xs">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Your Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ramesh Kumar"
+                  value={quickName}
+                  onChange={(e) => setQuickName(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Mobile / WhatsApp Number *</label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="10-digit number"
+                  value={quickPhone}
+                  onChange={(e) => setQuickPhone(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsGuestModalOpen(false)}
+                  className="px-3.5 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold shadow-xs"
+                >
+                  Continue to Profile
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

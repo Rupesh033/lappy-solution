@@ -5,18 +5,26 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Trash2, ShoppingBag, ArrowRight, ShieldCheck, 
-  Truck, ArrowLeft, Tag, Check, Store
+  Truck, ArrowLeft, Tag, Check, Store, Lock
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { PRODUCTS } from '../../data/products';
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, updateQuantity, removeFromCart } = useStore();
+  const { 
+    cart, 
+    updateQuantity, 
+    removeFromCart, 
+    coupons, 
+    appliedCoupon, 
+    couponDiscount, 
+    applyCoupon, 
+    removeCoupon,
+    customer
+  } = useStore();
 
   const [couponCode, setCouponCode] = useState('');
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponApplied, setCouponApplied] = useState(false);
   const [couponError, setCouponError] = useState('');
 
   const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -25,29 +33,26 @@ export default function CartPage() {
   
   const finalTotal = Math.max(0, subtotal - couponDiscount);
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  const handleApplyCoupon = (e: React.FormEvent, codeToApply?: string) => {
     e.preventDefault();
     setCouponError('');
-    const code = couponCode.trim().toUpperCase();
-    if (code === 'GARHWA500') {
-      if (subtotal >= 2000) {
-        setCouponDiscount(500);
-        setCouponApplied(true);
-      } else {
-        setCouponError('Minimum order amount for GARHWA500 is ₹2,000');
-      }
-    } else if (code === 'LAPPY100') {
-      setCouponDiscount(100);
-      setCouponApplied(true);
+    const code = (codeToApply || couponCode).trim().toUpperCase();
+    if (!code) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    const res = applyCoupon(code, subtotal);
+    if (!res.success) {
+      setCouponError(res.message);
     } else {
-      setCouponError('Invalid coupon code. Try GARHWA500 or LAPPY100');
+      setCouponCode('');
     }
   };
 
   const handleRemoveCoupon = () => {
-    setCouponDiscount(0);
-    setCouponApplied(false);
+    removeCoupon();
     setCouponCode('');
+    setCouponError('');
   };
 
   return (
@@ -232,9 +237,9 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {couponApplied && (
-                    <div className="flex justify-between text-[#1A56DB] font-bold">
-                      <span>Coupon Discount ({couponCode})</span>
+                  {appliedCoupon && couponDiscount > 0 && (
+                    <div className="flex justify-between text-[#15803D] font-bold">
+                      <span>Coupon Discount ({appliedCoupon.code})</span>
                       <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
                     </div>
                   )}
@@ -265,32 +270,34 @@ export default function CartPage() {
 
                 {/* Promo Code Input */}
                 <div className="pt-1">
-                  {!couponApplied ? (
-                    <form onSubmit={handleApplyCoupon} className="space-y-1.5">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Coupon code (e.g. GARHWA500)"
-                          value={couponCode}
-                          onChange={(e) => setCouponCode(e.target.value)}
-                          className="flex-1 h-9 px-3 rounded-lg bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB] uppercase font-semibold"
-                        />
-                        <button
-                          type="submit"
-                          className="h-9 px-3.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition-colors"
-                        >
-                          Apply
-                        </button>
-                      </div>
-                      {couponError && (
-                        <p className="text-[11px] text-red-600 font-medium">{couponError}</p>
-                      )}
-                    </form>
+                  {!appliedCoupon ? (
+                    <div className="space-y-1.5">
+                      <form onSubmit={handleApplyCoupon} className="space-y-1.5">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Enter Promo / Coupon Code"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            className="flex-1 h-9 px-3 rounded-lg bg-gray-50 border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB] uppercase font-semibold font-mono"
+                          />
+                          <button
+                            type="submit"
+                            className="h-9 px-3.5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                        {couponError && (
+                          <p className="text-[11px] text-red-600 font-medium">{couponError}</p>
+                        )}
+                      </form>
+                    </div>
                   ) : (
-                    <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between text-xs text-blue-800">
+                    <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-800">
                       <div className="flex items-center gap-1.5">
-                        <Tag className="w-3.5 h-3.5 text-[#1A56DB]" />
-                        <span><strong>{couponCode}</strong> applied (₹{couponDiscount} off)</span>
+                        <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                        <span><strong>{appliedCoupon.code}</strong> applied (₹{couponDiscount.toLocaleString('en-IN')} off)</span>
                       </div>
                       <button
                         onClick={handleRemoveCoupon}
@@ -306,15 +313,16 @@ export default function CartPage() {
                 <div className="space-y-2 pt-2">
                   <button
                     onClick={() => router.push('/checkout')}
-                    className="w-full h-11 rounded-lg bg-[#FB641B] hover:bg-[#E0530F] text-white font-bold text-[14px] flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98]"
+                    className="w-full h-11 rounded-lg bg-[#FB641B] hover:bg-[#E0530F] text-white font-bold text-[14px] flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98] cursor-pointer"
                   >
-                    <span>PLACE ORDER</span>
+                    <span>{customer ? 'PROCEED TO CHECKOUT' : 'SIGN IN & CHECKOUT'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
 
                   <div className="text-center">
-                    <span className="text-[11px] text-gray-400">
-                      Safe & Secure Payments • UPI • Netbanking • COD
+                    <span className="text-[11px] text-gray-500 font-medium flex items-center justify-center gap-1">
+                      <Lock className="w-3 h-3 text-emerald-600" />
+                      {customer ? 'Verified Secure Checkout • 100% Genuine' : 'Sign-In Required to Complete Purchase'}
                     </span>
                   </div>
                 </div>

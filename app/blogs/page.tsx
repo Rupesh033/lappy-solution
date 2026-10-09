@@ -55,7 +55,7 @@ export default function BlogListingPage() {
               Hardware Advice, Reviews & Buying Guides
             </h1>
             <p className="text-xs sm:text-[13.5px] text-blue-100 leading-relaxed">
-              Curated tutorials on refurbished laptops, Frontech curved monitors, CCTV security setups, and chip-level motherboard repair from Lappy Solution engineers.
+              Curated tutorials on refurbished laptops, Frontech curved monitors, CCTV security setups, and chip-level motherboard repair from Lapiez engineers.
             </p>
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function BlogListingPage() {
                         <span>{blog.readTime || '4 min read'}</span>
                       </span>
                       <span>•</span>
-                      <span>{blog.author || 'Lappy Solution Team'}</span>
+                      <span>{blog.author || 'Lapiez Team'}</span>
                     </div>
 
                     <Link href={`/blogs/${blog.slug}`}>
@@ -158,7 +158,7 @@ export default function BlogListingPage() {
                     </Link>
 
                     <a
-                      href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello Lappy Solution, I read your article "${blog.title}" and have a query.`)}`}
+                      href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello Lapiez, I read your article "${blog.title}" and have a query.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-400 hover:text-[#25D366] transition-colors p-1"

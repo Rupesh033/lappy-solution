@@ -17,7 +17,8 @@ export const ProductDetailModal: React.FC = () => {
     setSelectedProduct, 
     addToCart, 
     toggleWishlist, 
-    wishlistIds 
+    wishlistIds,
+    siteSettings
   } = useStore();
 
   const [activeImage, setActiveImage] = useState<string | null>(null);
@@ -32,8 +33,9 @@ export const ProductDetailModal: React.FC = () => {
     : [selectedProduct.image];
 
   const handleWhatsApp = () => {
-    const text = `Hello Lappy Solution Garhwa, I want to inquire about:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nCan I inspect or pick this up at your Chiniya Road showroom?`;
-    window.open(`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+    const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
+    const text = `Hello ${storeTitle}, I want to inquire about:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nCan I inspect or pick this up at your Chiniya Road showroom?`;
+    window.open(`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleBuyNow = () => {

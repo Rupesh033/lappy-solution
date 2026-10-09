@@ -69,28 +69,40 @@ export default function Home() {
     { name: 'SSDs & Storage', count: products.filter(p => p.category === 'Storage & Parts').length, href: '/shop?cat=Storage%20%26%20Parts' },
   ], [products]);
 
-  // Sorted list of active homepage sections
+  // Sorted list of active homepage sections (Brands placed directly below banners)
   const sortedSections = useMemo(() => {
+    let sectionsList: CMSSection[] = [];
     if (homepageSections && homepageSections.length > 0) {
-      return [...homepageSections]
+      sectionsList = [...homepageSections]
         .filter((s) => s.isVisible && s.sectionKey !== 'hero')
         .sort((a, b) => a.position - b.position);
+    } else {
+      sectionsList = [
+        { sectionKey: 'banners', title: 'Banner Slider', position: 1, isVisible: true },
+        { sectionKey: 'brands', title: 'Brands Showcase', position: 2, isVisible: true },
+        { sectionKey: 'trust_bar', title: 'Trust Bar', position: 3, isVisible: true },
+        { sectionKey: 'categories', title: 'Categories', position: 4, isVisible: true },
+        { sectionKey: 'trending', title: 'Trending Products', position: 5, isVisible: true },
+        { sectionKey: 'bestsellers', title: 'Best Sellers', position: 6, isVisible: true },
+        { sectionKey: 'premium', title: 'Premium Segment', position: 7, isVisible: true },
+        { sectionKey: 'refurbished_laptops', title: 'Refurbished Laptops & Printers', position: 8, isVisible: true },
+        { sectionKey: 'promo', title: 'Promotional Deals', position: 9, isVisible: true },
+        { sectionKey: 'cctv_spotlight', title: 'CCTV & Security Surveillance', position: 10, isVisible: true },
+        { sectionKey: 'blogs_preview', title: 'Latest Tech Guides', position: 11, isVisible: true },
+        { sectionKey: 'catalog_cta', title: 'Catalog CTA', position: 12, isVisible: true },
+        { sectionKey: 'showroom', title: 'Showroom Guarantee', position: 13, isVisible: true },
+      ] as CMSSection[];
     }
-    return [
-      { sectionKey: 'banners', title: 'Banner Slider', position: 1, isVisible: true },
-      { sectionKey: 'trust_bar', title: 'Trust Bar', position: 2, isVisible: true },
-      { sectionKey: 'categories', title: 'Categories', position: 3, isVisible: true },
-      { sectionKey: 'trending', title: 'Trending Products', position: 4, isVisible: true },
-      { sectionKey: 'bestsellers', title: 'Best Sellers', position: 5, isVisible: true },
-      { sectionKey: 'premium', title: 'Premium Segment', position: 6, isVisible: true },
-      { sectionKey: 'refurbished_laptops', title: 'Refurbished Laptops & Printers', position: 7, isVisible: true },
-      { sectionKey: 'promo', title: 'Promotional Deals', position: 8, isVisible: true },
-      { sectionKey: 'cctv_spotlight', title: 'CCTV & Security Surveillance', position: 9, isVisible: true },
-      { sectionKey: 'blogs_preview', title: 'Latest Tech Guides', position: 10, isVisible: true },
-      { sectionKey: 'brands', title: 'Brands', position: 11, isVisible: true },
-      { sectionKey: 'catalog_cta', title: 'Catalog CTA', position: 12, isVisible: true },
-      { sectionKey: 'showroom', title: 'Showroom Guarantee', position: 13, isVisible: true },
-    ] as CMSSection[];
+
+    // Ensure 'brands' is positioned directly underneath 'banners'
+    const bannersIdx = sectionsList.findIndex(s => s.sectionKey === 'banners');
+    const brandsIdx = sectionsList.findIndex(s => s.sectionKey === 'brands');
+    if (bannersIdx !== -1 && brandsIdx !== -1 && brandsIdx !== bannersIdx + 1) {
+      const [brandSec] = sectionsList.splice(brandsIdx, 1);
+      const newBannersIdx = sectionsList.findIndex(s => s.sectionKey === 'banners');
+      sectionsList.splice(newBannersIdx + 1, 0, brandSec);
+    }
+    return sectionsList;
   }, [homepageSections]);
 
   // Helper to extract products assigned to a section or provide fallback
@@ -617,7 +629,7 @@ export default function Home() {
                   </a>
 
                   <a
-                    href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello Lappy Solution Garhwa, I want to inquire about in-stock products.')}`}
+                    href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello Lapiez Garhwa, I want to inquire about in-stock products.')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 sm:flex-none h-9 sm:h-10 px-3.5 sm:px-4 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-colors"

@@ -16,18 +16,76 @@ import { ProductCard } from '../../../components/ProductCard';
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const productId = params?.id as string;
+  const rawId = (params?.id as string) || '';
+  const productId = decodeURIComponent(rawId).trim();
 
-  const { addToCart, toggleWishlist, wishlistIds, showToast } = useStore();
+  const { products, addToCart, toggleWishlist, wishlistIds, showToast, siteSettings } = useStore();
 
-  // Find product by id or numericId
+  const [dbProduct, setDbProduct] = useState<Product | null>(null);
+  const [isFetchingDirect, setIsFetchingDirect] = useState(false);
+
+  // 1. Dynamic product matching across useStore products (DB + admin added), static catalog, and direct DB query
   const product: Product | undefined = useMemo(() => {
-    return PRODUCTS.find(p => p.id === productId || String(p.numericId) === productId);
-  }, [productId]);
+    if (!productId) return undefined;
+    const searchTarget = productId.toLowerCase();
+
+    // Check dynamic products list first (has DB + added products)
+    const foundInStore = products.find(
+      p => p.id === productId || 
+           p.slug?.toLowerCase() === searchTarget || 
+           p.sku?.toLowerCase() === searchTarget || 
+           String(p.numericId) === productId
+    );
+    if (foundInStore) return foundInStore;
+
+    // Check static catalog fallback
+    const foundInStatic = PRODUCTS.find(
+      p => p.id === productId || 
+           p.slug?.toLowerCase() === searchTarget || 
+           p.sku?.toLowerCase() === searchTarget || 
+           String(p.numericId) === productId
+    );
+    if (foundInStatic) return foundInStatic;
+
+    return dbProduct || undefined;
+  }, [productId, products, dbProduct]);
+
+  // 2. Direct database query fallback if product is not yet in memory
+  React.useEffect(() => {
+    if (!product && productId && !isFetchingDirect && !dbProduct) {
+      setIsFetchingDirect(true);
+      fetch(`/api/cms/products?id=${encodeURIComponent(productId)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data?.products && Array.isArray(data.products) && data.products.length > 0) {
+            setDbProduct(data.products[0]);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to fetch product directly from DB:', err);
+        })
+        .finally(() => {
+          setIsFetchingDirect(false);
+        });
+    }
+  }, [product, productId, isFetchingDirect, dbProduct]);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews' | 'warranty'>('specs');
+
+  // Loading state while searching database directly
+  if (isFetchingDirect && !product) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center bg-[#F8FAFC]">
+        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#1A56DB] mb-4 animate-spin">
+          <RefreshCw className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-1">Loading Product Details...</h2>
+        <p className="text-xs text-slate-500">Checking Lapiez showroom live catalog</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -56,9 +114,10 @@ export default function ProductDetailPage() {
 
   const savings = product.mrp > product.price ? product.mrp - product.price : 0;
 
-  // Related products from same category
-  const relatedProducts = PRODUCTS.filter(
-    p => p.category === product.category && p.id !== product.id
+  // Related products from same category or brand
+  const allCatalog = products.length > 0 ? products : PRODUCTS;
+  const relatedProducts = allCatalog.filter(
+    p => (p.category === product.category || p.brand === product.brand) && p.id !== product.id
   ).slice(0, 4);
 
   const handleAddToCart = () => {
@@ -75,15 +134,16 @@ export default function ProductDetailPage() {
   };
 
   const handleWhatsApp = () => {
-    const text = `Hello Lappy Solution Garhwa! I am interested in purchasing:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nIs this in stock for same-day pickup at your Chiniya Road showroom?`;
-    window.open(`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+    const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
+    const text = `Hello ${storeTitle}! I am interested in purchasing:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nIs this in stock for same-day pickup at your showroom?`;
+    window.open(`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
         title: product.name,
-        text: `Check out ${product.name} at Lappy Solution Garhwa for ₹${product.price.toLocaleString('en-IN')}`,
+        text: `Check out ${product.name} at Lapiez Garhwa for ₹${product.price.toLocaleString('en-IN')}`,
         url: window.location.href
       }).catch(() => {});
     } else {
@@ -433,7 +493,7 @@ export default function ProductDetailPage() {
             <div className="space-y-4 text-xs sm:text-sm text-slate-600">
               <h3 className="text-base font-bold text-slate-900">Garhwa Showroom Warranty & Service Support</h3>
               <p className="leading-relaxed">
-                Every purchase made through Lappy Solution is backed by official brand warranty and our in-house Garhwa service desk:
+                Every purchase made through Lapiez is backed by official brand warranty and our in-house Garhwa service desk:
               </p>
               <ul className="space-y-2.5 pt-2">
                 <li className="flex items-start gap-2 text-slate-700">
@@ -486,7 +546,7 @@ export default function ProductDetailPage() {
                         date: '3 days ago',
                         rating: 5,
                         title: 'Verified Genuine Purchase',
-                        comment: 'Purchased for my daily work. Quality is super reliable, works flawlessly right out of the box with proper bill and warranty. Lappy Solution team provided quick support.',
+                        comment: 'Purchased for my daily work. Quality is super reliable, works flawlessly right out of the box with proper bill and warranty. Lapiez team provided quick support.',
                         verified: true
                       },
                       {

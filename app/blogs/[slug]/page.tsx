@@ -55,7 +55,7 @@ export default function SingleBlogPostPage() {
   const handleShare = () => {
     if (typeof window !== 'undefined' && navigator.share) {
       navigator.share({
-        title: blog?.title || 'Lappy Solution Tech Blog',
+        title: blog?.title || 'Lapiez Tech Blog',
         text: blog?.excerpt,
         url: window.location.href,
       }).catch(() => {});
@@ -68,7 +68,7 @@ export default function SingleBlogPostPage() {
   const handleWhatsAppConsult = () => {
     const phone = STORE_INFO.phone.replace(/[^0-9]/g, '');
     const text = encodeURIComponent(
-      `Hello Lappy Solution! I just read your article "${blog?.title}" on your website and would like expert guidance on recommended hardware.`
+      `Hello Lapiez! I just read your article "${blog?.title}" on your website and would like expert guidance on recommended hardware.`
     );
     window.open(`https://wa.me/91${phone}?text=${text}`, '_blank');
   };
@@ -253,7 +253,7 @@ export default function SingleBlogPostPage() {
               <div className="space-y-1 text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start gap-1.5 text-blue-200 text-xs font-bold uppercase tracking-wider">
                   <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
-                  <span>Tested & Recommended by Lappy Solution Garhwa</span>
+                  <span>Tested & Recommended by Lapiez Garhwa</span>
                 </div>
                 <h4 className="text-sm sm:text-base font-bold text-white">
                   Need Help Choosing the Right Hardware?

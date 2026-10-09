@@ -20,7 +20,7 @@ export interface StoreInfo {
 }
 
 export const STORE_INFO: StoreInfo = {
-  name: 'Lappy Solution',
+  name: 'Lapiez',
   tagline: 'Technology • Security • Solutions',
   address: 'In front of G P Plaza, Chiniya Road',
   landmark: 'Opposite G P Plaza',
@@ -33,9 +33,9 @@ export const STORE_INFO: StoreInfo = {
   email: 'lappysolution2018@gmail.com',
   timings: 'Monday - Saturday: 10:00 AM - 8:30 PM',
   established: '2018',
-  mapsUrl: 'https://www.google.com/maps/place/LAPPY+SOLUTION/@24.1579639,83.7987063,17z/',
+  mapsUrl: 'https://www.google.com/maps/place/LAPIEZ/@24.1579639,83.7987063,17z/',
   directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=24.1579639,83.7987063',
-  embedMapUrl: 'https://maps.google.com/maps?q=24.1579639,83.7987063+(LAPPY+SOLUTION)&t=&z=16&ie=UTF8&iwloc=B&output=embed',
+  embedMapUrl: 'https://maps.google.com/maps?q=24.1579639,83.7987063+(LAPIEZ)&t=&z=16&ie=UTF8&iwloc=B&output=embed',
   lat: 24.1579639,
   lng: 83.7987063
 };
@@ -219,120 +219,7 @@ export const CCTV_CONFIG = {
   }
 };
 
-export const INITIAL_LEADS = [
-  {
-    id: 'lead-101',
-    customerName: 'Rahul Kumar',
-    phone: '+91 94311 28941',
-    email: 'rahul.k.garhwa@gmail.com',
-    location: 'Chiniya Road, Garhwa',
-    type: 'Custom PC Build',
-    requirement: '10x Pro Office Desktop Towers for Coaching Institute with Core i5, 16GB RAM & 512GB SSD',
-    estimatedBudget: 289990,
-    date: '2026-10-04',
-    status: 'Quoted' as const
-  },
-  {
-    id: 'lead-102',
-    customerName: 'Sanjay Tiwary',
-    phone: '+91 98351 45012',
-    email: 'tiwary.sanjay@outlook.com',
-    location: 'Ranka Road, Garhwa',
-    type: 'CCTV Setup',
-    requirement: 'Complete 8-Camera 5MP Full-Color CP-PLUS Surveillance Setup for 2-Storey Retail Complex',
-    estimatedBudget: 38500,
-    date: '2026-10-05',
-    status: 'Contacted' as const
-  },
-  {
-    id: 'lead-103',
-    customerName: 'Ankit Gupta',
-    phone: '+91 79032 67890',
-    email: 'ankit.gupta88@gmail.com',
-    location: 'Majhiaon, Garhwa',
-    type: 'Laptop Enquiry',
-    requirement: 'HP 15s Intel i5 for B.Tech CSE student with student discount',
-    estimatedBudget: 52999,
-    date: '2026-10-05',
-    status: 'Won' as const
-  },
-  {
-    id: 'lead-104',
-    customerName: 'Pooja Singh',
-    phone: '+91 91223 88123',
-    email: 'pooja.singh@gmail.com',
-    location: 'Near Bus Stand, Garhwa',
-    type: 'Custom PC Build',
-    requirement: 'Video Editing PC with RTX 4060 & 32GB DDR5 RAM for photo studio',
-    estimatedBudget: 76999,
-    date: '2026-10-06',
-    status: 'New' as const
-  }
-];
+export const INITIAL_LEADS: any[] = [];
 
-export const INITIAL_ORDERS = [
-  {
-    orderId: 'LS-10248',
-    customerName: 'Rahul Kumar',
-    phone: '+91 94311 28941',
-    address: 'Near Gandhi Maidan, Chiniya Road, Garhwa - 822114',
-    items: [
-      { id: 'prod-flagship-1', name: 'HP 15s Intel Core i5 12th Gen', quantity: 1, price: 52999 }
-    ],
-    totalAmount: 52999,
-    paymentMethod: 'UPI',
-    paymentStatus: 'Paid',
-    orderStatus: 'Packed' as const,
-    date: '2026-10-05',
-    trackingSteps: [
-      { step: 'Order Placed', time: '10:15 AM, 05 Oct', done: true },
-      { step: 'Confirmed', time: '11:00 AM, 05 Oct', done: true },
-      { step: 'Packed', time: '02:30 PM, 05 Oct', done: true },
-      { step: 'Shipped', time: 'Pending Dispatch', done: false },
-      { step: 'Delivered', time: 'Est. Tomorrow', done: false }
-    ]
-  },
-  {
-    orderId: 'LS-10247',
-    customerName: 'Amit Verma',
-    phone: '+91 97092 11442',
-    address: 'Station Road, Garhwa - 822114',
-    items: [
-      { id: 'prod-flagship-7', name: 'CP-PLUS 4-Camera 5MP Full HD Security System Kit', quantity: 1, price: 18499 }
-    ],
-    totalAmount: 18499,
-    paymentMethod: 'Cash on Delivery (Store Pickup)',
-    paymentStatus: 'Pending',
-    orderStatus: 'Confirmed' as const,
-    date: '2026-10-05',
-    trackingSteps: [
-      { step: 'Order Placed', time: '04:10 PM, 05 Oct', done: true },
-      { step: 'Confirmed', time: '05:00 PM, 05 Oct', done: true },
-      { step: 'Packed', time: 'Scheduled', done: false },
-      { step: 'Shipped', time: 'Ready for Pickup', done: false },
-      { step: 'Delivered', time: 'Pending', done: false }
-    ]
-  },
-  {
-    orderId: 'LS-10246',
-    customerName: 'Pankaj Mishra',
-    phone: '+91 99345 67890',
-    address: 'Hospital Road, Garhwa - 822114',
-    items: [
-      { id: 'prod-flagship-9', name: 'Epson EcoTank L3210 All-in-One Printer', quantity: 1, price: 12999 },
-      { id: 'prod-33095033', name: 'Epson Ink 003 Black Color', quantity: 2, price: 320 }
-    ],
-    totalAmount: 13639,
-    paymentMethod: 'UPI',
-    paymentStatus: 'Paid',
-    orderStatus: 'Delivered' as const,
-    date: '2026-10-04',
-    trackingSteps: [
-      { step: 'Order Placed', time: '09:30 AM, 04 Oct', done: true },
-      { step: 'Confirmed', time: '10:00 AM, 04 Oct', done: true },
-      { step: 'Packed', time: '11:15 AM, 04 Oct', done: true },
-      { step: 'Shipped', time: '01:00 PM, 04 Oct', done: true },
-      { step: 'Delivered', time: '04:30 PM, 04 Oct', done: true }
-    ]
-  }
-];
+export const INITIAL_ORDERS: any[] = [];
+

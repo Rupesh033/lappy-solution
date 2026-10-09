@@ -12,6 +12,9 @@ import {
   formatInvoiceNumber 
 } from '../lib/invoiceUtils';
 import { supabase, signInWithGoogle, signOutCustomer, User } from '../lib/supabase';
+import { Coupon, INITIAL_COUPONS, calculateCouponDiscount } from '../data/coupons';
+
+export type { Coupon };
 
 
 export interface SiteSettings {
@@ -139,6 +142,7 @@ interface StoreContextType {
   updateSiteSettings: (settings: Partial<SiteSettings>) => Promise<void>;
   updateThemeSettings: (theme: Partial<ThemeSettings>) => Promise<void>;
   updatePaymentSettings: (payment: Partial<PaymentSettings>) => Promise<void>;
+  updateStoreAndPaymentSettings: (site: Partial<SiteSettings>, payment: Partial<PaymentSettings>) => Promise<void>;
   updateInvoiceSettings: (settings: Partial<InvoiceSettings>) => void;
   createInvoiceFromOrder: (order: any, buyerGstin?: string, isInterstate?: boolean) => Invoice;
   createManualInvoice: (invoice: Partial<Invoice>) => Invoice;
@@ -151,6 +155,7 @@ interface StoreContextType {
   editBanner: (banner: CMSBanner) => Promise<void>;
   deleteBanner: (id: string) => Promise<void>;
   addProductToDb: (prod: Partial<Product>) => Promise<void>;
+  updateProductInDb: (id: string, updatedFields: Partial<Product>) => Promise<boolean>;
   deleteProductFromDb: (id: string) => Promise<void>;
   updateHomepageSections: (sections: CMSSection[]) => Promise<void>;
   updateHomepageSectionDetails: (sectionKey: string, details: Partial<CMSSection>) => Promise<void>;
@@ -165,7 +170,17 @@ interface StoreContextType {
   customer: User | null;
   isCustomerLoading: boolean;
   signInWithGoogle: (redirectTo?: string) => Promise<void>;
+  loginCustomerManually: (userData: { id?: string; email: string; name?: string; picture?: string }) => void;
   signOutCustomer: () => Promise<void>;
+  coupons: Coupon[];
+  appliedCoupon: Coupon | null;
+  couponDiscount: number;
+  applyCoupon: (code: string, orderTotal: number) => { success: boolean; message: string; discount: number };
+  removeCoupon: () => void;
+  createCoupon: (couponData: any) => Promise<{ success: boolean; message?: string }>;
+  updateCoupon: (id: string, couponData: any) => Promise<{ success: boolean; message?: string }>;
+  deleteCoupon: (id: string) => Promise<{ success: boolean; message?: string }>;
+  fetchCoupons: () => Promise<void>;
 }
 
 
@@ -193,8 +208,8 @@ const defaultThemeSettings: ThemeSettings = {
 };
 
 const defaultPaymentSettings: PaymentSettings = {
-  upiId: '9608828288@okbizaxis',
-  upiName: 'LAPPY SOLUTION GARHWA',
+  upiId: 'lappy.solution@ybl',
+  upiName: 'LAPIEZ GARHWA',
   codEnabled: true,
   gstRate: 18,
   gstin: '20AABCL1234F1Z5',
@@ -206,8 +221,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
-  const [orders, setOrders] = useState<any[]>(INITIAL_ORDERS);
-  const [leads, setLeads] = useState<any[]>(INITIAL_LEADS);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [themeSettings, setThemeSettings] = useState<ThemeSettings>(defaultThemeSettings);
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(defaultPaymentSettings);
@@ -215,6 +230,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [homepageSections, setHomepageSections] = useState<CMSSection[]>([]);
   const [customPages, setCustomPages] = useState<CMSCustomPage[]>([]);
   const [blogPosts, setBlogPosts] = useState<CMSBlogPost[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>(INITIAL_COUPONS);
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(DEFAULT_INVOICE_SETTINGS);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -229,12 +247,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Monitor Supabase Customer Auth State
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setCustomer(session?.user ?? null);
+      if (session?.user) {
+        setCustomer(session.user);
+      } else {
+        try {
+          const local = localStorage.getItem('ls_customer_session');
+          if (local) setCustomer(JSON.parse(local));
+        } catch (e) {}
+      }
+      setIsCustomerLoading(false);
+    }).catch(() => {
+      try {
+        const local = localStorage.getItem('ls_customer_session');
+        if (local) setCustomer(JSON.parse(local));
+      } catch (e) {}
       setIsCustomerLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCustomer(session?.user ?? null);
+      if (session?.user) {
+        setCustomer(session.user);
+        try {
+          localStorage.setItem('ls_customer_session', JSON.stringify(session.user));
+        } catch (e) {}
+      }
       setIsCustomerLoading(false);
     });
 
@@ -242,6 +278,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       subscription.unsubscribe();
     };
   }, []);
+
+  const loginCustomerManually = (userData: { id?: string; email: string; name?: string; picture?: string }) => {
+    const userObj: any = {
+      id: userData.id || `usr-${Date.now()}`,
+      email: userData.email,
+      user_metadata: {
+        full_name: userData.name || userData.email.split('@')[0],
+        name: userData.name || userData.email.split('@')[0],
+        avatar_url: userData.picture || '',
+        picture: userData.picture || '',
+        email: userData.email,
+      },
+    };
+    setCustomer(userObj);
+    try {
+      localStorage.setItem('ls_customer_session', JSON.stringify(userObj));
+    } catch (e) {}
+    showToast(`Welcome ${userObj.user_metadata.full_name}!`);
+  };
 
   const handleSignInWithGoogle = async (redirectTo?: string) => {
     try {
@@ -254,13 +309,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const handleSignOutCustomer = async () => {
     try {
-      await signOutCustomer();
-      setCustomer(null);
-      showToast('Signed out of customer account');
-    } catch (err: any) {
-      showToast(err?.message || 'Sign out failed');
-      throw err;
-    }
+      await signOutCustomer().catch(() => {});
+    } catch (err: any) {}
+    setCustomer(null);
+    try {
+      localStorage.removeItem('ls_customer_session');
+    } catch (e) {}
+    showToast('Signed out of customer account');
   };
 
   const showToast = (msg: string) => {
@@ -276,8 +331,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const resSettings = await fetch('/api/cms/settings');
       if (resSettings.ok) {
         const data = await resSettings.json();
-        if (data.siteSettings) setSiteSettings(data.siteSettings);
-        if (data.paymentSettings) setPaymentSettings(data.paymentSettings);
+        if (data.siteSettings) {
+          const site = {
+            ...data.siteSettings,
+            siteName: data.siteSettings.siteName || 'Lapiez',
+          };
+          setSiteSettings(site);
+          try {
+            localStorage.setItem('ls_site_settings', JSON.stringify(site));
+          } catch (e) {}
+        }
+        if (data.paymentSettings) {
+          const payment = {
+            ...data.paymentSettings,
+            upiId: data.paymentSettings.upiId || 'lappy.solution@ybl',
+            upiName: data.paymentSettings.upiName || 'LAPIEZ GARHWA',
+          };
+          setPaymentSettings(payment);
+          try {
+            localStorage.setItem('ls_payment_settings', JSON.stringify(payment));
+          } catch (e) {}
+        }
       }
 
       // 2. Theme
@@ -344,6 +418,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           } catch (e) {}
         }
       }
+
+      // 9. Coupons
+      try {
+        const resCoupons = await fetch('/api/cms/coupons');
+        if (resCoupons.ok) {
+          const data = await resCoupons.json();
+          if (Array.isArray(data.coupons) && data.coupons.length > 0) {
+            setCoupons(data.coupons);
+          }
+        }
+      } catch (e) {}
     } catch (e) {
       console.warn('CMS DB sync fallback to local cache:', e);
     }
@@ -359,10 +444,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedWishlist) setWishlistIds(JSON.parse(savedWishlist));
 
       const savedOrders = localStorage.getItem('ls_orders');
-      if (savedOrders) setOrders(JSON.parse(savedOrders));
+      if (savedOrders) {
+        try {
+          const parsed = JSON.parse(savedOrders);
+          const realOrders = Array.isArray(parsed)
+            ? parsed.filter((o: any) => !['LS-10248', 'LS-10247', 'LS-10246'].includes(o.orderId))
+            : [];
+          setOrders(realOrders);
+          localStorage.setItem('ls_orders', JSON.stringify(realOrders));
+        } catch {
+          setOrders([]);
+        }
+      } else {
+        setOrders([]);
+      }
 
       const savedLeads = localStorage.getItem('ls_leads');
-      if (savedLeads) setLeads(JSON.parse(savedLeads));
+      if (savedLeads) {
+        try {
+          const parsed = JSON.parse(savedLeads);
+          const realLeads = Array.isArray(parsed)
+            ? parsed.filter((l: any) => !['lead-101', 'lead-102', 'lead-103', 'lead-104'].includes(l.id))
+            : [];
+          setLeads(realLeads);
+          localStorage.setItem('ls_leads', JSON.stringify(realLeads));
+        } catch {
+          setLeads([]);
+        }
+      } else {
+        setLeads([]);
+      }
 
       const savedProducts = localStorage.getItem('ls_products');
       if (savedProducts) {
@@ -386,16 +497,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const savedInvoices = localStorage.getItem('ls_invoices');
       if (savedInvoices) {
-        setInvoices(JSON.parse(savedInvoices));
-      } else {
-        const initialInvs = INITIAL_ORDERS.map((ord, idx) => {
-          const cfg = { ...DEFAULT_INVOICE_SETTINGS, nextNumber: 10245 + idx };
-          return buildInvoiceFromOrder({ order: ord, settings: cfg });
-        });
-        setInvoices(initialInvs);
         try {
-          localStorage.setItem('ls_invoices', JSON.stringify(initialInvs));
-        } catch (e) {}
+          const parsed = JSON.parse(savedInvoices);
+          const realInvs = Array.isArray(parsed)
+            ? parsed.filter((inv: any) => !['LS-10248', 'LS-10247', 'LS-10246'].includes(inv.orderId))
+            : [];
+          setInvoices(realInvs);
+          localStorage.setItem('ls_invoices', JSON.stringify(realInvs));
+        } catch {
+          setInvoices([]);
+        }
+      } else {
+        setInvoices([]);
       }
 
       const savedInvSettings = localStorage.getItem('ls_invoice_settings');
@@ -408,6 +521,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const savedBlogs = localStorage.getItem('ls_blog_posts');
       if (savedBlogs) setBlogPosts(JSON.parse(savedBlogs));
+
+      const savedSiteSettings = localStorage.getItem('ls_site_settings');
+      if (savedSiteSettings) {
+        try {
+          const parsed = JSON.parse(savedSiteSettings);
+          if (parsed && typeof parsed === 'object') setSiteSettings(parsed);
+        } catch (e) {}
+      }
+
+      const savedPaymentSettings = localStorage.getItem('ls_payment_settings');
+      if (savedPaymentSettings) {
+        try {
+          const parsed = JSON.parse(savedPaymentSettings);
+          if (parsed && typeof parsed === 'object') setPaymentSettings(parsed);
+        } catch (e) {}
+      }
     } catch (e) {
       console.error('LocalStorage load error:', e);
     }
@@ -473,11 +602,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const placeOrder = async (newOrder: any): Promise<Invoice> => {
+    if (!customer) {
+      showToast('Please sign in to your customer account before placing an order.');
+      throw new Error('Customer sign-in is strictly required to place an order.');
+    }
     try {
+      const orderPayload = {
+        ...newOrder,
+        customerId: customer.id,
+        customerEmail: customer.email || newOrder.email,
+      };
       const response = await fetch('/api/cms/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newOrder),
+        body: JSON.stringify(orderPayload),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Order could not be placed');
@@ -571,14 +709,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updated = { ...siteSettings, ...settings };
     setSiteSettings(updated);
     try {
-      await fetch('/api/cms/settings', {
+      localStorage.setItem('ls_site_settings', JSON.stringify(updated));
+    } catch (e) {}
+    try {
+      const res = await fetch('/api/cms/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ siteSettings: updated }),
       });
-      showToast('Site settings updated in database!');
-    } catch (e) {
-      console.error('Failed to update site settings:', e);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      showToast('Store settings saved successfully!');
+    } catch (e: any) {
+      console.error('Failed to update site settings in DB:', e);
+      showToast(`Saved locally! (DB: ${e.message || 'notice'})`);
     }
   };
 
@@ -586,14 +733,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updated = { ...themeSettings, ...theme };
     setThemeSettings(updated);
     try {
-      await fetch('/api/cms/theme', {
+      const res = await fetch('/api/cms/theme', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(updated),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
       showToast('Theme colors updated in database!');
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to update theme:', e);
+      showToast(`Theme saved locally! (DB: ${e.message || 'notice'})`);
     }
   };
 
@@ -601,14 +754,53 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updated = { ...paymentSettings, ...payment };
     setPaymentSettings(updated);
     try {
-      await fetch('/api/cms/settings', {
+      localStorage.setItem('ls_payment_settings', JSON.stringify(updated));
+    } catch (e) {}
+    try {
+      const res = await fetch('/api/cms/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ paymentSettings: updated }),
       });
-      showToast('Payment & UPI settings updated in database!');
-    } catch (e) {
-      console.error('Failed to update payment settings:', e);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      showToast('Payment & UPI settings saved successfully!');
+    } catch (e: any) {
+      console.error('Failed to update payment settings in DB:', e);
+      showToast(`Saved locally! (DB: ${e.message || 'notice'})`);
+    }
+  };
+
+  const updateStoreAndPaymentSettings = async (
+    site: Partial<SiteSettings>,
+    payment: Partial<PaymentSettings>
+  ) => {
+    const updatedSite = { ...siteSettings, ...site };
+    const updatedPayment = { ...paymentSettings, ...payment };
+    setSiteSettings(updatedSite);
+    setPaymentSettings(updatedPayment);
+    try {
+      localStorage.setItem('ls_site_settings', JSON.stringify(updatedSite));
+      localStorage.setItem('ls_payment_settings', JSON.stringify(updatedPayment));
+    } catch (e) {}
+    try {
+      const res = await fetch('/api/cms/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ siteSettings: updatedSite, paymentSettings: updatedPayment }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      showToast('Store details & Payment settings saved permanently to database!');
+    } catch (e: any) {
+      console.error('Failed to update settings in DB:', e);
+      showToast(`Settings saved locally! (DB: ${e.message || 'notice'})`);
     }
   };
 
@@ -702,6 +894,45 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } catch (e) {
       console.error('Failed to delete product:', e);
+    }
+  };
+
+  const updateProductInDb = async (id: string, updatedFields: Partial<Product>): Promise<boolean> => {
+    try {
+      // 1. Instant local state update
+      setProducts((prev) => {
+        const next = prev.map((p) => (p.id === id || p.sku === id ? { ...p, ...updatedFields } : p));
+        try {
+          localStorage.setItem('ls_products', JSON.stringify(next));
+        } catch (e) {}
+        return next;
+      });
+
+      // 2. Persist to Prisma DB
+      const res = await fetch('/api/cms/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updatedFields }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.product) {
+          setProducts((prev) =>
+            prev.map((p) => (p.id === data.product.id || p.sku === data.product.sku ? { ...p, ...data.product } : p))
+          );
+        }
+        showToast('Product updated successfully!');
+        return true;
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || 'Failed to update product in database');
+        return false;
+      }
+    } catch (e) {
+      console.error('Failed to update product:', e);
+      showToast('Error saving product changes');
+      return false;
     }
   };
 
@@ -826,7 +1057,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       content: post.content || '',
       coverImage: post.coverImage || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=1000',
       category: post.category || 'Hardware Guide',
-      author: post.author || 'Lappy Solution Team',
+      author: post.author || 'Lapiez Team',
       readTime: post.readTime || '4 min read',
       status: post.status || 'published',
     };
@@ -857,6 +1088,103 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.error('Failed to delete blog:', e);
     }
   };
+
+  // Coupon Engine Methods
+  const fetchCoupons = useCallback(async () => {
+    try {
+      const res = await fetch('/api/cms/coupons');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.coupons) && data.coupons.length > 0) {
+          setCoupons(data.coupons);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch coupons:', e);
+    }
+  }, []);
+
+  const applyCoupon = useCallback((code: string, orderTotal: number) => {
+    if (!code || !code.trim()) {
+      return { success: false, message: 'Please enter a coupon code.', discount: 0 };
+    }
+    const cleanCode = code.trim().toUpperCase();
+    const found = coupons.find((c) => c.code === cleanCode);
+    if (!found) {
+      return { 
+        success: false, 
+        message: `Invalid or expired coupon code.`, 
+        discount: 0 
+      };
+    }
+    const result = calculateCouponDiscount(found, orderTotal);
+    if (!result.isValid) {
+      return { success: false, message: result.error || 'Coupon cannot be applied.', discount: 0 };
+    }
+    setAppliedCoupon(found);
+    setCouponDiscount(result.discountAmount);
+    showToast(`Coupon "${found.code}" applied! Saved ₹${result.discountAmount.toLocaleString('en-IN')}`);
+    return { 
+      success: true, 
+      message: `Applied ${found.code}! Saved ₹${result.discountAmount.toLocaleString('en-IN')}`, 
+      discount: result.discountAmount 
+    };
+  }, [coupons]);
+
+  const removeCoupon = useCallback(() => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    showToast('Coupon removed');
+  }, []);
+
+  const createCoupon = useCallback(async (couponData: any) => {
+    try {
+      const res = await fetch('/api/cms/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(couponData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create coupon');
+      await fetchCoupons();
+      showToast(`Coupon ${couponData.code?.toUpperCase()} created successfully!`);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to create coupon' };
+    }
+  }, [fetchCoupons]);
+
+  const updateCoupon = useCallback(async (id: string, couponData: any) => {
+    try {
+      const res = await fetch('/api/cms/coupons', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...couponData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update coupon');
+      await fetchCoupons();
+      showToast('Coupon updated successfully!');
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to update coupon' };
+    }
+  }, [fetchCoupons]);
+
+  const deleteCoupon = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/cms/coupons?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete coupon');
+      await fetchCoupons();
+      showToast('Coupon deleted!');
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Failed to delete coupon' };
+    }
+  }, [fetchCoupons]);
 
   // Invoicing Engine Methods
   const createInvoiceFromOrder = (order: any, buyerGstin?: string, isInterstate: boolean = false): Invoice => {
@@ -1026,6 +1354,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateSiteSettings,
         updateThemeSettings,
         updatePaymentSettings,
+        updateStoreAndPaymentSettings,
         updateInvoiceSettings,
         createInvoiceFromOrder,
         createManualInvoice,
@@ -1038,6 +1367,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         editBanner,
         deleteBanner,
         addProductToDb,
+        updateProductInDb,
         deleteProductFromDb,
         updateHomepageSections,
         updateHomepageSectionDetails,
@@ -1052,7 +1382,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         customer,
         isCustomerLoading,
         signInWithGoogle: handleSignInWithGoogle,
+        loginCustomerManually,
         signOutCustomer: handleSignOutCustomer,
+        coupons,
+        appliedCoupon,
+        couponDiscount,
+        applyCoupon,
+        removeCoupon,
+        createCoupon,
+        updateCoupon,
+        deleteCoupon,
+        fetchCoupons,
       }}
     >
 

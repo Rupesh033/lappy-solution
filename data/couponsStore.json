@@ -1,0 +1,32 @@
+[
+  {
+    "id": "coupon-norm-welcome5",
+    "code": "WELCOME5",
+    "title": "Normal Customer Special",
+    "discountType": "percentage",
+    "discountValue": 5,
+    "minOrder": 499,
+    "maxDiscount": 1500,
+    "audience": "normal",
+    "description": "Instant 5% OFF on all hardware, spares, displays & accessories for regular buyers.",
+    "isActive": true,
+    "validUntil": "2027-12-31",
+    "timesUsed": 14,
+    "createdAt": "2026-10-09T17:08:49.130Z"
+  },
+  {
+    "id": "coupon-prem-lapiezvip",
+    "code": "LAPIEZVIP",
+    "title": "Premium VIP Club Special",
+    "discountType": "percentage",
+    "discountValue": 10,
+    "minOrder": 2499,
+    "maxDiscount": 5000,
+    "audience": "premium",
+    "description": "Exclusive 10% OFF for VIP & Premium Customers on laptops, custom PCs & CCTV kits.",
+    "isActive": true,
+    "validUntil": "2027-12-31",
+    "timesUsed": 38,
+    "createdAt": "2026-10-09T17:08:49.130Z"
+  }
+]

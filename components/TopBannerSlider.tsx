@@ -51,7 +51,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: 'Printers starting from ₹3,499',
       ctaText: 'Shop Refurbished Now',
       ctaLink: '/shop?cat=Laptops',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to inquire about certified refurbished laptops and printers.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want to inquire about certified refurbished laptops and printers.',
       image: '/images/banners/refurbished-laptops-printers.png',
       fullBleedImage: true,
       bgGradient: 'from-[#0A1633] via-[#0E2A68] to-[#1E3A8A]',
@@ -76,7 +76,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: 'Direct brand warranty across India',
       ctaText: 'Explore All 131 Frontech Items',
       ctaLink: '/shop?brand=Frontech',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to explore the official Frontech product range.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want to explore the official Frontech product range.',
       image: 'https://frontechonline.com/cdn/shop/files/Banner_900x240_v2_a2d0c753-543d-472d-816a-d810a97f08c1.jpg?v=1791359069&width=3840',
       bgGradient: 'from-[#051F20] via-[#0B3C35] to-[#047857]',
       accentBorder: 'border-emerald-400/30'
@@ -100,7 +100,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: '18% GST tax invoice included',
       ctaText: 'Shop Frontech Monitors',
       ctaLink: '/shop?brand=Frontech&cat=Computers',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to inquire about Frontech curved gaming monitors.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want to inquire about Frontech curved gaming monitors.',
       image: 'https://frontechonline.com/cdn/shop/files/Curved_MON_Banner_900x240_4d9d539a-9786-4acc-a586-25da2266c152.jpg?v=1776420392&width=3840',
       bgGradient: 'from-[#0A1633] via-[#0D224E] to-[#1E3A8A]',
       accentBorder: 'border-yellow-400/30'
@@ -124,7 +124,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: 'Up to 65% OFF MRP',
       ctaText: 'Shop Keyboards & Mice',
       ctaLink: '/shop?brand=Frontech&cat=Accessories',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to buy Frontech keyboard and mouse combo.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want to buy Frontech keyboard and mouse combo.',
       image: 'https://frontechonline.com/cdn/shop/files/KEYBOARD_MOUSE__3840_x_1000_v2.jpg?v=1782379136&width=3840',
       bgGradient: 'from-[#1E0836] via-[#35105D] to-[#5B21B6]',
       accentBorder: 'border-purple-400/30'
@@ -148,7 +148,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: 'Heavy wooden cabinet sound',
       ctaText: 'Explore Frontech Audio',
       ctaLink: '/shop?brand=Frontech&search=Speaker',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to inquire about Frontech soundbars and trolley speakers.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want to inquire about Frontech soundbars and trolley speakers.',
       image: 'https://frontechonline.com/cdn/shop/files/SPEAKER_3840_x_1000_v2.jpg?v=1782379243&width=3840',
       bgGradient: 'from-[#2B091B] via-[#4C0E31] to-[#9F1239]',
       accentBorder: 'border-rose-400/30'
@@ -172,7 +172,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: '18% GST ITC claimable for business',
       ctaText: 'Shop Laptop Deals',
       ctaLink: '/shop?cat=Laptops',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to inquire about festival laptop offers and pricing.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want to inquire about festival laptop offers and pricing.',
       image: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80',
       bgGradient: 'from-[#0A1633] via-[#0F2960] to-[#1A56DB]',
       accentBorder: 'border-blue-400/30'
@@ -196,7 +196,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: 'MRP ₹24,000 • Save ₹5,501 (23% OFF)',
       ctaText: 'View CCTV Packages',
       ctaLink: '/shop?cat=CCTV%20%26%20Security',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want a quote for 4-camera CP-PLUS CCTV security kit.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want a quote for 4-camera CP-PLUS CCTV security kit.',
       image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&auto=format&fit=crop&q=80',
       bgGradient: 'from-[#03241C] via-[#064E3B] to-[#047857]',
       accentBorder: 'border-emerald-400/30'
@@ -220,7 +220,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: 'Benchmark tested with warranty',
       ctaText: 'Explore Custom PCs',
       ctaLink: '/shop?cat=Computers',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to configure a custom PC for video editing / gaming.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want to configure a custom PC for video editing / gaming.',
       image: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=800&auto=format&fit=crop&q=80',
       bgGradient: 'from-[#171033] via-[#2E1065] to-[#4338CA]',
       accentBorder: 'border-purple-400/30'
@@ -244,7 +244,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
       priceNote: 'Adapters from ₹899 • Free Installation',
       ctaText: 'Explore Spares & SSDs',
       ctaLink: '/shop?search=SSD',
-      whatsappMessage: 'Hello Lappy Solution Garhwa, I want to upgrade my laptop SSD / buy original adapter.',
+      whatsappMessage: 'Hello Lapiez Garhwa, I want to upgrade my laptop SSD / buy original adapter.',
       image: '/images/categories/laptop-ssd.png',
       bgGradient: 'from-[#381504] via-[#78350F] to-[#EA580C]',
       accentBorder: 'border-orange-400/30'
@@ -252,7 +252,7 @@ const DEFAULT_BANNERS: BannerSlide[] = [
   ];
 
 export const TopBannerSlider: React.FC = () => {
-  const { banners: cmsBanners } = useStore();
+  const { banners: cmsBanners, siteSettings } = useStore();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -282,7 +282,7 @@ export const TopBannerSlider: React.FC = () => {
           priceNote: '18% GST ITC Bill Included',
           ctaText: b.buttonText || 'Shop Now',
           ctaLink: b.buttonUrl || '/shop',
-          whatsappMessage: b.whatsappMsg || 'Hello Lappy Solution Garhwa, I want to inquire about this offer.',
+          whatsappMessage: b.whatsappMsg || 'Hello Lapiez Garhwa, I want to inquire about this offer.',
           image: b.desktopImage || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80',
           bgGradient: b.bgGradient || 'from-[#0A1633] via-[#0F2960] to-[#1A56DB]',
           accentBorder: 'border-blue-400/30'
@@ -435,7 +435,7 @@ export const TopBannerSlider: React.FC = () => {
                       </Link>
 
                       <a
-                        href={`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent(slide.whatsappMessage)}`}
+                        href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(slide.whatsappMessage)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="h-8.5 sm:h-11 px-3 sm:px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-[12px] sm:text-[13.5px] flex items-center gap-1.5 sm:gap-2 transition-all shadow-md active:scale-[0.98]"

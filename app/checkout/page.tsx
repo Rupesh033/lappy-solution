@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Truck, Store, Check, ArrowLeft, 
   ArrowRight, QrCode, CreditCard, Banknote, Smartphone, 
-  Copy, CheckCircle2, Lock, Building, UploadCloud, AlertCircle
+  Copy, CheckCircle2, Lock, Building, UploadCloud, AlertCircle, Tag,
+  User, UserCheck, LogIn, LogOut
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useStore } from '../../context/StoreContext';
@@ -14,9 +15,29 @@ import { STORE_INFO } from '../../data/storeData';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, placeOrder, showToast, paymentSettings } = useStore();
+  const { 
+    cart, 
+    placeOrder, 
+    showToast, 
+    paymentSettings,
+    coupons,
+    appliedCoupon,
+    couponDiscount,
+    applyCoupon,
+    removeCoupon,
+    customer,
+    isCustomerLoading,
+    loginCustomerManually,
+    signOutCustomer
+  } = useStore();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  // Fast Sign-In States (When Visitor is Not Logged In)
+  const [fastSignInName, setFastSignInName] = useState('');
+  const [fastSignInPhone, setFastSignInPhone] = useState('');
+  const [fastSignInEmail, setFastSignInEmail] = useState('');
+  const [fastSignInError, setFastSignInError] = useState('');
 
   // Customer & Shipping State
   const [customerName, setCustomerName] = useState('');
@@ -41,20 +62,38 @@ export default function CheckoutPage() {
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tempOrderId, setTempOrderId] = useState('');
+  const [inputCouponCode, setInputCouponCode] = useState('');
+  const [couponError, setCouponError] = useState('');
 
   // Generate unique order ID on mount
   useEffect(() => {
     const randomDigits = Math.floor(10000 + Math.random() * 90000);
-    setTempOrderId(`LS-${randomDigits}`);
+    setTempOrderId(`LPZ-${randomDigits}`);
   }, []);
 
   const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const finalTotal = subtotal;
+  const finalTotal = Math.max(0, subtotal - (couponDiscount || 0));
 
   // Official Merchant UPI URI from CMS Database
-  const upiId = paymentSettings.upiId || '9608828288@okbizaxis';
-  const upiName = paymentSettings.upiName || 'LAPPY SOLUTION GARHWA';
+  const upiId = paymentSettings.upiId || 'lappy.solution@ybl';
+  const upiName = paymentSettings.upiName || 'LAPIEZ GARHWA';
   const upiPaymentUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${finalTotal}&cu=INR&tn=Order%20${tempOrderId}`;
+
+  const handleApplyCouponCode = (e?: React.FormEvent, codeToApply?: string) => {
+    if (e) e.preventDefault();
+    const code = (codeToApply || inputCouponCode).trim().toUpperCase();
+    if (!code) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    setCouponError('');
+    const res = applyCoupon(code, subtotal);
+    if (!res.success) {
+      setCouponError(res.message);
+    } else {
+      setInputCouponCode('');
+    }
+  };
 
   const handleCopyUpi = () => {
     navigator.clipboard.writeText(upiId);
@@ -63,8 +102,127 @@ export default function CheckoutPage() {
     setTimeout(() => setCopiedUpi(false), 2500);
   };
 
+  // Pre-fill shipping form when customer is logged in
+  useEffect(() => {
+    if (customer) {
+      const fullName = (customer.user_metadata?.full_name || customer.user_metadata?.name || '').trim();
+      if (fullName && !customerName) {
+        setCustomerName(fullName);
+      }
+      if (customer.email && !email && !customer.email.includes('@customer.lapiez.in') && !customer.email.includes('@guest.')) {
+        setEmail(customer.email);
+      }
+      const custPhone = customer.phone || customer.user_metadata?.phone;
+      if (custPhone && !phone) {
+        setPhone(custPhone);
+      }
+    }
+  }, [customer]);
+
+  // Google GSI Instant Sign-in for Checkout
+  useEffect(() => {
+    if (customer) return;
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '825902095033-m9afrcqfcf63h0e0j6g2eb10811e5828.apps.googleusercontent.com';
+    
+    const parseJwt = (token: string) => {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch {
+        return null;
+      }
+    };
+
+    const initCheckoutGsi = () => {
+      const google = (window as any).google;
+      if (google?.accounts?.id) {
+        try {
+          google.accounts.id.initialize({
+            client_id: clientId,
+            callback: (response: any) => {
+              if (response?.credential) {
+                const payload = parseJwt(response.credential);
+                if (payload?.email) {
+                  loginCustomerManually({
+                    id: payload.sub,
+                    email: payload.email,
+                    name: payload.name,
+                    picture: payload.picture,
+                  });
+                  setCustomerName(payload.name || '');
+                  setEmail(payload.email || '');
+                  showToast(`Welcome ${payload.name || payload.email}! Signed in successfully.`);
+                }
+              }
+            },
+          });
+
+          const btnEl = document.getElementById('checkout-google-gsi');
+          if (btnEl) {
+            google.accounts.id.renderButton(btnEl, {
+              theme: 'outline',
+              size: 'large',
+              width: '280',
+              text: 'continue_with',
+              shape: 'rectangular',
+            });
+          }
+        } catch (err) {
+          console.log('Google Identity checkout init note:', err);
+        }
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      initCheckoutGsi();
+    } else {
+      const timer = setInterval(() => {
+        if ((window as any).google?.accounts?.id) {
+          clearInterval(timer);
+          initCheckoutGsi();
+        }
+      }, 500);
+      return () => clearInterval(timer);
+    }
+  }, [customer, loginCustomerManually, showToast]);
+
+  const handleFastCustomerSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFastSignInError('');
+    if (!fastSignInName.trim() || !fastSignInPhone.trim()) {
+      setFastSignInError('Please enter your full name and 10-digit mobile number');
+      return;
+    }
+    const cleanPhone = fastSignInPhone.trim().replace(/\D/g, '').slice(-10);
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setFastSignInError('Please enter a valid 10-digit Indian mobile number (starting with 6, 7, 8 or 9)');
+      return;
+    }
+    const emailToUse = fastSignInEmail.trim() || `${cleanPhone}@customer.lapiez.in`;
+    loginCustomerManually({
+      id: `usr-${Date.now()}`,
+      name: fastSignInName.trim(),
+      email: emailToUse,
+    });
+    setCustomerName(fastSignInName.trim());
+    setPhone(cleanPhone);
+    if (fastSignInEmail.trim()) setEmail(fastSignInEmail.trim());
+    showToast(`Signed in as ${fastSignInName.trim()}! Please complete delivery details.`);
+  };
+
   const handleValidateStep1 = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!customer) {
+      showToast('Please sign in to your customer account to continue checkout');
+      return;
+    }
     if (!customerName.trim() || !phone.trim()) {
       showToast('Please enter your full name and phone number');
       return;
@@ -78,11 +236,19 @@ export default function CheckoutPage() {
   };
 
   const handleProceedToPayment = () => {
+    if (!customer) {
+      showToast('Please sign in to your customer account to continue');
+      return;
+    }
     setStep(3);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleFinalOrderSubmit = async () => {
+    if (!customer) {
+      showToast('Please sign in to your customer account before placing an order');
+      return;
+    }
     if (paymentMethod === 'upi_qr' && !utrNumber.trim()) {
       showToast('Please enter the 12-digit UPI UTR / Transaction Reference number after scanning the QR code');
       return;
@@ -96,9 +262,10 @@ export default function CheckoutPage() {
 
     const newOrder = {
       orderId: tempOrderId,
+      customerId: customer.id,
       customerName,
       phone,
-      email: email || 'customer@lappysolution.com',
+      email: email || customer.email || 'customer@lapiez.in',
       address: fullAddress,
       deliveryType,
       items: cart.map(item => ({
@@ -112,6 +279,9 @@ export default function CheckoutPage() {
         sku: item.product.sku || item.product.id
       })),
       totalAmount: finalTotal,
+      subtotalAmount: subtotal,
+      couponCode: appliedCoupon?.code || null,
+      couponDiscount: couponDiscount || 0,
       paymentMethod: paymentMethod === 'upi_qr' ? 'UPI Dynamic QR (GPay/PhonePe)' : paymentMethod === 'cod' ? 'Cash on Delivery / Pickup' : `NetBanking (${selectedBank})`,
       paymentStatus: paymentMethod === 'upi_qr' ? 'Verification In Progress' : 'Pending Payment',
       utrNumber: utrNumber || null,
@@ -119,7 +289,9 @@ export default function CheckoutPage() {
       date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
       gstin: needGst ? gstin : null,
       businessName: needGst ? businessName : null,
-      notes: orderNotes || null,
+      notes: appliedCoupon 
+        ? `${orderNotes ? orderNotes + ' | ' : ''}Coupon Applied: ${appliedCoupon.code} (₹${couponDiscount} OFF)`
+        : orderNotes || null,
       trackingSteps: [
         { step: 'Order Placed', time: 'Just now', done: true },
         { step: 'Showroom Verification', time: 'Next 15 mins', done: true },
@@ -185,29 +357,35 @@ export default function CheckoutPage() {
         </div>
 
         {/* Stepper Header (1. Details -> 2. Review -> 3. Payment) */}
+        {/* Stepper Header (0. Sign-In -> 1. Details -> 2. Review -> 3. Payment) */}
         <div className="flex items-center justify-between max-w-xl mx-auto mb-10 pb-2">
           {[
+            { num: 0, label: 'Sign-In Verification' },
             { num: 1, label: 'Delivery Details' },
             { num: 2, label: 'Order Review' },
             { num: 3, label: 'QR Payment & Confirmation' }
-          ].map((s) => (
-            <div key={s.num} className="flex flex-col items-center text-center">
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs mb-1.5 transition-all ${
-                  step === s.num
-                    ? 'bg-blue-600 text-white ring-4 ring-blue-100 shadow-sm'
-                    : step > s.num
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-200 text-slate-500'
-                }`}
-              >
-                {step > s.num ? <Check className="w-4 h-4 stroke-[3]" /> : s.num}
+          ].map((s) => {
+            const isCompleted = s.num === 0 ? Boolean(customer) : Boolean(customer && step > s.num);
+            const isCurrent = s.num === 0 ? !customer : Boolean(customer && step === s.num);
+            return (
+              <div key={s.num} className="flex flex-col items-center text-center">
+                <div
+                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs mb-1.5 transition-all ${
+                    isCurrent
+                      ? 'bg-blue-600 text-white ring-4 ring-blue-100 shadow-sm'
+                      : isCompleted
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-200 text-slate-500'
+                  }`}
+                >
+                  {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : s.num === 0 ? <Lock className="w-4 h-4" /> : s.num}
+                </div>
+                <span className={`text-xs font-bold ${isCurrent ? 'text-blue-600' : isCompleted ? 'text-slate-900' : 'text-slate-400'}`}>
+                  {s.label}
+                </span>
               </div>
-              <span className={`text-xs font-bold ${step === s.num ? 'text-blue-600' : step > s.num ? 'text-slate-900' : 'text-slate-400'}`}>
-                {s.label}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Main 2-Column Checkout Layout */}
@@ -216,9 +394,153 @@ export default function CheckoutPage() {
           {/* Left Column: Form & Payment Systems (7 Cols) */}
           <div className="lg:col-span-7 space-y-6">
             
-            {/* STEP 1: Customer & Delivery Address Form */}
-            {step === 1 && (
-              <form onSubmit={handleValidateStep1} className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            {/* If Customer is NOT Signed In: Mandatory Sign-In Gate */}
+            {!customer ? (
+              <div className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in duration-300">
+                <div className="flex items-start gap-4 pb-4 border-b border-slate-100">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#1A56DB] flex-shrink-0">
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 inline-block mb-1">
+                      Mandatory Step
+                    </span>
+                    <h2 className="text-lg sm:text-xl font-black text-gray-900">
+                      Sign In Required to Complete Purchase
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-1">
+                      To protect your order, enable showroom warranty verification, and receive genuine GST tax bills, customer authentication is strictly required before placing an order.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Option 1: Google One-Tap / Identity Sign-In */}
+                <div className="space-y-3">
+                  <span className="text-xs font-bold text-gray-700 block">
+                    Instant 1-Click Verification:
+                  </span>
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-3">
+                    <div id="checkout-google-gsi" className="min-h-[44px] flex items-center justify-center"></div>
+                    <span className="text-[11px] text-gray-400">
+                      Sign in instantly with your verified Google Account
+                    </span>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-gray-200"></div>
+                  <span className="flex-shrink mx-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    Or Sign In with Mobile Number
+                  </span>
+                  <div className="flex-grow border-t border-gray-200"></div>
+                </div>
+
+                {/* Option 2: Fast Mobile & Name Sign-In Form */}
+                <form onSubmit={handleFastCustomerSignIn} className="space-y-4">
+                  {fastSignInError && (
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{fastSignInError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700">Your Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Ramesh Singh"
+                      value={fastSignInName}
+                      onChange={(e) => setFastSignInName(e.target.value)}
+                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700">10-Digit Mobile / WhatsApp Number *</label>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={10}
+                      placeholder="e.g. 9876543210"
+                      value={fastSignInPhone}
+                      onChange={(e) => setFastSignInPhone(e.target.value)}
+                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:bg-white"
+                    />
+                    <span className="text-[10px] text-gray-400 block">
+                      Order confirmations and tracking alerts will be sent to this number.
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700">Email Address (Optional for PDF Bill)</label>
+                    <input
+                      type="email"
+                      placeholder="e.g. ramesh@example.com"
+                      value={fastSignInEmail}
+                      onChange={(e) => setFastSignInEmail(e.target.value)}
+                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full h-12 rounded-xl bg-[#1A56DB] hover:bg-[#1545B0] text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-[0.99]"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span>Sign In & Continue to Delivery Details</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </form>
+
+                {/* Trust Badges */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-gray-400 flex-wrap gap-2">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    100% Privacy Protected
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Store className="w-3.5 h-3.5 text-blue-600" />
+                    Garhwa Showroom Verified
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Verified Customer Status Bar */}
+                <div className="rounded-2xl bg-white border border-emerald-200 p-4 shadow-2xs flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
+                      {(customer.user_metadata?.full_name || customer.user_metadata?.name || customer.email || 'U')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-900">
+                          {customer.user_metadata?.full_name || customer.user_metadata?.name || 'Verified Customer'}
+                        </span>
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          Signed In
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-500">
+                        {customer.email && !customer.email.includes('@customer.lapiez.in') ? customer.email : phone ? `Mobile: ${phone}` : 'Active Account'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => signOutCustomer()}
+                    className="text-xs text-slate-500 hover:text-rose-600 font-semibold cursor-pointer transition-colors"
+                  >
+                    Switch Account
+                  </button>
+                </div>
+
+                {/* STEP 1: Customer & Delivery Address Form */}
+                {step === 1 && (
+                  <form onSubmit={handleValidateStep1} className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
                 
                 {/* Contact Information */}
                 <div>
@@ -359,7 +681,7 @@ export default function CheckoutPage() {
                   ) : (
                     <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
                       <strong className="block font-bold">Showroom Address for Counter Collection:</strong>
-                      <p>Lappy Solution, In front of G P Plaza, Chiniya Road, Garhwa, Jharkhand - 822114</p>
+                      <p>Lapiez, In front of G P Plaza, Chiniya Road, Garhwa, Jharkhand - 822114</p>
                       <p className="text-[11px] text-amber-800 pt-1">
                         Timings: Monday to Saturday (10:00 AM - 8:30 PM). Your items will be packaged and ready with test certificates.
                       </p>
@@ -610,7 +932,7 @@ export default function CheckoutPage() {
                       {/* Merchant Logo Badge */}
                       <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-slate-900">
                         <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center text-[10px]">LS</div>
-                        <span>LAPPY SOLUTION GARHWA</span>
+                        <span>LAPIEZ GARHWA</span>
                       </div>
 
                       {/* Live Generated QR Code */}
@@ -720,7 +1042,7 @@ export default function CheckoutPage() {
 
                     <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 text-[11px] text-slate-600">
                       <strong className="block text-slate-900">Official Current Account Details:</strong>
-                      <p>Account Name: <strong className="text-slate-900">LAPPY SOLUTION</strong></p>
+                      <p>Account Name: <strong className="text-slate-900">LAPIEZ GARHWA</strong></p>
                       <p>Bank: <strong className="text-slate-900">Bank of India, Garhwa Branch</strong></p>
                       <p>Account No: <strong className="text-slate-900 font-mono">482020110001892</strong></p>
                       <p>IFSC Code: <strong className="text-slate-900 font-mono">BKID0004820</strong></p>
@@ -757,6 +1079,8 @@ export default function CheckoutPage() {
 
               </div>
             )}
+          </>
+        )}
 
           </div>
 
@@ -764,6 +1088,13 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
             <div className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-7 shadow-sm space-y-5">
               
+              {!customer && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-medium flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>Please sign in on the left to continue to delivery & payment.</span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="text-base font-black text-slate-900">
                   Order Summary
@@ -791,12 +1122,74 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Coupon Code Section */}
+              <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Have a Coupon Code?</span>
+                  </span>
+                  {appliedCoupon && (
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-[11px] text-red-600 hover:text-red-700 font-semibold"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                {!appliedCoupon ? (
+                  <div className="space-y-1.5">
+                    <form onSubmit={(e) => handleApplyCouponCode(e)} className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Enter Promo / Coupon Code"
+                        value={inputCouponCode}
+                        onChange={(e) => setInputCouponCode(e.target.value.toUpperCase())}
+                        className="flex-1 h-9 px-3 rounded-lg bg-slate-50 border border-slate-300 text-xs font-mono uppercase focus:bg-white focus:border-blue-600 focus:outline-none"
+                      />
+                      <button
+                        type="submit"
+                        className="h-9 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        Apply
+                      </button>
+                    </form>
+
+                    {couponError && (
+                      <p className="text-[11px] text-red-600 font-medium">{couponError}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <div>
+                        <span className="font-mono font-bold text-emerald-900">{appliedCoupon.code}</span>
+                        <span className="text-[10px] text-emerald-700 block">{appliedCoupon.title} Applied</span>
+                      </div>
+                    </div>
+                    <span className="font-bold text-emerald-700">
+                      -₹{couponDiscount.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                )}
+              </div>
+
               {/* Cost Calculations */}
               <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="text-slate-900 font-semibold">₹{subtotal.toLocaleString('en-IN')}</span>
                 </div>
+                {appliedCoupon && couponDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-semibold">
+                    <span>Coupon Discount ({appliedCoupon.code})</span>
+                    <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Shipping & Handling</span>
                   <span className="text-emerald-700 font-bold">FREE</span>

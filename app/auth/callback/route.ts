@@ -2,16 +2,34 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+function getSafeRedirectPath(rawPath: string | null): string {
+  if (!rawPath) return '/account';
+  const trimmed = rawPath.trim();
+  // Ensure it starts with exactly one '/' and not '//' or '/\' to prevent protocol-relative open redirects
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.startsWith('/\\')) {
+    return trimmed;
+  }
+  return '/account';
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/account';
+  const next = getSafeRedirectPath(searchParams.get('next'));
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Supabase configuration missing in auth callback.');
+    return NextResponse.redirect(`${origin}/account?error=auth-misconfigured`);
+  }
 
   if (code) {
     const cookieStore = await cookies();
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rprmjhzjiuaktkubfuqt.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_75VfJ7bsDZvhM2wAiT-Q0Q_vbwU5K1O',
+      supabaseUrl,
+      supabaseKey,
       {
         cookies: {
           getAll() {
@@ -39,3 +57,4 @@ export async function GET(request: Request) {
 
   return NextResponse.redirect(`${origin}/account?error=auth-failed`);
 }
+

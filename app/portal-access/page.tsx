@@ -95,7 +95,7 @@ export default function PortalAccessPage() {
           </div>
 
           <h1 className="text-2xl font-black tracking-tight text-white">
-            {siteSettings?.siteName || 'Lappy Solution'} Console
+            {siteSettings?.siteName || 'Lapiez'} Console
           </h1>
           
           <p className="text-xs text-blue-200/80 leading-relaxed">

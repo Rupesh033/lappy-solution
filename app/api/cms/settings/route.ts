@@ -11,9 +11,20 @@ export async function GET() {
       where: { id: 'default' },
     });
 
+    const cleanSiteSettings = siteSettings ? {
+      ...siteSettings,
+      siteName: siteSettings.siteName || 'Lapiez',
+    } : null;
+
+    const cleanPaymentSettings = paymentSettings ? {
+      ...paymentSettings,
+      upiId: paymentSettings.upiId || 'lappy.solution@ybl',
+      upiName: paymentSettings.upiName || 'LAPIEZ GARHWA',
+    } : null;
+
     return NextResponse.json({
-      siteSettings,
-      paymentSettings,
+      siteSettings: cleanSiteSettings,
+      paymentSettings: cleanPaymentSettings,
     });
   } catch (error) {
     console.error('Error fetching CMS settings:', error);
@@ -30,24 +41,32 @@ export async function PUT(request: Request) {
     let updatedSite;
     let updatedPayment;
 
-    if (siteSettings) {
+    if (siteSettings && typeof siteSettings === 'object') {
       const siteFields = ['siteName', 'tagline', 'logo', 'favicon', 'phone', 'whatsapp', 'email', 'address', 'timings', 'announcementText', 'maintenanceMode'];
-      const safeSiteSettings = Object.fromEntries(Object.entries(siteSettings).filter(([key]) => siteFields.includes(key)));
-      updatedSite = await prisma.siteSettings.upsert({
-        where: { id: 'default' },
-        update: safeSiteSettings,
-        create: { id: 'default', ...safeSiteSettings },
-      });
+      const safeSiteSettings = Object.fromEntries(
+        Object.entries(siteSettings).filter(([key, val]) => siteFields.includes(key) && val !== undefined)
+      );
+      if (Object.keys(safeSiteSettings).length > 0) {
+        updatedSite = await prisma.siteSettings.upsert({
+          where: { id: 'default' },
+          update: safeSiteSettings,
+          create: { id: 'default', ...safeSiteSettings },
+        });
+      }
     }
 
-    if (paymentSettings) {
+    if (paymentSettings && typeof paymentSettings === 'object') {
       const paymentFields = ['upiId', 'upiName', 'codEnabled', 'gstRate', 'gstin'];
-      const safePaymentSettings = Object.fromEntries(Object.entries(paymentSettings).filter(([key]) => paymentFields.includes(key)));
-      updatedPayment = await prisma.paymentSettings.upsert({
-        where: { id: 'default' },
-        update: safePaymentSettings,
-        create: { id: 'default', ...safePaymentSettings },
-      });
+      const safePaymentSettings = Object.fromEntries(
+        Object.entries(paymentSettings).filter(([key, val]) => paymentFields.includes(key) && val !== undefined)
+      );
+      if (Object.keys(safePaymentSettings).length > 0) {
+        updatedPayment = await prisma.paymentSettings.upsert({
+          where: { id: 'default' },
+          update: safePaymentSettings,
+          create: { id: 'default', ...safePaymentSettings },
+        });
+      }
     }
 
     return NextResponse.json({

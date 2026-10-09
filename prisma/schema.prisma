@@ -11,7 +11,7 @@ generator client {
 
 model SiteSettings {
   id              String   @id @default("default")
-  siteName        String   @default("Lappy Solution")
+  siteName        String   @default("Lapiez")
   tagline         String   @default("Technology • Security • Solutions")
   logo            String   @default("/images/logo.png")
   favicon         String   @default("/favicon.ico")
@@ -38,8 +38,8 @@ model ThemeSettings {
 
 model PaymentSettings {
   id              String   @id @default("default")
-  upiId           String   @default("9608828288@okbizaxis")
-  upiName         String   @default("LAPPY SOLUTION GARHWA")
+  upiId           String   @default("lappy.solution@ybl")
+  upiName         String   @default("LAPIEZ GARHWA")
   codEnabled      Boolean  @default(true)
   gstRate         Int      @default(18)
   gstin           String   @default("20AABCL1234F1Z5")
@@ -142,7 +142,7 @@ model BlogPost {
   content    String
   coverImage String
   category   String   @default("Hardware Guide")
-  author     String   @default("Lappy Solution Team")
+  author     String   @default("Lapiez Team")
   readTime   String   @default("4 min read")
   tags       String?
   status     String   @default("published") // published | draft

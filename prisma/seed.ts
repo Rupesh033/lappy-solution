@@ -5,7 +5,7 @@ import { STORE_INFO, INITIAL_ORDERS } from '../data/storeData';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting Lappy Solution CMS Database Seeding...');
+  console.log('🌱 Starting Lapiez CMS Database Seeding...');
 
   // 1. Site Settings
   await prisma.siteSettings.upsert({
@@ -49,7 +49,7 @@ async function main() {
     create: {
       id: 'default',
       upiId: '9608828288@okbizaxis',
-      upiName: 'LAPPY SOLUTION GARHWA',
+      upiName: 'LAPIEZ GARHWA',
       codEnabled: true,
       gstRate: 18,
       gstin: '20AABCL1234F1Z5'
@@ -89,7 +89,7 @@ async function main() {
         desktopImage: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80',
         buttonText: 'Shop Laptop Deals',
         buttonUrl: '/shop?cat=Laptops',
-        whatsappMsg: 'Hello Lappy Solution Garhwa, I want to inquire about festival laptop offers and pricing.',
+        whatsappMsg: 'Hello Lapiez Garhwa, I want to inquire about festival laptop offers and pricing.',
         bgGradient: 'from-[#0A1633] via-[#0F2960] to-[#1A56DB]',
         position: 1
       },
@@ -101,7 +101,7 @@ async function main() {
         desktopImage: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&auto=format&fit=crop&q=80',
         buttonText: 'View CCTV Packages',
         buttonUrl: '/shop?cat=CCTV%20%26%20Security',
-        whatsappMsg: 'Hello Lappy Solution Garhwa, I want a quote for 4-camera CP-PLUS CCTV security kit.',
+        whatsappMsg: 'Hello Lapiez Garhwa, I want a quote for 4-camera CP-PLUS CCTV security kit.',
         bgGradient: 'from-[#03241C] via-[#064E3B] to-[#047857]',
         position: 2
       },
@@ -113,7 +113,7 @@ async function main() {
         desktopImage: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=800&auto=format&fit=crop&q=80',
         buttonText: 'Explore Custom PCs',
         buttonUrl: '/shop?cat=Computers',
-        whatsappMsg: 'Hello Lappy Solution Garhwa, I want to configure a custom PC for video editing / gaming.',
+        whatsappMsg: 'Hello Lapiez Garhwa, I want to configure a custom PC for video editing / gaming.',
         bgGradient: 'from-[#171033] via-[#2E1065] to-[#4338CA]',
         position: 3
       },
@@ -125,7 +125,7 @@ async function main() {
         desktopImage: '/images/categories/laptop-ssd.png',
         buttonText: 'Explore Spares & SSDs',
         buttonUrl: '/shop?search=SSD',
-        whatsappMsg: 'Hello Lappy Solution Garhwa, I want to upgrade my laptop SSD / buy original adapter.',
+        whatsappMsg: 'Hello Lapiez Garhwa, I want to upgrade my laptop SSD / buy original adapter.',
         bgGradient: 'from-[#381504] via-[#78350F] to-[#EA580C]',
         position: 4
       }
@@ -253,7 +253,7 @@ async function main() {
     update: {},
     create: {
       email: 'admin@lappysolution.com',
-      name: 'Lappy Solution Owner',
+      name: 'Lapiez Owner',
       role: 'SUPER_ADMIN'
     }
   });

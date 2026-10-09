@@ -66,7 +66,7 @@ async function seedData() {
     { 
       sectionKey: 'blogs_preview', 
       title: 'Latest Tech Guides & Hardware News', 
-      subtitle: 'Expert buying tips, laptop repair advice, and tech tutorials from Lappy Solution engineers.',
+      subtitle: 'Expert buying tips, laptop repair advice, and tech tutorials from Lapiez engineers.',
       badge: '📰 GARHWA TECH DIARY',
       position: 9, 
       isVisible: true 
@@ -98,13 +98,13 @@ async function seedData() {
     {
       slug: 'terms-and-conditions',
       title: 'Terms & Conditions',
-      metaTitle: 'Terms & Conditions | Lappy Solution Garhwa',
-      metaDesc: 'Official terms and conditions for ordering, showroom pickup, GST invoicing, and warranty at Lappy Solution.',
+      metaTitle: 'Terms & Conditions | Lapiez Garhwa',
+      metaDesc: 'Official terms and conditions for ordering, showroom pickup, GST invoicing, and warranty at Lapiez.',
       content: `## 1. Introduction & Store Overview
-Welcome to **Lappy Solution** (Opposite G P Plaza, Near Old Bus Stand, Chiniya Road, Garhwa, Jharkhand - 822114). By placing an order, requesting an estimate, or purchasing products on this platform or at our physical showroom, you agree to comply with and be bound by the following terms and conditions.
+Welcome to **Lapiez** (Opposite G P Plaza, Near Old Bus Stand, Chiniya Road, Garhwa, Jharkhand - 822114). By placing an order, requesting an estimate, or purchasing products on this platform or at our physical showroom, you agree to comply with and be bound by the following terms and conditions.
 
 ## 2. 100% Genuine Hardware & 18% GST Invoicing
-All products sold by Lappy Solution (Laptops, Frontech Monitors, CP-PLUS CCTV kits, Crucial/Kingston SSDs, original adapters, and laptop batteries) are **100% genuine and brand certified**. Every transaction includes a valid **CBIC Rule 46 compliant 18% GST Tax Invoice** bearing our legal GSTIN (20AABCL1234F1Z5) which allows legitimate Input Tax Credit (ITC) claims for business accounts.
+All products sold by Lapiez (Laptops, Frontech Monitors, CP-PLUS CCTV kits, Crucial/Kingston SSDs, original adapters, and laptop batteries) are **100% genuine and brand certified**. Every transaction includes a valid **CBIC Rule 46 compliant 18% GST Tax Invoice** bearing our legal GSTIN (20AABCL1234F1Z5) which allows legitimate Input Tax Credit (ITC) claims for business accounts.
 
 ## 3. Order Processing & Showroom Pickup
 * **Showroom Pickup:** Ready within 30 minutes of placing the order. Customers can inspect the hardware live on our Chiniya Road testing bench before handover.
@@ -126,8 +126,8 @@ For any inquiries, bill corrections, or service appointments:
     {
       slug: 'privacy-policy',
       title: 'Privacy Policy',
-      metaTitle: 'Privacy Policy | Lappy Solution Garhwa',
-      metaDesc: 'How Lappy Solution protects your personal information and transaction records.',
+      metaTitle: 'Privacy Policy | Lapiez Garhwa',
+      metaDesc: 'How Lapiez protects your personal information and transaction records.',
       content: `## 1. Information We Collect
 We collect necessary customer details to fulfill orders, generate GST tax invoices, and provide warranty support. This includes your Name, Mobile/WhatsApp Number, Delivery Address, Pincode, and optional Business Name / GSTIN.
 
@@ -138,7 +138,7 @@ Your details are used exclusively for:
 * Manufacturer warranty registration and showroom service history.
 
 ## 3. Payment Data Security
-Lappy Solution **never stores credit card, debit card, or UPI PINs**. Payments made through dynamic QR codes or payment links are processed directly by authorized NPCI-certified UPI applications (Axis Bank / BHIM / PhonePe / Google Pay).
+Lapiez **never stores credit card, debit card, or UPI PINs**. Payments made through dynamic QR codes or payment links are processed directly by authorized NPCI-certified UPI applications (Axis Bank / BHIM / PhonePe / Google Pay).
 
 ## 4. Zero Data Selling Guarantee
 We respect your privacy. Your personal information is never sold, leased, or distributed to third-party marketing companies.
@@ -149,10 +149,10 @@ If you have any questions regarding your data or wish to update your records, co
     {
       slug: 'warranty-policy',
       title: 'Warranty & Replacement Policy',
-      metaTitle: 'Warranty & Replacement Policy | Lappy Solution Garhwa',
+      metaTitle: 'Warranty & Replacement Policy | Lapiez Garhwa',
       metaDesc: 'Learn about our testing warranty, manufacturer claims, and refurbished laptop guarantees.',
       content: `## 1. Brand New Hardware Warranty
-All brand new products purchased from Lappy Solution carry 100% genuine manufacturer warranties across India:
+All brand new products purchased from Lapiez carry 100% genuine manufacturer warranties across India:
 * **Frontech Monitors & Displays:** 3-Year all-India manufacturer warranty.
 * **Frontech Keyboards, Mice, Audio:** 1-Year replacement warranty.
 * **HP, Dell, Lenovo Laptops:** 1-Year on-site or depot brand warranty.
@@ -166,15 +166,15 @@ For certified refurbished laptops and printers:
 * **Battery & Adapter Assurance:** All refurbished laptops are supplied with certified original batteries providing healthy backup and tested chargers.
 
 ## 3. How to Claim Warranty
-Simply bring your hardware along with the **Lappy Solution GST Invoice** (PDF or printout) to our showroom counter at **Chiniya Road, Garhwa**, or message our dedicated support desk on WhatsApp at **+91 9608828288**.`
+Simply bring your hardware along with the **Lapiez GST Invoice** (PDF or printout) to our showroom counter at **Chiniya Road, Garhwa**, or message our dedicated support desk on WhatsApp at **+91 9608828288**.`
     },
     {
       slug: 'about-us',
-      title: 'About Lappy Solution Garhwa',
-      metaTitle: 'About Us | Lappy Solution - Leading IT & Hardware Showroom in Garhwa',
+      title: 'About Lapiez Garhwa',
+      metaTitle: 'About Us | Lapiez - Leading IT & Hardware Showroom in Garhwa',
       metaDesc: 'Garhwa’s trusted technology hub for laptops, Frontech monitors, CCTV kits, and chip-level repairs.',
-      content: `## Welcome to Lappy Solution
-Established as Garhwa’s premier technology destination, **Lappy Solution** provides an end-to-end ecosystem for personal computers, business workstations, official Frontech displays, CCTV surveillance kits, and certified laptop repairs.
+      content: `## Welcome to Lapiez
+Established as Garhwa’s premier technology destination, **Lapiez** provides an end-to-end ecosystem for personal computers, business workstations, official Frontech displays, CCTV surveillance kits, and certified laptop repairs.
 
 ## Why Customers in Garhwa & Palamu Trust Us:
 * **100% Genuine Sealed Products:** Direct distributor sourcing guarantees authenticity.
@@ -207,7 +207,7 @@ Established as Garhwa’s premier technology destination, **Lappy Solution** pro
       excerpt: 'Discover why students, coaching institutes, and businesses in Garhwa are choosing Grade-A certified refurbished Dell Latitude and HP EliteBook laptops over cheap new laptops.',
       coverImage: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=1000&auto=format&fit=crop&q=80',
       category: 'Buying Guide',
-      author: 'Rupesh Kumar (Lappy Solution Tech Team)',
+      author: 'Rupesh Kumar (Lapiez Tech Team)',
       readTime: '5 min read',
       tags: 'refurbished,laptops,guide,dell,hp',
       content: `Buying a laptop today can be overwhelming. Brand-new budget laptops under ₹30,000 often cut corners with cheap plastic chassis, dim displays, and entry-level Celeron or Athlon processors that lag after a few months.
@@ -218,7 +218,7 @@ On the other hand, **Certified Refurbished Business Laptops** (such as Dell Lati
 Enterprise laptops are built to withstand daily office transit, minor spills, and high workloads. Their metal hinges and cooling systems far outperform retail plastic models.
 
 ### 2. Powerful Core i5/i7 Processors + Fast NVMe SSDs
-At Lappy Solution Garhwa, all refurbished laptops are upgraded with brand-new Crucial/Kingston NVMe SSDs and 8GB to 16GB of DDR4 RAM. They boot Windows 11 in under 10 seconds.
+At Lapiez Garhwa, all refurbished laptops are upgraded with brand-new Crucial/Kingston NVMe SSDs and 8GB to 16GB of DDR4 RAM. They boot Windows 11 in under 10 seconds.
 
 ### 3. Rigorous 28-Point Showroom Testing Bench
 Every machine undergoes:
@@ -232,10 +232,10 @@ Visit our Chiniya Road showroom to test any laptop with live benchmarks before m
     {
       slug: 'frontech-curved-gaming-monitors-review',
       title: 'Review: Frontech 100Hz & 200Hz Curved Frameless Monitors in Garhwa',
-      excerpt: 'An in-depth look at Frontech’s Ultima & Gaming monitor series available at Lappy Solution with 3-year warranty and prices starting at ₹5,999.',
+      excerpt: 'An in-depth look at Frontech’s Ultima & Gaming monitor series available at Lapiez with 3-year warranty and prices starting at ₹5,999.',
       coverImage: 'https://cdn.shopify.com/s/files/1/0854/3227/1149/files/24.5_inch_mon_0087v_01.jpg?v=1772186717',
       category: 'Display & Gaming',
-      author: 'Lappy Solution Hardware Lab',
+      author: 'Lapiez Hardware Lab',
       readTime: '4 min read',
       tags: 'frontech,monitors,gaming,curved,review',
       content: `Frontech has revolutionized the Indian monitor market with their new **Ultima and Gaming series displays**. For users in Garhwa and Palamu looking for frameless designs, vibrant color accuracy, and high refresh rates without breaking the bank, Frontech offers unbeatable value.
@@ -254,7 +254,7 @@ Drop by our Garhwa showroom counter to witness the display clarity and contrast 
       excerpt: 'Learn the differences between 2MP, 5MP, and IP CCTV cameras, night vision requirements, and mobile app live view setup for Garhwa & Palamu properties.',
       coverImage: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=1000&auto=format&fit=crop&q=80',
       category: 'Security & Surveillance',
-      author: 'Lappy Solution Security Services',
+      author: 'Lapiez Security Services',
       readTime: '6 min read',
       tags: 'cctv,cpplus,security,cameras,installation',
       content: `Security is essential for retail shops, godowns, schools, and residences across Jharkhand. Choosing the right surveillance setup prevents blind spots, captures clear number plates, and provides instant mobile access.
@@ -267,7 +267,7 @@ Drop by our Garhwa showroom counter to witness the display clarity and contrast 
 Traditional IR cameras switch to black and white in the dark. Modern **Full-Color LED cameras** illuminate the area with warm soft light and record vibrant, crystal-clear color video even in pitch darkness.
 
 ### 3. Remote Live View on Your Mobile Phone
-Every CCTV package installed by Lappy Solution includes complete mobile app setup so you can watch live video, playback footage, and receive motion alerts on your Android or iPhone from anywhere in the world.
+Every CCTV package installed by Lapiez includes complete mobile app setup so you can watch live video, playback footage, and receive motion alerts on your Android or iPhone from anywhere in the world.
 
 Contact our team at **+91 9608828288** for a free site inspection and instant quotation in Garhwa!`
     }

@@ -1,0 +1,392 @@
+{
+  "collections": [
+    {
+      "id": 10593,
+      "name": "Computer & laptops",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp",
+      "categories": []
+    },
+    {
+      "id": 10594,
+      "name": "Antivirus",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/M0Si0HDm.webp",
+      "categories": []
+    },
+    {
+      "id": 10595,
+      "name": "Laptop Parts",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/cJZR0B6A.webp",
+      "categories": [
+        {
+          "id": 6282356,
+          "name": "Laptop Body",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/f0df7rlA.webp"
+        },
+        {
+          "id": 6282347,
+          "name": "Laptop Parts",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/Diz3MPXE.webp"
+        }
+      ]
+    },
+    {
+      "id": 10676,
+      "name": "Computer Peripherals",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/q1ZdCuDa.webp",
+      "categories": [
+        {
+          "id": 6282351,
+          "name": "Mouse & Keyboard",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/L8IwalBC.webp"
+        },
+        {
+          "id": 6283522,
+          "name": "SPEAKER",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/2BUGAooM.webp"
+        },
+        {
+          "id": 6282349,
+          "name": "Computer Peripherals",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/GwPcb1yj.webp"
+        },
+        {
+          "id": 6282352,
+          "name": "Cable & Connector",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/el7ONA81.webp"
+        }
+      ]
+    },
+    {
+      "id": 10678,
+      "name": "Printer Parts",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/jYQQGsRT.webp",
+      "categories": [
+        {
+          "id": 6282341,
+          "name": "Toner & ink",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/l2p8ucCm.webp"
+        },
+        {
+          "id": 6287242,
+          "name": "Paper &Sticker",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/ow8dNWPb.webp"
+        },
+        {
+          "id": 5998950,
+          "name": "Printer Parts",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/OlOCqBJp.webp"
+        }
+      ]
+    },
+    {
+      "id": 10679,
+      "name": "CCTV",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/YcXl0oyU.webp",
+      "categories": [
+        {
+          "id": 6282350,
+          "name": "CCTV",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/hgA6MLZj.webp"
+        },
+        {
+          "id": 6282352,
+          "name": "Cable & Connector",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/el7ONA81.webp"
+        }
+      ]
+    },
+    {
+      "id": 10680,
+      "name": "Electronics",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/bYcAegxA.webp",
+      "categories": []
+    },
+    {
+      "id": 10681,
+      "name": "2nd Hand items",
+      "imageUrl": "https://cdn.dotpe.in/longtail/collection/compressed/8473996/K3PiQoVO.webp",
+      "categories": []
+    },
+    {
+      "id": 10701,
+      "name": "Printer",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/ZIB6owYD.webp",
+      "categories": [
+        {
+          "id": 6282341,
+          "name": "Toner & ink",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/l2p8ucCm.webp"
+        },
+        {
+          "id": 6282340,
+          "name": "Printers",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/miAu6UKK.webp"
+        }
+      ]
+    },
+    {
+      "id": 10704,
+      "name": "Biomatric",
+      "imageUrl": "https://cdn.dotpe.in/longtail/store-items/8473996/bUVqEHxs.webp",
+      "categories": []
+    },
+    {
+      "id": 19459,
+      "name": "LAPTOP",
+      "imageUrl": "",
+      "categories": []
+    },
+    {
+      "id": 28636,
+      "name": "accessories",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_collection/8473996/Yk0fk2IC.webp",
+      "categories": [
+        {
+          "id": 6282407,
+          "name": "Pendrive & SD Card",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/8vFO2TCN.webp"
+        },
+        {
+          "id": 6282352,
+          "name": "Cable & Connector",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/el7ONA81.webp"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "name": "Other Collections",
+      "imageUrl": "",
+      "categories": [
+        {
+          "id": 6282341,
+          "name": "Toner & ink",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/l2p8ucCm.webp"
+        },
+        {
+          "id": 6282351,
+          "name": "Mouse & Keyboard",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/L8IwalBC.webp"
+        },
+        {
+          "id": 6282350,
+          "name": "CCTV",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/hgA6MLZj.webp"
+        },
+        {
+          "id": 6282340,
+          "name": "Printers",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/miAu6UKK.webp"
+        },
+        {
+          "id": 6283522,
+          "name": "SPEAKER",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/2BUGAooM.webp"
+        },
+        {
+          "id": 6282342,
+          "name": "Computer & Laptop",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/IeLmoeqB.webp"
+        },
+        {
+          "id": 6282549,
+          "name": "Antivirus",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/RTFwIMif.webp"
+        },
+        {
+          "id": 6282546,
+          "name": "Refurbished",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/XmZkrZN3.webp"
+        },
+        {
+          "id": 6282407,
+          "name": "Pendrive & SD Card",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/8vFO2TCN.webp"
+        },
+        {
+          "id": 6282406,
+          "name": "SSD & Hard Disk",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/AOIZttdP.webp"
+        },
+        {
+          "id": 6282405,
+          "name": "Electronics",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/r7ipJc8i.webp"
+        },
+        {
+          "id": 6282349,
+          "name": "Computer Peripherals",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/GwPcb1yj.webp"
+        },
+        {
+          "id": 6282352,
+          "name": "Cable & Connector",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/el7ONA81.webp"
+        },
+        {
+          "id": 6282353,
+          "name": "Biometric & Scanner",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/iRn5yJ2u.webp"
+        },
+        {
+          "id": 6282354,
+          "name": "Laptop Battery",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/NwYWdydV.webp"
+        },
+        {
+          "id": 6282355,
+          "name": "Laptop Peripherals",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/xNVYuAFx.webp"
+        },
+        {
+          "id": 6282356,
+          "name": "Laptop Body",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/f0df7rlA.webp"
+        },
+        {
+          "id": 6282357,
+          "name": "Laptop Adepter",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/jvvqVbL9.webp"
+        },
+        {
+          "id": 6282347,
+          "name": "Laptop Parts",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/Diz3MPXE.webp"
+        },
+        {
+          "id": 5998950,
+          "name": "Printer Parts",
+          "imageUrl": "https://cdn.dotpe.in/longtail/item_category/compressed/8473996/OlOCqBJp.webp"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "id": 6282341,
+      "name": "Toner & ink",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/0MLEw5kt.webp",
+      "activeProducts": 41
+    },
+    {
+      "id": 6287242,
+      "name": "Paper &Sticker",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/mnioCDmy.webp",
+      "activeProducts": 1
+    },
+    {
+      "id": 6282351,
+      "name": "Mouse & Keyboard",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/dOCQTeoY.webp",
+      "activeProducts": 30
+    },
+    {
+      "id": 6282350,
+      "name": "CCTV",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/ODxRPjlK.webp",
+      "activeProducts": 24
+    },
+    {
+      "id": 6282340,
+      "name": "Printers",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/yxNuvhqL.webp",
+      "activeProducts": 10
+    },
+    {
+      "id": 6283522,
+      "name": "SPEAKER",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/JyVfnons.webp",
+      "activeProducts": 3
+    },
+    {
+      "id": 6282342,
+      "name": "Computer & Laptop",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/xs0h04dj.webp",
+      "activeProducts": 2
+    },
+    {
+      "id": 6282549,
+      "name": "Antivirus",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/VH4tVZy3.webp",
+      "activeProducts": 14
+    },
+    {
+      "id": 6282546,
+      "name": "Refurbished",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/xkKf6HNX.webp",
+      "activeProducts": 1
+    },
+    {
+      "id": 6282407,
+      "name": "Pendrive & SD Card",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/2AZ4d8vt.webp",
+      "activeProducts": 3
+    },
+    {
+      "id": 6282406,
+      "name": "SSD & Hard Disk",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/McOO3lrp.webp",
+      "activeProducts": 3
+    },
+    {
+      "id": 6282405,
+      "name": "Electronics",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/oenljVRM.webp",
+      "activeProducts": 5
+    },
+    {
+      "id": 6282349,
+      "name": "Computer Peripherals",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/oQTjA0ON.webp",
+      "activeProducts": 23
+    },
+    {
+      "id": 6282352,
+      "name": "Cable & Connector",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/lFlSylhj.webp",
+      "activeProducts": 27
+    },
+    {
+      "id": 6282353,
+      "name": "Biometric & Scanner",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/zSnb5zim.webp",
+      "activeProducts": 3
+    },
+    {
+      "id": 6282354,
+      "name": "Laptop Battery",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/eeFFVXks.webp",
+      "activeProducts": 17
+    },
+    {
+      "id": 6282355,
+      "name": "Laptop Peripherals",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/rX7OX8M8.webp",
+      "activeProducts": 9
+    },
+    {
+      "id": 6282356,
+      "name": "Laptop Body",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/z5NcNjVt.webp",
+      "activeProducts": 5
+    },
+    {
+      "id": 6282357,
+      "name": "Laptop Adepter",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/zIHC2Qpu.webp",
+      "activeProducts": 6
+    },
+    {
+      "id": 6282347,
+      "name": "Laptop Parts",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/OwGeDQwz.webp",
+      "activeProducts": 23
+    },
+    {
+      "id": 5998950,
+      "name": "Printer Parts",
+      "imageUrl": "https://cdn.dotpe.in/longtail/item_category/8473996/BstOgDA9.webp",
+      "activeProducts": 22
+    }
+  ]
+}

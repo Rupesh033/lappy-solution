@@ -11,7 +11,7 @@ import { STORE_INFO } from '../data/storeData';
 import { useStore } from '../context/StoreContext';
 
 export const Footer: React.FC = () => {
-  const { setIsAccountOpen, setAccountTab } = useStore();
+  const { setIsAccountOpen, setAccountTab, customPages, siteSettings } = useStore();
 
   // Policy Modal state
   const [activePolicy, setActivePolicy] = useState<'privacy' | 'refund' | 'shipping' | 'terms' | 'gst' | null>(null);
@@ -60,15 +60,15 @@ export const Footer: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-3">
                 <a
-                  href={`tel:${STORE_INFO.phone}`}
+                  href={`tel:${siteSettings?.phone || STORE_INFO.phone}`}
                   className="h-[40px] px-4 rounded-[8px] bg-white hover:bg-slate-50 text-[#0F172A] text-[13px] font-semibold inline-flex items-center gap-2 transition-colors border border-[#CBD5E1] shadow-2xs"
                 >
                   <Phone className="w-4 h-4 text-[#2563EB]" />
-                  <span>{STORE_INFO.phone}</span>
+                  <span>{siteSettings?.phone || STORE_INFO.phone}</span>
                 </a>
 
                 <a
-                  href={`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent('Hello Lappy Solution Garhwa, I need quick support / inquiry about hardware.')}`}
+                  href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I need quick support / inquiry about hardware.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="h-[40px] px-4 rounded-[8px] bg-[#16A34A] hover:bg-[#15803D] text-white text-[13px] font-semibold inline-flex items-center gap-2 transition-colors shadow-2xs"
@@ -106,14 +106,22 @@ export const Footer: React.FC = () => {
               {/* Brand Logo */}
               <Link href="/" className="inline-flex items-center gap-3 group">
                 <div className="w-10 h-10 rounded-[10px] bg-[#2563EB] flex items-center justify-center text-white font-bold text-lg shadow-sm transition-transform group-hover:scale-105">
-                  LS
+                  LP
                 </div>
                 <div>
                   <span className="font-bold text-[#0F172A] text-[19px] tracking-tight block">
-                    LAPPY <span className="text-[#2563EB]">SOLUTION</span>
+                    {siteSettings?.siteName ? (
+                      siteSettings.siteName.toLowerCase().includes('lapiez') ? (
+                        <>LAP<span className="text-[#2563EB]">IEZ</span></>
+                      ) : (
+                        siteSettings.siteName
+                      )
+                    ) : (
+                      <>LAP<span className="text-[#2563EB]">IEZ</span></>
+                    )}
                   </span>
                   <span className="text-[10px] text-[#64748B] uppercase tracking-widest font-semibold block">
-                    Technology • Security • Solutions
+                    {siteSettings?.tagline || 'Technology • Security • Solutions'}
                   </span>
                 </div>
               </Link>
@@ -126,18 +134,18 @@ export const Footer: React.FC = () => {
               <div className="space-y-2 text-[12.5px] pt-1">
                 <div className="flex items-start gap-2.5 text-[#334155]">
                   <MapPin className="w-4 h-4 text-[#2563EB] flex-shrink-0 mt-0.5" />
-                  <span>{STORE_INFO.address}, Garhwa, Jharkhand - {STORE_INFO.pincode}</span>
+                  <span>{siteSettings?.address || `${STORE_INFO.address}, Garhwa, Jharkhand - ${STORE_INFO.pincode}`}</span>
                 </div>
 
                 <div className="flex items-center gap-2.5 text-[#334155]">
                   <Clock className="w-4 h-4 text-[#D97706] flex-shrink-0" />
-                  <span>{STORE_INFO.timings}</span>
+                  <span>{siteSettings?.timings || STORE_INFO.timings}</span>
                 </div>
 
                 <div className="flex items-center gap-2.5 text-[#334155]">
                   <Mail className="w-4 h-4 text-[#2563EB] flex-shrink-0" />
-                  <a href={`mailto:${STORE_INFO.email}`} className="hover:text-[#2563EB] transition-colors">
-                    {STORE_INFO.email}
+                  <a href={`mailto:${siteSettings?.email || STORE_INFO.email}`} className="hover:text-[#2563EB] transition-colors">
+                    {siteSettings?.email || STORE_INFO.email}
                   </a>
                 </div>
               </div>
@@ -146,7 +154,7 @@ export const Footer: React.FC = () => {
               <div className="pt-2 flex items-center gap-2">
                 {/* WhatsApp */}
                 <a
-                  href={`https://wa.me/${STORE_INFO.whatsapp}`}
+                  href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
@@ -325,7 +333,22 @@ export const Footer: React.FC = () => {
                 </li>
                 <li>
                   <Link href="/pages/about-us" className="hover:text-[#2563EB] transition-colors block">
-                    About Lappy Solution
+                    About Lapiez
+                  </Link>
+                </li>
+                {/* Dynamically render any additional CMS pages created in Admin */}
+                {customPages && customPages
+                  .filter((p) => p && !['terms-and-conditions', 'privacy-policy', 'warranty-policy', 'about-us'].includes(p.slug) && (p.status === 'published' || !p.status))
+                  .map((cp) => (
+                    <li key={cp.id || cp.slug}>
+                      <Link href={`/pages/${cp.slug}`} className="hover:text-[#2563EB] transition-colors block">
+                        {cp.title}
+                      </Link>
+                    </li>
+                  ))}
+                <li>
+                  <Link href="/contact" className="text-[#2563EB] font-bold hover:underline transition-colors block">
+                    Contact Us & Showroom
                   </Link>
                 </li>
                 <li>
@@ -390,7 +413,7 @@ export const Footer: React.FC = () => {
             
             <div>
               <span>© {new Date().getFullYear()} </span>
-              <strong className="text-[#0F172A] font-semibold">Lappy Solution Garhwa</strong>.
+              <strong className="text-[#0F172A] font-semibold">Lapiez Garhwa</strong>.
               <span className="hidden sm:inline"> In front of G P Plaza, Chiniya Road, Garhwa, Jharkhand 822114.</span>
             </div>
 
@@ -458,7 +481,7 @@ export const Footer: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">Privacy Policy</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  At Lappy Solution Garhwa, we only collect essential customer contact details (Name, Phone number, and Showroom/Delivery Address) required for issuing GST tax invoices, processing warranty claims, and scheduling on-site technician visits.
+                  At Lapiez Garhwa, we only collect essential customer contact details (Name, Phone number, and Showroom/Delivery Address) required for issuing GST tax invoices, processing warranty claims, and scheduling on-site technician visits.
                 </p>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   We never sell, rent, or trade your contact information. All payment transactions via UPI, Cards, or Net Banking are handled through encrypted banking channels.
@@ -507,7 +530,7 @@ export const Footer: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">Terms of Service</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  All hardware sold by Lappy Solution carries official brand warranty as stated on the tax invoice. On-site CCTV installations include comprehensive cabling and 1-2 years hardware warranty support.
+                  All hardware sold by Lapiez carries official brand warranty as stated on the tax invoice. On-site CCTV installations include comprehensive cabling and 1-2 years hardware warranty support.
                 </p>
               </div>
             )}
@@ -520,7 +543,7 @@ export const Footer: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">18% GST Input Tax Credit (ITC)</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  All products sold at Lappy Solution include authentic GST Tax Invoices with accurate HSN codes. Registered businesses, schools, colleges, and coaching centers can claim 18% input credit by providing their GSTIN during checkout or at our showroom counter.
+                  All products sold at Lapiez include authentic GST Tax Invoices with accurate HSN codes. Registered businesses, schools, colleges, and coaching centers can claim 18% input credit by providing their GSTIN during checkout or at our showroom counter.
                 </p>
               </div>
             )}

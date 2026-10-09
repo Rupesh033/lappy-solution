@@ -6,22 +6,34 @@ import { hasAdminSession } from '@/lib/adminAuth';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const slug = searchParams.get('slug');
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const requestedLimit = Number(searchParams.get('limit'));
     const limit = Number.isInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 100) : undefined;
 
     const where: Prisma.ProductWhereInput = { status: 'active' };
-    if (category && category !== 'All' && category !== 'All Products') {
-      where.category = category;
-    }
-    if (search) {
+    if (id) {
       where.OR = [
-        { name: { contains: search } },
-        { brand: { contains: search } },
-        { specs: { contains: search } },
-        { sku: { contains: search } },
+        { id: id },
+        { slug: id },
+        { sku: id },
       ];
+    } else if (slug) {
+      where.slug = slug;
+    } else {
+      if (category && category !== 'All' && category !== 'All Products') {
+        where.category = category;
+      }
+      if (search) {
+        where.OR = [
+          { name: { contains: search } },
+          { brand: { contains: search } },
+          { specs: { contains: search } },
+          { sku: { contains: search } },
+        ];
+      }
     }
 
     const products = await prisma.product.findMany({
@@ -101,13 +113,44 @@ export async function PUT(request: Request) {
     const { id } = body;
     if (typeof id !== 'string') return NextResponse.json({ error: 'Product ID is required.' }, { status: 400 });
     const allowedFields = ['name', 'slug', 'category', 'brand', 'price', 'mrp', 'discount', 'specs', 'description', 'image', 'inStock', 'stockQuantity', 'sku', 'rating', 'featured', 'status'];
-    const data = Object.fromEntries(Object.entries(body).filter(([key]) => allowedFields.includes(key)));
+    const data: Record<string, any> = Object.fromEntries(
+      Object.entries(body).filter(([key]) => allowedFields.includes(key))
+    );
     if (Object.keys(data).length === 0) return NextResponse.json({ error: 'No valid product fields provided.' }, { status: 400 });
 
-    const product = await prisma.product.update({
-      where: { id },
-      data,
-    });
+    if (data.price !== undefined) data.price = Number(data.price);
+    if (data.mrp !== undefined) data.mrp = Number(data.mrp);
+    if (data.stockQuantity !== undefined) data.stockQuantity = Number(data.stockQuantity);
+    if (data.discount !== undefined) data.discount = Number(data.discount);
+    if (data.rating !== undefined) data.rating = Number(data.rating);
+
+    let product;
+    try {
+      product = await prisma.product.update({
+        where: { id },
+        data,
+      });
+    } catch {
+      // Fallback: search by SKU or slug
+      const found = await prisma.product.findFirst({
+        where: {
+          OR: [
+            { id },
+            { sku: id },
+            { slug: id },
+            ...(body.sku ? [{ sku: body.sku }] : [])
+          ]
+        }
+      });
+      if (found) {
+        product = await prisma.product.update({
+          where: { id: found.id },
+          data,
+        });
+      } else {
+        return NextResponse.json({ error: 'Product not found in database.' }, { status: 404 });
+      }
+    }
 
     return NextResponse.json({ success: true, product });
   } catch (error) {
@@ -123,7 +166,16 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-    await prisma.product.delete({ where: { id } });
+    try {
+      await prisma.product.delete({ where: { id } });
+    } catch {
+      const found = await prisma.product.findFirst({
+        where: { OR: [{ id }, { sku: id }, { slug: id }] }
+      });
+      if (found) {
+        await prisma.product.delete({ where: { id: found.id } });
+      }
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting product:', error);

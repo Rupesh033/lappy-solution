@@ -92,7 +92,7 @@ function generateReviews(title, type, rating) {
     { author: 'Vikash Kumar Gupta', loc: 'Garhwa, Jharkhand', comment: `Excellent build quality for ${title}. Works flawlessly right out of the box with full warranty. Highly recommended for daily work and gaming.` },
     { author: 'Rahul Sharma', loc: 'Daltonganj, Palamu', comment: `Value for money product by Frontech. Build quality is top-notch and delivery was quick. Genuine sealed pack with invoice.` },
     { author: 'Pooja Verma', loc: 'Ranchi, Jharkhand', comment: `Very satisfied with this purchase. Easy to setup, robust finishing, and great performance at this price point.` },
-    { author: 'Anil Vishwakarma', loc: 'Garhwa', comment: `Best in this price segment. 100% genuine Frontech product with proper bill and warranty. Counter service at Lappy Solution was very helpful.` },
+    { author: 'Anil Vishwakarma', loc: 'Garhwa', comment: `Best in this price segment. 100% genuine Frontech product with proper bill and warranty. Counter service at Lapiez was very helpful.` },
     { author: 'Sandeep Tiwari', loc: 'Chiniya Road, Garhwa', comment: `Superb performance and premium feel. Sound/display clarity is remarkable. Worth every rupee spent.` }
   ];
 

@@ -63,7 +63,7 @@ export default function OrderSuccessPage() {
   const handleWhatsApp = () => {
     if (!order) return;
     const itemsList = order.items?.map((it: any) => `• ${it.name} (Qty: ${it.quantity}) - ₹${((it.price || 0) * (it.quantity || 1)).toLocaleString('en-IN')}`).join('\n') || '';
-    const waText = `Hello Lappy Solution Garhwa!\n\nI have placed order *#${order.orderId}* on your website.\n\n*Customer:* ${order.customerName} (${order.phone})\n*Delivery:* ${order.address}\n*Total Amount:* ₹${Number(order.totalAmount || 0).toLocaleString('en-IN')}\n*Payment Mode:* ${order.paymentMethod}${order.utrNumber ? `\n*UTR / Ref No:* ${order.utrNumber}` : ''}\n\n*Items Ordered:*\n${itemsList}\n\nPlease confirm availability and delivery dispatch schedule.`;
+    const waText = `Hello Lapiez Garhwa!\n\nI have placed order *#${order.orderId}* on your website.\n\n*Customer:* ${order.customerName} (${order.phone})\n*Delivery:* ${order.address}\n*Total Amount:* ₹${Number(order.totalAmount || 0).toLocaleString('en-IN')}\n*Payment Mode:* ${order.paymentMethod}${order.utrNumber ? `\n*UTR / Ref No:* ${order.utrNumber}` : ''}\n\n*Items Ordered:*\n${itemsList}\n\nPlease confirm availability and delivery dispatch schedule.`;
     window.open(`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waText)}`, '_blank');
   };
 
@@ -73,7 +73,7 @@ export default function OrderSuccessPage() {
   const totalTax = Math.round((grandTotal - taxableValue) * 100) / 100;
   const cgst = Math.round((totalTax / 2) * 100) / 100;
   const sgst = Math.round((totalTax - cgst) * 100) / 100;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`upi://pay?pa=${paymentSettings?.upiId || '9608828288@okbizaxis'}&pn=Lappy%20Solution&am=${grandTotal}&cu=INR&tn=Invoice%20${order.orderId}`)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`upi://pay?pa=${paymentSettings?.upiId || 'lappy.solution@ybl'}&pn=LAPIEZ%20GARHWA&am=${grandTotal}&cu=INR&tn=Invoice%20${order.orderId}`)}`;
 
   return (
     <div className="bg-[#F1F3F6] py-6 sm:py-10 min-h-[90vh]">
@@ -238,7 +238,7 @@ export default function OrderSuccessPage() {
                   <QrCode className="w-3.5 h-3.5 text-[#1A56DB]" />
                   <span>Dynamic UPI Payment QR</span>
                 </span>
-                <span className="text-gray-500 font-mono block">VPA: {paymentSettings?.upiId || '9608828288@okbizaxis'}</span>
+                <span className="text-gray-500 font-mono block">VPA: {paymentSettings?.upiId || 'lappy.solution@ybl'}</span>
                 <span className="text-emerald-700 font-bold block">Amount: ₹{grandTotal.toLocaleString('en-IN')}</span>
               </div>
             </div>

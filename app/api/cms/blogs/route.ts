@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         content: body.content || '',
         coverImage: body.coverImage || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=1000',
         category: body.category || 'Hardware Guide',
-        author: body.author || 'Lappy Solution Team',
+        author: body.author || 'Lapiez Team',
         readTime: body.readTime || '4 min read',
         tags: body.tags || '',
         status: body.status || 'published',

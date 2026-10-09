@@ -201,7 +201,7 @@ export default function InvoicePage() {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 leading-tight">
-                  {invoice.sellerName || siteSettings?.siteName || 'Lappy Solution'}
+                  {invoice.sellerName || siteSettings?.siteName || 'Lapiez'}
                 </h1>
                 <p className="text-[11px] font-semibold text-gray-600">
                   {invoiceSettings?.tagline || 'Technology • Security • Complete Hardware Solutions'}
@@ -524,7 +524,7 @@ export default function InvoicePage() {
             </div>
             <div className="space-y-0">
               <div className="font-extrabold text-gray-900 text-[10.5px]">
-                For LAPPY SOLUTION
+                For LAPIEZ
               </div>
               <div className="text-[9px] text-gray-500 uppercase tracking-wider">
                 {invoice.signatoryTitle || 'Authorized Signatory'}

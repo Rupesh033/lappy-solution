@@ -13,7 +13,7 @@ import { STORE_INFO } from '../data/storeData';
 
 export const Hero: React.FC = () => {
   const router = useRouter();
-  const { products, addToCart, setSelectedProduct } = useStore();
+  const { products, addToCart, setSelectedProduct, siteSettings } = useStore();
   const [activeTab, setActiveTab] = useState<'laptop' | 'cctv' | 'pc' | 'spares'>('laptop');
 
   const laptopDeal = products.find(p => p.category === 'Laptops') || {
@@ -123,7 +123,7 @@ export const Hero: React.FC = () => {
               </Link>
 
               <a
-                href={`https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent('Hello Lappy Solution Garhwa, I want to order / inquire about laptop and CCTV prices.')}`}
+                href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I want to order / inquire about laptop and CCTV prices.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-11 px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-[14px] flex items-center gap-2 transition-all shadow-sm active:scale-[0.98]"

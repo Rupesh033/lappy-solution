@@ -10,7 +10,8 @@ import {
   QrCode, Receipt, Store, Sparkles, Copy, Eye, EyeOff, 
   ArrowUp, ArrowDown, Palette, Sliders, Image as ImageIcon, 
   Trash2, Save, Lock, Key, FileText, Printer, Building2, Percent, DollarSign,
-  BookOpen, Star, Crown, Laptop
+  BookOpen, Star, Crown, Laptop, Box, Award, AlertTriangle, MoreVertical,
+  SlidersHorizontal, ArrowUpDown, Pencil, ChevronDown, Download, Upload, Tag
 } from 'lucide-react';
 import { useStore, CMSBanner, CMSSection, CMSCustomPage, CMSBlogPost } from '../../context/StoreContext';
 import { STORE_INFO } from '../../data/storeData';
@@ -46,6 +47,7 @@ export default function AdminPage() {
     updateThemeSettings,
     paymentSettings,
     updatePaymentSettings,
+    updateStoreAndPaymentSettings,
     invoices,
     invoiceSettings,
     updateInvoiceSettings,
@@ -53,29 +55,61 @@ export default function AdminPage() {
     deleteInvoice,
     updateInvoice,
     addProductToDb,
+    updateProductInDb,
     deleteProductFromDb,
     syncWithDatabase,
-    showToast 
+    showToast,
+    coupons,
+    createCoupon,
+    updateCoupon,
+    deleteCoupon,
+    fetchCoupons
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'orders' | 'inventory' | 'billing' | 'banners' | 'homepage' | 'pages' | 'blogs' | 'theme' | 'settings' | 'leads'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'inventory' | 'billing' | 'coupons' | 'banners' | 'homepage' | 'pages' | 'blogs' | 'theme' | 'settings' | 'leads'>('orders');
   
   // Orders Filter
   const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'verified' | 'packed' | 'shipped' | 'delivered'>('all');
   const [orderSearch, setOrderSearch] = useState('');
 
-  // Inventory Filter
+  // Inventory Filters (Matching Image 2)
   const [inventoryCategory, setInventoryCategory] = useState<string>('All');
   const [inventorySearch, setInventorySearch] = useState('');
+  const [inventoryBrand, setInventoryBrand] = useState<string>('All');
+  const [inventoryStatus, setInventoryStatus] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>('all');
+  const [inventoryStockLevel, setInventoryStockLevel] = useState<'all' | 'high' | 'low' | 'out'>('all');
+  const [inventoryPriceRange, setInventoryPriceRange] = useState<'all' | 'under_1k' | '1k_10k' | '10k_50k' | 'above_50k'>('all');
+  const [inventorySort, setInventorySort] = useState<'newest' | 'price_asc' | 'price_desc' | 'name_asc' | 'stock_asc'>('newest');
+  const [inventorySelectedIds, setInventorySelectedIds] = useState<string[]>([]);
+
+  // Live Inline Price Editing State
+  const [inlineEditingPriceId, setInlineEditingPriceId] = useState<string | null>(null);
+  const [inlineEditingPriceVal, setInlineEditingPriceVal] = useState<string>('');
+
+  // Edit Product Modal State
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editBrand, setEditBrand] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editMrp, setEditMrp] = useState('');
+  const [editStockQuantity, setEditStockQuantity] = useState(10);
+  const [editInStock, setEditInStock] = useState(true);
+  const [editImage, setEditImage] = useState('');
+  const [editSpecs, setEditSpecs] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   // New Product Modal State
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [newProductName, setNewProductName] = useState('');
-  const [newProductCategory, setNewProductCategory] = useState<'Laptops' | 'Computers' | 'CCTV & Security' | 'Printers' | 'Accessories' | 'Storage & Parts' | 'Networking'>('Laptops');
+  const [newProductCategory, setNewProductCategory] = useState<string>('Laptops');
   const [newProductBrand, setNewProductBrand] = useState('HP');
   const [newProductPrice, setNewProductPrice] = useState('');
   const [newProductMrp, setNewProductMrp] = useState('');
+  const [newProductStockQuantity, setNewProductStockQuantity] = useState(10);
   const [newProductSpecs, setNewProductSpecs] = useState('');
+  const [newProductDescription, setNewProductDescription] = useState('');
   const [newProductImage, setNewProductImage] = useState('https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80');
 
   // New Banner Modal State
@@ -115,8 +149,8 @@ export default function AdminPage() {
   const [storeAddress, setStoreAddress] = useState(siteSettings?.address || `${STORE_INFO.address}, ${STORE_INFO.city} - ${STORE_INFO.pincode}`);
   const [storeTimings, setStoreTimings] = useState(siteSettings?.timings || STORE_INFO.timings);
 
-  const [upiId, setUpiId] = useState(paymentSettings?.upiId || '9608828288@okbizaxis');
-  const [upiName, setUpiName] = useState(paymentSettings?.upiName || 'LAPPY SOLUTION GARHWA');
+  const [upiId, setUpiId] = useState(paymentSettings?.upiId || 'lappy.solution@ybl');
+  const [upiName, setUpiName] = useState(paymentSettings?.upiName || 'LAPIEZ GARHWA');
   const [gstRate, setGstRate] = useState(paymentSettings?.gstRate || 18);
   const [gstin, setGstin] = useState(paymentSettings?.gstin || '20AABCL1234F1Z5');
   const [codEnabled, setCodEnabled] = useState(paymentSettings?.codEnabled ?? true);
@@ -222,7 +256,7 @@ export default function AdminPage() {
   const [manualGstRate, setManualGstRate] = useState(18);
 
   // Invoice Settings Form State
-  const [invBizName, setInvBizName] = useState(invoiceSettings?.businessName || 'Lappy Solution');
+  const [invBizName, setInvBizName] = useState(invoiceSettings?.businessName || 'Lapiez');
   const [invAddress, setInvAddress] = useState(invoiceSettings?.address || 'In front of G P Plaza, Chiniya Road');
   const [invGstin, setInvGstin] = useState(invoiceSettings?.gstin || '20AABCL1234F1Z5');
   const [invPan, setInvPan] = useState(invoiceSettings?.pan || 'AABCL1234F');
@@ -230,7 +264,7 @@ export default function AdminPage() {
   const [invEmail, setInvEmail] = useState(invoiceSettings?.email || 'lappysolution2018@gmail.com');
   const [invPrefix, setInvPrefix] = useState(invoiceSettings?.prefix || 'INV');
   const [invFinancialYear, setInvFinancialYear] = useState(invoiceSettings?.financialYear || '2026-27');
-  const [invUpiId, setInvUpiId] = useState(invoiceSettings?.upiId || '9608828288@okbizaxis');
+  const [invUpiId, setInvUpiId] = useState(invoiceSettings?.upiId || 'lappy.solution@ybl');
   const [invBankName, setInvBankName] = useState(invoiceSettings?.bankName || 'State Bank of India');
   const [invAccountNo, setInvAccountNo] = useState(invoiceSettings?.accountNumber || '38947291048');
   const [invIfsc, setInvIfsc] = useState(invoiceSettings?.ifscCode || 'SBIN0000080');
@@ -328,33 +362,147 @@ export default function AdminPage() {
     showToast(`Order ${orderId} marked as ${newStatus}!`);
   };
 
-  // Inventory Toggle Stock
-  const handleToggleStock = (productId: string) => {
-    const updated = products.map(p => {
-      if (p.id === productId) {
-        return { ...p, inStock: !p.inStock };
-      }
-      return p;
-    });
-    updateProducts(updated);
-    showToast('Inventory stock status updated!');
+  // Inventory Toggle Stock (Persists directly to DB)
+  const handleToggleStock = async (productId: string) => {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+    const nextInStock = !prod.inStock;
+    await updateProductInDb(productId, { inStock: nextInStock });
+    showToast(`"${prod.name.slice(0, 22)}..." marked as ${nextInStock ? 'In Stock' : 'Out of Stock'}`);
   };
 
-  // Inventory Quick Price Update
-  const handleQuickPriceChange = (productId: string, newPrice: number) => {
-    if (isNaN(newPrice) || newPrice <= 0) return;
-    const updated = products.map(p => {
-      if (p.id === productId) {
-        return { ...p, price: newPrice };
-      }
-      return p;
-    });
-    updateProducts(updated);
-    showToast('Product price updated!');
+  // Live Inline Price Editing Handlers
+  const handleStartInlineEdit = (p: Product) => {
+    setInlineEditingPriceId(p.id);
+    setInlineEditingPriceVal(String(p.price));
   };
 
-  // Add Product Submit
-  const handleAddProductSubmit = (e: React.FormEvent) => {
+  const handleSaveInlinePrice = async (productId: string) => {
+    const val = Number(inlineEditingPriceVal);
+    if (isNaN(val) || val <= 0) {
+      showToast('Please enter a valid price amount');
+      return;
+    }
+    const success = await updateProductInDb(productId, { price: val });
+    if (success) {
+      setInlineEditingPriceId(null);
+      setInlineEditingPriceVal('');
+      showToast(`Live price updated to ₹${val.toLocaleString('en-IN')}`);
+    }
+  };
+
+  const handleCancelInlinePrice = () => {
+    setInlineEditingPriceId(null);
+    setInlineEditingPriceVal('');
+  };
+
+  // Full Edit Product Modal Handlers
+  const handleOpenEditProduct = (p: Product) => {
+    setEditingProduct(p);
+    setEditName(p.name);
+    setEditCategory(p.category);
+    setEditBrand(p.brand);
+    setEditPrice(String(p.price));
+    setEditMrp(String(p.mrp || p.price));
+    setEditStockQuantity(p.stockQuantity ?? 10);
+    setEditInStock(p.inStock ?? true);
+    setEditImage(p.image || '');
+    setEditSpecs(p.specs || '');
+    setEditDescription(p.description || '');
+    setIsEditProductModalOpen(true);
+  };
+
+  const handleSaveEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    const priceNum = Number(editPrice);
+    const mrpNum = Number(editMrp) || priceNum;
+    if (!editName.trim() || isNaN(priceNum) || priceNum <= 0) {
+      showToast('Please enter valid product title and price');
+      return;
+    }
+    const discount = Math.round(((mrpNum - priceNum) / mrpNum) * 100);
+    const success = await updateProductInDb(editingProduct.id, {
+      name: editName.trim(),
+      category: editCategory.trim() as any,
+      brand: editBrand.trim(),
+      price: priceNum,
+      mrp: mrpNum,
+      discount: discount > 0 ? discount : 0,
+      stockQuantity: Number(editStockQuantity) || 0,
+      inStock: editInStock,
+      image: editImage.trim() || editingProduct.image,
+      specs: editSpecs.trim(),
+      description: editDescription.trim(),
+    });
+    if (success) {
+      setIsEditProductModalOpen(false);
+      setEditingProduct(null);
+    }
+  };
+
+  // Bulk Selection Handlers
+  const handleToggleSelectAll = (visibleItems: Product[]) => {
+    if (inventorySelectedIds.length === visibleItems.length && visibleItems.length > 0) {
+      setInventorySelectedIds([]);
+    } else {
+      setInventorySelectedIds(visibleItems.map(p => p.id));
+    }
+  };
+
+  const handleToggleSelectProduct = (id: string) => {
+    setInventorySelectedIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkToggleStock = async (inStock: boolean) => {
+    if (inventorySelectedIds.length === 0) return;
+    for (const id of inventorySelectedIds) {
+      await updateProductInDb(id, { inStock });
+    }
+    showToast(`Updated stock status for ${inventorySelectedIds.length} products!`);
+    setInventorySelectedIds([]);
+  };
+
+  const handleBulkDelete = async () => {
+    if (inventorySelectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${inventorySelectedIds.length} selected products? This action cannot be undone.`)) return;
+    for (const id of inventorySelectedIds) {
+      await deleteProductFromDb(id);
+    }
+    showToast(`Deleted ${inventorySelectedIds.length} products!`);
+    setInventorySelectedIds([]);
+  };
+
+  // Export Inventory CSV
+  const handleExportInventoryCsv = (itemsToExport: Product[]) => {
+    const headers = ['ID', 'SKU', 'Name', 'Brand', 'Category', 'Price', 'MRP', 'Stock', 'InStock', 'Rating'];
+    const rows = itemsToExport.map(p => [
+      `"${p.id}"`,
+      `"${p.sku || ''}"`,
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      `"${p.brand || ''}"`,
+      `"${p.category || ''}"`,
+      p.price,
+      p.mrp,
+      p.stockQuantity ?? 10,
+      p.inStock ? 'In Stock' : 'Out of Stock',
+      p.rating || 4.5
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Lapiez_Inventory_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Exported ${itemsToExport.length} products to CSV!`);
+  };
+
+  // Add Product Submit (Persists to DB)
+  const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProductName.trim() || !newProductPrice) {
       showToast('Please enter product name and price');
@@ -365,31 +513,96 @@ export default function AdminPage() {
     const mrpNum = Number(newProductMrp) || Math.round(priceNum * 1.2);
     const discount = Math.round(((mrpNum - priceNum) / mrpNum) * 100);
 
-    const newProd: Product = {
-      id: `prod-custom-${Date.now()}`,
+    const newProd: Partial<Product> = {
       name: newProductName.trim(),
-      category: newProductCategory,
-      brand: newProductBrand,
+      category: newProductCategory.trim() as any,
+      brand: newProductBrand.trim(),
       price: priceNum,
       mrp: mrpNum,
       discount: discount > 0 ? discount : 10,
-      specs: newProductSpecs.trim() || 'Genuine Garhwa showroom sealed hardware with official manufacturer warranty.',
-      description: newProductSpecs.trim() || newProductName.trim(),
-      image: newProductImage.trim(),
-      images: [newProductImage.trim()],
+      specs: newProductSpecs.trim() || 'Genuine showroom sealed hardware with official manufacturer warranty.',
+      description: newProductDescription.trim() || newProductSpecs.trim() || newProductName.trim(),
+      image: newProductImage.trim() || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80',
       inStock: true,
-      stockQuantity: 10,
+      stockQuantity: Number(newProductStockQuantity) || 10,
       sku: `LS-${newProductCategory.substring(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
       rating: 4.8,
-      reviewsCount: 12
     };
 
-    addProductToDb(newProd);
+    await addProductToDb(newProd);
     setIsAddProductOpen(false);
     setNewProductName('');
     setNewProductPrice('');
     setNewProductMrp('');
     setNewProductSpecs('');
+    setNewProductDescription('');
+  };
+
+  // Image Upload Handlers (Device / Mobile Gallery)
+  const handleBannerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image size should be less than 8MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (typeof event.target?.result === 'string') {
+        setNewBannerImage(event.target.result);
+        showToast('Banner image uploaded from gallery!');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleProductFileUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image size should be less than 8MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (typeof event.target?.result === 'string') {
+        if (isEdit) {
+          setEditImage(event.target.result);
+        } else {
+          setNewProductImage(event.target.result);
+        }
+        showToast('Product photo uploaded from gallery!');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleMultipleProductUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const count = files.length;
+    let completed = 0;
+    const urls: string[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (typeof event.target?.result === 'string') {
+          urls.push(event.target.result);
+        }
+        completed++;
+        if (completed === count) {
+          if (urls.length > 0) {
+            setNewProductImage(urls[0]);
+            showToast(`Loaded ${urls.length} images from gallery!`);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Add Banner Submit
@@ -407,7 +620,7 @@ export default function AdminPage() {
       desktopImage: newBannerImage.trim(),
       buttonText: newBannerBtnText.trim() || 'Shop Now',
       buttonUrl: newBannerBtnUrl.trim() || '/shop',
-      whatsappMsg: `Hello Lappy Solution Garhwa, I want to inquire about: ${newBannerTitle}`,
+      whatsappMsg: `Hello Lapiez Garhwa, I want to inquire about: ${newBannerTitle}`,
       bgGradient: newBannerGradient,
       position: banners.length + 1,
       status: 'active',
@@ -572,7 +785,7 @@ export default function AdminPage() {
   const [blogSlug, setBlogSlug] = useState('');
   const [blogCategory, setBlogCategory] = useState('Refurbished Guides');
   const [blogCoverImage, setBlogCoverImage] = useState('/images/banners/refurbished-laptops-printers.png');
-  const [blogAuthor, setBlogAuthor] = useState('Lappy Solution Tech Team');
+  const [blogAuthor, setBlogAuthor] = useState('Lapiez Tech Team');
   const [blogReadTime, setBlogReadTime] = useState('5 min');
   const [blogTags, setBlogTags] = useState('refurbished, laptops, garhwa');
   const [blogExcerpt, setBlogExcerpt] = useState('');
@@ -585,7 +798,7 @@ export default function AdminPage() {
     setBlogSlug('');
     setBlogCategory('Refurbished Guides');
     setBlogCoverImage('/images/banners/refurbished-laptops-printers.png');
-    setBlogAuthor('Lappy Solution Tech Team');
+    setBlogAuthor('Lapiez Tech Team');
     setBlogReadTime('5 min');
     setBlogTags('refurbished, laptops, garhwa');
     setBlogExcerpt('');
@@ -647,6 +860,88 @@ export default function AdminPage() {
     setIsBlogModalOpen(false);
   };
 
+  // Coupon Management States & Handlers
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+  const [editingCouponId, setEditingCouponId] = useState<string | null>(null);
+  const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [couponTitleInput, setCouponTitleInput] = useState('');
+  const [couponDiscountType, setCouponDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+  const [couponDiscountValue, setCouponDiscountValue] = useState('5');
+  const [couponMinOrder, setCouponMinOrder] = useState('499');
+  const [couponMaxDiscount, setCouponMaxDiscount] = useState('1000');
+  const [couponAudience, setCouponAudience] = useState<'normal' | 'premium' | 'all'>('normal');
+  const [couponDesc, setCouponDesc] = useState('');
+  const [couponValidUntil, setCouponValidUntil] = useState('2027-12-31');
+  const [couponIsActive, setCouponIsActive] = useState(true);
+
+  const handleOpenCreateCoupon = () => {
+    setEditingCouponId(null);
+    setCouponCodeInput('');
+    setCouponTitleInput('');
+    setCouponDiscountType('percentage');
+    setCouponDiscountValue('5');
+    setCouponMinOrder('499');
+    setCouponMaxDiscount('1000');
+    setCouponAudience('normal');
+    setCouponDesc('');
+    setCouponValidUntil('2027-12-31');
+    setCouponIsActive(true);
+    setIsCouponModalOpen(true);
+  };
+
+  const handleOpenEditCoupon = (c: any) => {
+    setEditingCouponId(c.id);
+    setCouponCodeInput(c.code);
+    setCouponTitleInput(c.title || '');
+    setCouponDiscountType(c.discountType);
+    setCouponDiscountValue(String(c.discountValue));
+    setCouponMinOrder(String(c.minOrder || 0));
+    setCouponMaxDiscount(c.maxDiscount ? String(c.maxDiscount) : '');
+    setCouponAudience(c.audience || 'normal');
+    setCouponDesc(c.description || '');
+    setCouponValidUntil(c.validUntil || '2027-12-31');
+    setCouponIsActive(c.isActive !== false);
+    setIsCouponModalOpen(true);
+  };
+
+  const handleSaveCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponCodeInput.trim() || !couponDiscountValue) {
+      showToast('Please enter coupon code and discount value');
+      return;
+    }
+
+    const payload = {
+      code: couponCodeInput.trim().toUpperCase(),
+      title: couponTitleInput.trim() || couponCodeInput.trim().toUpperCase(),
+      discountType: couponDiscountType,
+      discountValue: Number(couponDiscountValue) || 0,
+      minOrder: Number(couponMinOrder) || 0,
+      maxDiscount: couponMaxDiscount ? Number(couponMaxDiscount) : undefined,
+      audience: couponAudience,
+      description: couponDesc.trim(),
+      validUntil: couponValidUntil || undefined,
+      isActive: couponIsActive,
+    };
+
+    if (editingCouponId) {
+      await updateCoupon(editingCouponId, payload);
+    } else {
+      await createCoupon(payload);
+    }
+    setIsCouponModalOpen(false);
+  };
+
+  const handleToggleCouponStatus = async (coupon: any) => {
+    await updateCoupon(coupon.id, { isActive: !coupon.isActive });
+  };
+
+  const handleDeleteCoupon = async (id: string, code: string) => {
+    if (confirm(`Are you sure you want to delete coupon ${code}?`)) {
+      await deleteCoupon(id);
+    }
+  };
+
   // Save Theme Form
   const handleSaveTheme = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -661,44 +956,134 @@ export default function AdminPage() {
     showToast('Theme & Announcement updated in database!');
   };
 
-  // Save Settings Form
+  // Save Settings Form State & Handler
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateSiteSettings({
-      siteName: storeName,
-      tagline: storeTagline,
-      phone: storePhone,
-      whatsapp: storeWhatsapp,
-      email: storeEmail,
-      address: storeAddress,
-      timings: storeTimings,
-    });
-    await updatePaymentSettings({
-      upiId,
-      upiName,
-      gstRate: Number(gstRate),
-      gstin,
-      codEnabled,
-    });
-    showToast('Store & Payment settings saved to database!');
+    setIsSavingSettings(true);
+    try {
+      await updateStoreAndPaymentSettings(
+        {
+          siteName: storeName,
+          tagline: storeTagline,
+          phone: storePhone,
+          whatsapp: storeWhatsapp,
+          email: storeEmail,
+          address: storeAddress,
+          timings: storeTimings,
+        },
+        {
+          upiId,
+          upiName,
+          gstRate: Number(gstRate),
+          gstin,
+          codEnabled,
+        }
+      );
+    } catch (err: any) {
+      console.error('Error saving settings:', err);
+    } finally {
+      setIsSavingSettings(false);
+    }
   };
 
-  // Filtered Products
+  // Dynamic Categories and Department Counts (Matching Image 2)
+  const distinctCategories = useMemo(() => {
+    const map = new Map<string, number>();
+    products.forEach((p) => {
+      const cat = p.category?.trim() || 'General';
+      map.set(cat, (map.get(cat) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [products]);
+
+  // Dynamic Brands (Matching Image 2)
+  const distinctBrands = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      if (p.brand?.trim()) set.add(p.brand.trim());
+    });
+    return Array.from(set).sort();
+  }, [products]);
+
+  // Inventory KPI Counts (Matching Image 2)
+  const inStockCount = useMemo(() => {
+    return products.filter((p) => p.inStock && (p.stockQuantity ?? 10) > 0).length;
+  }, [products]);
+
+  const lowStockCount = useMemo(() => {
+    return products.filter((p) => p.inStock && (p.stockQuantity ?? 10) <= 5 && (p.stockQuantity ?? 10) > 0).length;
+  }, [products]);
+
+  const outOfStockCount = useMemo(() => {
+    return products.filter((p) => !p.inStock || (p.stockQuantity ?? 10) === 0).length;
+  }, [products]);
+
+  // Comprehensive Filtered & Sorted Inventory
   const filteredInventory = useMemo(() => {
-    return products.filter(p => {
-      if (inventoryCategory !== 'All' && p.category !== inventoryCategory) return false;
+    return products.filter((p) => {
+      // 1. Department/Category Filter
+      if (inventoryCategory !== 'All' && p.category !== inventoryCategory) {
+        return false;
+      }
+
+      // 2. Brand Filter
+      if (inventoryBrand !== 'All' && p.brand !== inventoryBrand) {
+        return false;
+      }
+
+      // 3. Status Filter (In Stock, Low Stock, Out of Stock)
+      const qty = p.stockQuantity ?? (p.inStock ? 10 : 0);
+      const isActualInStock = p.inStock && qty > 0;
+      if (inventoryStatus === 'in_stock' && (!isActualInStock || qty <= 5)) return false;
+      if (inventoryStatus === 'low_stock' && (!isActualInStock || qty > 5)) return false;
+      if (inventoryStatus === 'out_of_stock' && isActualInStock) return false;
+
+      // 4. Stock Level Filter
+      if (inventoryStockLevel === 'high' && qty < 10) return false;
+      if (inventoryStockLevel === 'low' && (qty <= 0 || qty > 5)) return false;
+      if (inventoryStockLevel === 'out' && qty > 0) return false;
+
+      // 5. Price Range Filter
+      if (inventoryPriceRange === 'under_1k' && p.price >= 1000) return false;
+      if (inventoryPriceRange === '1k_10k' && (p.price < 1000 || p.price > 10000)) return false;
+      if (inventoryPriceRange === '10k_50k' && (p.price < 10000 || p.price > 50000)) return false;
+      if (inventoryPriceRange === 'above_50k' && p.price < 50000) return false;
+
+      // 6. Search Bar Query
       if (inventorySearch.trim()) {
         const q = inventorySearch.toLowerCase();
-        const matchesName = p.name.toLowerCase().includes(q);
-        const matchesBrand = p.brand.toLowerCase().includes(q);
+        const matchesName = p.name?.toLowerCase().includes(q);
+        const matchesBrand = p.brand?.toLowerCase().includes(q);
         const matchesSku = (p.sku || '').toLowerCase().includes(q);
-        if (!matchesName && !matchesBrand && !matchesSku) return false;
+        const matchesCat = (p.category || '').toLowerCase().includes(q);
+        const matchesSpecs = (p.specs || '').toLowerCase().includes(q);
+        if (!matchesName && !matchesBrand && !matchesSku && !matchesCat && !matchesSpecs) return false;
       }
-      return true;
-    });
-  }, [products, inventoryCategory, inventorySearch]);
 
-  const categories = ['All', 'Laptops', 'Computers', 'CCTV & Security', 'Printers', 'Accessories', 'Storage & Parts'];
+      return true;
+    }).sort((a, b) => {
+      if (inventorySort === 'price_asc') return a.price - b.price;
+      if (inventorySort === 'price_desc') return b.price - a.price;
+      if (inventorySort === 'name_asc') return (a.name || '').localeCompare(b.name || '');
+      if (inventorySort === 'stock_asc') return (a.stockQuantity ?? 10) - (b.stockQuantity ?? 10);
+      return 0;
+    });
+  }, [
+    products, 
+    inventoryCategory, 
+    inventoryBrand, 
+    inventoryStatus, 
+    inventoryStockLevel, 
+    inventoryPriceRange, 
+    inventorySort, 
+    inventorySearch
+  ]);
+
+  const categories = useMemo(() => ['All', ...distinctCategories.map((c) => c.name)], [distinctCategories]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -723,7 +1108,7 @@ export default function AdminPage() {
             </div>
 
             <h1 className="text-2xl font-black tracking-tight text-white">
-              {siteSettings?.siteName || 'Lappy Solution'} Console
+              {siteSettings?.siteName || 'Lapiez'} Console
             </h1>
             
             <p className="text-xs text-blue-200/80 leading-relaxed">
@@ -802,12 +1187,12 @@ export default function AdminPage() {
             
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#1A56DB] flex items-center justify-center font-extrabold text-white text-lg shadow-sm">
-                LS
+                LP
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                    Lappy Solution Merchant Portal
+                    Lapiez Merchant Console
                   </h1>
                   <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                     Live Showroom
@@ -919,6 +1304,7 @@ export default function AdminPage() {
             {[
               { id: 'orders', label: 'Orders & UTR', count: orders.length },
               { id: 'billing', label: 'GST Invoices & Billing', count: invoices.length },
+              { id: 'coupons', label: 'Coupons & Discounts', count: coupons.length },
               { id: 'inventory', label: `Inventory (${products.length} SKUs)`, count: products.length },
               { id: 'banners', label: 'Hero Banners', count: banners.length },
               { id: 'homepage', label: 'Page Builder & Sections', count: homepageSections.length },
@@ -1053,7 +1439,7 @@ export default function AdminPage() {
 
                           {/* Quick WhatsApp Contact to Customer */}
                           <a
-                            href={`https://wa.me/${order.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${order.customerName}, this is Lappy Solution Garhwa regarding your order ${order.orderId}.`)}`}
+                            href={`https://wa.me/${order.phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${order.customerName}, this is Lapiez Garhwa regarding your order ${order.orderId}.`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="h-8.5 px-3 rounded-lg bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
@@ -1894,140 +2280,642 @@ export default function AdminPage() {
         {/* ========================================================= */}
         {/* TAB 2: PRODUCT INVENTORY & PRICING MANAGER               */}
         {/* ========================================================= */}
+        {/* ========================================================= */}
+        {/* TAB 2: ADVANCED ENTERPRISE INVENTORY DASHBOARD (IMAGE 2) */}
+        {/* ========================================================= */}
         {activeTab === 'inventory' && (
-          <div className="space-y-4">
+          <div className="space-y-5 animate-in fade-in duration-150">
             
-            {/* Header with Search and Add Product Button */}
-            <div className="bg-white border border-[#E5E7EB] rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
-              
-              {/* Category Filter Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto">
-                {categories.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setInventoryCategory(c)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-                      inventoryCategory === c
-                        ? 'bg-[#1A56DB] text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
+            {/* 1. Header Toolbar (Title, Count Badge, Subtitle, Actions) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-2xl font-black text-gray-900 tracking-tight">Inventory</h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+                    {products.length.toLocaleString('en-IN')} Items
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Manage your products, stock, brands and categories — all in one place.
+                </p>
               </div>
 
-              {/* Action and Search */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="relative flex-1 sm:w-60">
-                  <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search catalog items..."
-                    value={inventorySearch}
-                    onChange={(e) => setInventorySearch(e.target.value)}
-                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg pl-8.5 pr-3 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#1A56DB]"
-                  />
-                </div>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button
+                  onClick={() => handleExportInventoryCsv(filteredInventory)}
+                  className="h-9 px-3.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                  title="Export filtered items to CSV"
+                >
+                  <Download className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Export</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const json = JSON.stringify(products, null, 2);
+                    const blob = new Blob([json], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `lapiez_catalog_backup_${Date.now()}.json`;
+                    a.click();
+                    showToast('Catalog backup JSON downloaded!');
+                  }}
+                  className="h-9 px-3.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                  title="Export full catalog JSON"
+                >
+                  <Upload className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Backup JSON</span>
+                </button>
 
                 <button
                   onClick={() => setIsAddProductOpen(true)}
-                  className="h-9 px-3.5 rounded-lg bg-[#15803D] hover:bg-[#166534] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs flex-shrink-0"
+                  className="h-9 px-4 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Product</span>
+                  <Plus className="w-4 h-4 text-emerald-400" />
+                  <span>+ Add Product</span>
                 </button>
+              </div>
+            </div>
+
+            {/* 2. Top 5 KPI Summary Cards (Matching Image 2) */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+              
+              {/* Card 1: TOTAL PRODUCTS */}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs space-y-2 hover:border-gray-300 transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                    TOTAL PRODUCTS
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 border border-slate-200">
+                    <Box className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-gray-900 tracking-tight">
+                  {products.length.toLocaleString('en-IN')}
+                </div>
+                <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+                  <span>↗ +100% active catalog</span>
+                </div>
+              </div>
+
+              {/* Card 2: IN STOCK */}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs space-y-2 hover:border-gray-300 transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                    IN STOCK
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-emerald-700 tracking-tight">
+                  {inStockCount.toLocaleString('en-IN')}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>{Math.round((inStockCount / Math.max(products.length, 1)) * 100)}% of catalog</span>
+                </div>
+              </div>
+
+              {/* Card 3: LOW STOCK */}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs space-y-2 hover:border-gray-300 transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                    LOW STOCK
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-200">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-amber-600 tracking-tight">
+                  {lowStockCount.toLocaleString('en-IN')}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span>{Math.round((lowStockCount / Math.max(products.length, 1)) * 100)}% of catalog</span>
+                </div>
+              </div>
+
+              {/* Card 4: OUT OF STOCK */}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs space-y-2 hover:border-gray-300 transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                    OUT OF STOCK
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-200">
+                    <XCircle className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-rose-600 tracking-tight">
+                  {outOfStockCount.toLocaleString('en-IN')}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  <span>{Math.round((outOfStockCount / Math.max(products.length, 1)) * 100)}% of catalog</span>
+                </div>
+              </div>
+
+              {/* Card 5: TOTAL BRANDS */}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs space-y-2 hover:border-gray-300 transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                    TOTAL BRANDS
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-700 border border-amber-200">
+                    <Award className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-gray-900 tracking-tight">
+                  {distinctBrands.length.toLocaleString('en-IN')}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                  <span>Active brand partners</span>
+                </div>
               </div>
 
             </div>
 
-            {/* Inventory Table / Cards */}
-            <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xs overflow-hidden">
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-                  Products in Garhwa Showroom ({filteredInventory.length})
-                </span>
-                <span className="text-xs text-gray-500">
-                  Click 'In Stock' to toggle immediate customer availability
-                </span>
-              </div>
+            {/* 3. Main Two-Column Layout (Left Categories Sidebar + Right Inventory Table) */}
+            <div className="flex flex-col lg:flex-row gap-5 items-start">
+              
+              {/* LEFT COLUMN: Categories Sidebar (Matching Image 2) */}
+              <div className="w-full lg:w-60 flex-shrink-0 bg-white border border-[#E5E7EB] rounded-2xl p-3.5 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between px-2 pt-1">
+                  <span className="font-extrabold text-xs text-gray-900 uppercase tracking-wider">
+                    Categories
+                  </span>
+                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                    {distinctCategories.length} DEPTS
+                  </span>
+                </div>
 
-              <div className="divide-y divide-gray-100">
-                {filteredInventory.slice(0, 50).map((product) => (
-                  <div key={product.id} className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/70 transition-colors">
-                    
-                    {/* Left: Product Info */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-12 h-12 rounded-lg bg-[#F8FAFC] border border-gray-100 p-1 flex-shrink-0">
-                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
-                      </div>
-                      
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-gray-500 uppercase">{product.brand}</span>
-                          <span className="text-[10px] font-semibold text-gray-400">• SKU: {product.sku}</span>
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-100 text-gray-700">{product.category}</span>
-                        </div>
-                        <h4 className="font-bold text-xs sm:text-sm text-gray-900 truncate mt-0.5">{product.name}</h4>
-                        <p className="text-[11px] text-gray-500 truncate">{product.specs}</p>
-                      </div>
+                <div className="space-y-1">
+                  {/* All Categories Button */}
+                  <button
+                    onClick={() => setInventoryCategory('All')}
+                    className={`w-full py-2 px-3 rounded-xl flex items-center justify-between text-xs font-bold transition-all cursor-pointer ${
+                      inventoryCategory === 'All'
+                        ? 'bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] shadow-2xs'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5 text-[#B45309]" />
+                      <span>All Categories</span>
                     </div>
+                    <span className="text-[10.5px] font-bold opacity-80">
+                      {products.length}
+                    </span>
+                  </button>
 
-                    {/* Right: Price & In-Stock Toggle */}
-                    <div className="flex items-center justify-between sm:justify-end gap-4 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                      
-                      {/* Price Control */}
-                      <div className="text-left sm:text-right">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-gray-400">Price:</span>
-                          <span className="font-extrabold text-sm text-[#111827]">
-                            ₹{product.price.toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                        {product.mrp > product.price && (
-                          <span className="text-[10.5px] text-gray-400 line-through block">
-                            MRP ₹{product.mrp.toLocaleString('en-IN')}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Stock Toggle Button */}
+                  {/* Individual Categories List */}
+                  {distinctCategories.map((cat) => {
+                    const isSelected = inventoryCategory === cat.name;
+                    return (
                       <button
-                        onClick={() => handleToggleStock(product.id)}
-                        className={`h-8.5 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs ${
-                          product.inStock
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
-                            : 'bg-red-50 text-red-700 border border-red-300 hover:bg-red-100'
+                        key={cat.name}
+                        onClick={() => setInventoryCategory(cat.name)}
+                        className={`w-full py-2 px-3 rounded-xl flex items-center justify-between text-xs font-semibold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#EFF6FF] text-[#1A56DB] font-bold border border-blue-200 shadow-2xs'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
-                        <span className={`w-2 h-2 rounded-full ${product.inStock ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                        <span>{product.inStock ? 'In Stock' : 'Out of Stock'}</span>
+                        <div className="flex items-center gap-2 truncate">
+                          {cat.name.toLowerCase().includes('laptop') ? (
+                            <Laptop className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                          ) : cat.name.toLowerCase().includes('cctv') || cat.name.toLowerCase().includes('security') ? (
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                          ) : cat.name.toLowerCase().includes('printer') ? (
+                            <Printer className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
+                          ) : cat.name.toLowerCase().includes('part') || cat.name.toLowerCase().includes('storage') ? (
+                            <Sliders className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                          ) : (
+                            <Package className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                          )}
+                          <span className="truncate">{cat.name}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-400 ml-1.5 flex-shrink-0">
+                          {cat.count}
+                        </span>
                       </button>
-
-                      {/* Delete Product Button */}
-                      <button
-                        onClick={() => {
-                          if (confirm(`Delete "${product.name}" from database?`)) {
-                            deleteProductFromDb(product.id);
-                          }
-                        }}
-                        className="w-8.5 h-8.5 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 flex items-center justify-center transition-colors"
-                        title="Delete product"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-
-                    </div>
-
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
 
-              {filteredInventory.length > 50 && (
-                <div className="p-3 text-center text-xs text-gray-500 bg-gray-50 border-t border-gray-100">
-                  Showing first 50 of {filteredInventory.length} items. Use category filters or search above to refine.
+              {/* RIGHT COLUMN: Filter Toolbar, Bulk Actions & Products Table */}
+              <div className="flex-1 min-w-0 space-y-3.5 w-full">
+                
+                {/* Search & Filter Controls Toolbar (Matching Image 2) */}
+                <div className="bg-white border border-[#E5E7EB] rounded-2xl p-3 shadow-2xs space-y-3">
+                  <div className="flex flex-col md:flex-row items-center gap-2.5">
+                    
+                    {/* Search Input */}
+                    <div className="relative flex-1 w-full">
+                      <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search products by name, SKU, brand, specs..."
+                        value={inventorySearch}
+                        onChange={(e) => setInventorySearch(e.target.value)}
+                        className="w-full h-9 bg-gray-50 border border-gray-200 rounded-xl pl-8.5 pr-8 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#1A56DB] focus:bg-white transition-all"
+                      />
+                      {inventorySearch && (
+                        <button
+                          onClick={() => setInventorySearch('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Filter Dropdowns Grid */}
+                    <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+                      
+                      {/* Brand Dropdown */}
+                      <select
+                        value={inventoryBrand}
+                        onChange={(e) => setInventoryBrand(e.target.value)}
+                        className="h-9 px-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#1A56DB] cursor-pointer"
+                      >
+                        <option value="All">All Brands ({distinctBrands.length})</option>
+                        {distinctBrands.map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+
+                      {/* Status Dropdown */}
+                      <select
+                        value={inventoryStatus}
+                        onChange={(e) => setInventoryStatus(e.target.value as any)}
+                        className="h-9 px-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#1A56DB] cursor-pointer"
+                      >
+                        <option value="all">All Status</option>
+                        <option value="in_stock">In Stock (&gt;5)</option>
+                        <option value="low_stock">Low Stock (1-5)</option>
+                        <option value="out_of_stock">Out of Stock</option>
+                      </select>
+
+                      {/* Stock Level Dropdown */}
+                      <select
+                        value={inventoryStockLevel}
+                        onChange={(e) => setInventoryStockLevel(e.target.value as any)}
+                        className="h-9 px-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#1A56DB] cursor-pointer"
+                      >
+                        <option value="all">All Stock Levels</option>
+                        <option value="high">High Stock (10+)</option>
+                        <option value="low">Low Stock (1-5)</option>
+                        <option value="out">Out of Stock (0)</option>
+                      </select>
+
+                      {/* Price Range Dropdown */}
+                      <select
+                        value={inventoryPriceRange}
+                        onChange={(e) => setInventoryPriceRange(e.target.value as any)}
+                        className="h-9 px-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#1A56DB] cursor-pointer"
+                      >
+                        <option value="all">Price Range</option>
+                        <option value="under_1k">Under ₹1,000</option>
+                        <option value="1k_10k">₹1,000 - ₹10,000</option>
+                        <option value="10k_50k">₹10,000 - ₹50,000</option>
+                        <option value="above_50k">Above ₹50,000</option>
+                      </select>
+
+                      {/* Sort Dropdown */}
+                      <select
+                        value={inventorySort}
+                        onChange={(e) => setInventorySort(e.target.value as any)}
+                        className="h-9 px-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#1A56DB] cursor-pointer"
+                      >
+                        <option value="newest">Newest First</option>
+                        <option value="price_asc">Price: Low to High</option>
+                        <option value="price_desc">Price: High to Low</option>
+                        <option value="name_asc">Name: A to Z</option>
+                        <option value="stock_asc">Stock: Low to High</option>
+                      </select>
+
+                    </div>
+                  </div>
+
+                  {/* Sub-toolbar: Results count & Active Reset */}
+                  <div className="flex items-center justify-between text-xs text-gray-500 pt-1 border-t border-gray-100">
+                    <div>
+                      Showing <strong className="text-gray-900">{filteredInventory.length}</strong> of{' '}
+                      <strong className="text-gray-900">{products.length}</strong> products
+                    </div>
+
+                    {(inventoryCategory !== 'All' || inventoryBrand !== 'All' || inventoryStatus !== 'all' || inventoryStockLevel !== 'all' || inventoryPriceRange !== 'all' || inventorySearch) && (
+                      <button
+                        onClick={() => {
+                          setInventoryCategory('All');
+                          setInventoryBrand('All');
+                          setInventoryStatus('all');
+                          setInventoryStockLevel('all');
+                          setInventoryPriceRange('all');
+                          setInventorySearch('');
+                        }}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-1"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Reset Filters</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
+
+                {/* Bulk Actions Floating Bar (When items selected) */}
+                {inventorySelectedIds.length > 0 && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs flex-wrap gap-2 shadow-sm animate-in fade-in">
+                    <div className="flex items-center gap-2 font-bold text-blue-900">
+                      <span>{inventorySelectedIds.length} items selected</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleBulkToggleStock(true)}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Check className="w-3 h-3" />
+                        <span>Mark In Stock</span>
+                      </button>
+                      <button
+                        onClick={() => handleBulkToggleStock(false)}
+                        className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                        <span>Mark Out of Stock</span>
+                      </button>
+                      <button
+                        onClick={handleBulkDelete}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-rose-300 text-rose-700 hover:bg-rose-50 font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Delete Selected</span>
+                      </button>
+                      <button
+                        onClick={() => setInventorySelectedIds([])}
+                        className="px-2.5 py-1.5 rounded-lg text-gray-500 hover:text-gray-700 font-semibold cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Data Table (Exact Table Styling from Image 2) */}
+                <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xs overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs divide-y divide-gray-100">
+                      <thead className="bg-[#F8FAFC] text-[11px] font-extrabold uppercase text-gray-500 tracking-wider">
+                        <tr>
+                          <th className="py-3 px-3.5 w-10 text-center">
+                            <input
+                              type="checkbox"
+                              checked={inventorySelectedIds.length === filteredInventory.length && filteredInventory.length > 0}
+                              onChange={() => handleToggleSelectAll(filteredInventory)}
+                              className="rounded border-gray-300 text-[#1A56DB] focus:ring-0 cursor-pointer"
+                            />
+                          </th>
+                          <th className="py-3 px-3.5">PRODUCT</th>
+                          <th className="py-3 px-3">BRAND</th>
+                          <th className="py-3 px-3">CATEGORY</th>
+                          <th className="py-3 px-3">STOCK LEVEL</th>
+                          <th className="py-3 px-3">LIVE PRICE</th>
+                          <th className="py-3 px-3">STATUS</th>
+                          <th className="py-3 px-3">UPDATED</th>
+                          <th className="py-3 px-3 text-right pr-4">ACTIONS</th>
+                        </tr>
+                      </thead>
+
+                      <tbody className="divide-y divide-gray-100 bg-white">
+                        {filteredInventory.slice(0, 100).map((product) => {
+                          const isSelected = inventorySelectedIds.includes(product.id);
+                          const isInlineEditing = inlineEditingPriceId === product.id;
+                          const qty = product.stockQuantity ?? (product.inStock ? 10 : 0);
+                          const isLowStock = product.inStock && qty <= 5 && qty > 0;
+                          const isOutOfStock = !product.inStock || qty === 0;
+
+                          return (
+                            <tr
+                              key={product.id}
+                              className={`hover:bg-slate-50/80 transition-colors ${isSelected ? 'bg-blue-50/40' : ''}`}
+                            >
+                              {/* Checkbox */}
+                              <td className="py-3 px-3.5 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleToggleSelectProduct(product.id)}
+                                  className="rounded border-gray-300 text-[#1A56DB] focus:ring-0 cursor-pointer"
+                                />
+                              </td>
+
+                              {/* Product Info */}
+                              <td className="py-3 px-3.5">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-lg bg-[#F8FAFC] border border-gray-200 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                    <img
+                                      src={product.image || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80'}
+                                      alt={product.name}
+                                      className="w-full h-full object-contain"
+                                    />
+                                  </div>
+                                  <div className="min-w-0 max-w-xs sm:max-w-sm">
+                                    <div className="font-bold text-gray-900 truncate hover:text-[#1A56DB] transition-colors" title={product.name}>
+                                      {product.name}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-[10.5px] mt-0.5">
+                                      <span className="font-mono text-gray-500 font-semibold">
+                                        SKU: {product.sku || 'N/A'}
+                                      </span>
+                                      {product.featured && (
+                                        <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold text-[9px]">
+                                          FEATURED
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Brand */}
+                              <td className="py-3 px-3 whitespace-nowrap">
+                                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-200">
+                                  {product.brand || 'General'}
+                                </span>
+                              </td>
+
+                              {/* Category */}
+                              <td className="py-3 px-3 whitespace-nowrap">
+                                <div className="font-semibold text-gray-800 text-[11.5px]">
+                                  {product.category}
+                                </div>
+                              </td>
+
+                              {/* Stock Level with Visual Bar */}
+                              <td className="py-3 px-3 whitespace-nowrap">
+                                <div className="space-y-1">
+                                  <span className={`text-[11px] font-bold ${
+                                    isOutOfStock 
+                                      ? 'text-rose-600' 
+                                      : isLowStock 
+                                      ? 'text-amber-600' 
+                                      : 'text-emerald-700'
+                                  }`}>
+                                    {isOutOfStock ? '0 in stock' : `${qty} in stock`}
+                                  </span>
+                                  <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full transition-all ${
+                                        isOutOfStock 
+                                          ? 'bg-rose-500 w-0' 
+                                          : isLowStock 
+                                          ? 'bg-amber-500' 
+                                          : 'bg-emerald-500'
+                                      }`}
+                                      style={{ width: `${Math.min(100, Math.max(isOutOfStock ? 0 : 10, (qty / 20) * 100))}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Price (LIVE INLINE EDITABLE) */}
+                              <td className="py-3 px-3 whitespace-nowrap">
+                                {isInlineEditing ? (
+                                  <div className="flex items-center gap-1">
+                                    <div className="relative">
+                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[11px]">₹</span>
+                                      <input
+                                        type="number"
+                                        value={inlineEditingPriceVal}
+                                        onChange={(e) => setInlineEditingPriceVal(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') handleSaveInlinePrice(product.id);
+                                          if (e.key === 'Escape') handleCancelInlinePrice();
+                                        }}
+                                        className="w-24 h-7 pl-4.5 pr-1.5 text-xs font-extrabold border-2 border-blue-600 rounded-lg bg-white text-gray-900 focus:outline-none shadow-xs"
+                                        autoFocus
+                                      />
+                                    </div>
+                                    <button
+                                      onClick={() => handleSaveInlinePrice(product.id)}
+                                      className="w-7 h-7 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                                      title="Save live price"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={handleCancelInlinePrice}
+                                      className="w-7 h-7 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center transition-colors cursor-pointer"
+                                      title="Cancel"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div
+                                    onClick={() => handleStartInlineEdit(product)}
+                                    className="group flex items-center gap-1.5 cursor-pointer py-1 px-1.5 -ml-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                                    title="Click to edit live price immediately"
+                                  >
+                                    <div>
+                                      <span className="font-black text-xs text-gray-900">
+                                        ₹{product.price.toLocaleString('en-IN')}
+                                      </span>
+                                      {product.mrp > product.price && (
+                                        <span className="text-[10px] text-gray-400 line-through block">
+                                          ₹{product.mrp.toLocaleString('en-IN')}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <Pencil className="w-3 h-3 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Status Toggle Pill Button */}
+                              <td className="py-3 px-3 whitespace-nowrap">
+                                <button
+                                  onClick={() => handleToggleStock(product.id)}
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
+                                    isOutOfStock
+                                      ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
+                                      : isLowStock
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                  }`}
+                                  title="Click to toggle stock status in database"
+                                >
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                      isOutOfStock ? 'bg-rose-500' : isLowStock ? 'bg-amber-500' : 'bg-emerald-500'
+                                    }`}
+                                  />
+                                  <span>
+                                    {isOutOfStock ? 'OUT OF STOCK' : isLowStock ? 'LOW STOCK' : 'IN STOCK'}
+                                  </span>
+                                </button>
+                              </td>
+
+                              {/* Updated */}
+                              <td className="py-3 px-3 whitespace-nowrap text-[11px] text-gray-400">
+                                Recently
+                              </td>
+
+                              {/* Actions Dropdown / Buttons */}
+                              <td className="py-3 px-3 whitespace-nowrap text-right pr-4">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={() => handleOpenEditProduct(product)}
+                                    className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-[#1A56DB] flex items-center justify-center transition-colors cursor-pointer"
+                                    title="Edit Product Details"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (confirm(`Delete "${product.name}" from database?`)) {
+                                        deleteProductFromDb(product.id);
+                                      }
+                                    }}
+                                    className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
+                                    title="Delete Product"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+
+                            </tr>
+                          );
+                        })}
+
+                        {filteredInventory.length === 0 && (
+                          <tr>
+                            <td colSpan={9} className="py-12 text-center text-gray-500 text-xs">
+                              <Box className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                              <div className="font-bold text-gray-800 text-sm">No products found</div>
+                              <p className="text-gray-400 mt-1">Try changing category, search query, or status filters.</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {filteredInventory.length > 100 && (
+                    <div className="p-3 text-center text-xs text-gray-500 bg-gray-50 border-t border-gray-100">
+                      Showing first 100 of {filteredInventory.length} products. Use filters to narrow results.
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
             </div>
 
           </div>
@@ -2073,7 +2961,7 @@ export default function AdminPage() {
                       </div>
 
                       <a
-                        href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${lead.customerName}, this is Lappy Solution Garhwa regarding your ${lead.type} inquiry.`)}`}
+                        href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello ${lead.customerName}, this is Lapiez Garhwa regarding your ${lead.type} inquiry.`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="h-8.5 px-3 rounded-lg bg-[#25D366] hover:bg-[#1EBE5B] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
@@ -2105,13 +2993,29 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsAddBannerOpen(true)}
-                className="h-9 px-4 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs self-start sm:self-auto"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Add New Banner</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <label className="cursor-pointer h-9 px-3.5 rounded-lg bg-blue-50 border border-blue-200 text-[#1A56DB] hover:bg-blue-100 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload Banner Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      handleBannerFileUpload(e);
+                      setIsAddBannerOpen(true);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+
+                <button
+                  onClick={() => setIsAddBannerOpen(true)}
+                  className="h-9 px-4 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs self-start sm:self-auto cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Add New Banner</span>
+                </button>
+              </div>
             </div>
 
             {banners.length > 0 ? (
@@ -2571,6 +3475,212 @@ export default function AdminPage() {
         )}
 
         {/* ========================================================= */}
+        {/* TAB: COUPONS & DISCOUNT ENGINE                           */}
+        {/* ========================================================= */}
+        {activeTab === 'coupons' && (
+          <div className="space-y-6">
+            {/* Header Bar */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-black text-lg text-[#111827]">
+                    Coupons & Promotional Discounts
+                  </h3>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#1A56DB] border border-blue-100">
+                    {coupons.length} Configured
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 max-w-xl">
+                  Manage promotional coupons for normal shoppers and exclusive discounts for premium VIP members. Customers can apply these codes during cart and checkout.
+                </p>
+              </div>
+
+              <button
+                onClick={handleOpenCreateCoupon}
+                className="h-10 px-4 rounded-xl bg-[#1A56DB] hover:bg-[#1E40AF] text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-xs shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create New Coupon</span>
+              </button>
+            </div>
+
+            {/* Quick KPI stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white border border-[#E5E7EB] rounded-xl p-3.5">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block">Total Codes</span>
+                <span className="text-xl font-extrabold text-[#111827] mt-0.5 block">{coupons.length}</span>
+              </div>
+              <div className="bg-white border border-[#E5E7EB] rounded-xl p-3.5">
+                <span className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider block">Active Codes</span>
+                <span className="text-xl font-extrabold text-emerald-700 mt-0.5 block">
+                  {coupons.filter(c => c.isActive).length}
+                </span>
+              </div>
+              <div className="bg-white border border-[#E5E7EB] rounded-xl p-3.5">
+                <span className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider block">Normal Customers</span>
+                <span className="text-xl font-extrabold text-blue-700 mt-0.5 block">
+                  {coupons.filter(c => c.audience === 'normal').length}
+                </span>
+              </div>
+              <div className="bg-white border border-[#E5E7EB] rounded-xl p-3.5">
+                <span className="text-[11px] font-semibold text-purple-600 uppercase tracking-wider block">Premium / VIP</span>
+                <span className="text-xl font-extrabold text-purple-700 mt-0.5 block">
+                  {coupons.filter(c => c.audience === 'premium').length}
+                </span>
+              </div>
+            </div>
+
+            {/* Coupons List / Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {coupons.map((coupon) => {
+                const isPremium = coupon.audience === 'premium';
+                const isNormal = coupon.audience === 'normal';
+
+                return (
+                  <div
+                    key={coupon.id}
+                    className={`bg-white border rounded-2xl p-5 shadow-2xs relative flex flex-col justify-between transition-all ${
+                      coupon.isActive
+                        ? isPremium
+                          ? 'border-purple-200 ring-1 ring-purple-100 hover:shadow-md'
+                          : 'border-blue-100 hover:shadow-md'
+                        : 'border-gray-200 opacity-60 bg-gray-50/70'
+                    }`}
+                  >
+                    <div>
+                      {/* Top Badges */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span
+                          className={`text-[10.5px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider ${
+                            isPremium
+                              ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                              : isNormal
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          }`}
+                        >
+                          {isPremium ? (
+                            <>
+                              <Crown className="w-3 h-3 text-purple-600" />
+                              <span>Premium VIP</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3 h-3 text-emerald-600" />
+                              <span>Normal Shoppers</span>
+                            </>
+                          )}
+                        </span>
+
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            coupon.isActive
+                              ? 'bg-emerald-500/10 text-emerald-700'
+                              : 'bg-gray-200 text-gray-600'
+                          }`}
+                        >
+                          {coupon.isActive ? 'Active' : 'Paused'}
+                        </span>
+                      </div>
+
+                      {/* Code Banner */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-between mb-3">
+                        <div>
+                          <div className="font-mono font-black text-lg tracking-wider text-gray-900">
+                            {coupon.code}
+                          </div>
+                          <div className="text-[11px] font-semibold text-[#1A56DB] mt-0.5">
+                            {coupon.discountType === 'percentage'
+                              ? `${coupon.discountValue}% Instant OFF`
+                              : `₹${coupon.discountValue} Flat Discount`}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(coupon.code, 'Coupon Code')}
+                          className="p-1.5 rounded-lg hover:bg-white text-gray-400 hover:text-gray-700 border border-transparent hover:border-gray-200 transition-colors cursor-pointer"
+                          title="Copy Code"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Title & Description */}
+                      <h4 className="font-bold text-sm text-gray-900 leading-snug">
+                        {coupon.title}
+                      </h4>
+                      {coupon.description && (
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                          {coupon.description}
+                        </p>
+                      )}
+
+                      {/* Rules / Thresholds */}
+                      <div className="mt-3.5 pt-3 border-t border-gray-100 space-y-1 text-[11px] text-gray-600">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400">Min Order Value:</span>
+                          <span className="font-semibold text-gray-800">
+                            {coupon.minOrder && coupon.minOrder > 0 ? `₹${coupon.minOrder.toLocaleString('en-IN')}` : 'No minimum'}
+                          </span>
+                        </div>
+                        {coupon.maxDiscount && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-400">Max Discount Cap:</span>
+                            <span className="font-semibold text-gray-800">
+                              ₹{coupon.maxDiscount.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        )}
+                        {coupon.validUntil && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-400">Valid Until:</span>
+                            <span className="font-semibold text-gray-800">{coupon.validUntil}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions Bottom Bar */}
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCouponStatus(coupon)}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                          coupon.isActive
+                            ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                            : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                        }`}
+                      >
+                        {coupon.isActive ? 'Pause' : 'Activate'}
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCoupon(coupon)}
+                          className="h-8 px-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCoupon(coupon.id, coupon.code)}
+                          className="h-8 w-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
+                          title="Delete Coupon"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
         {/* TAB: THEME & BRAND APPEARANCE                            */}
         {/* ========================================================= */}
         {activeTab === 'theme' && (
@@ -2884,10 +3994,11 @@ export default function AdminPage() {
               <div className="pt-3 border-t border-gray-100 flex items-center justify-end">
                 <button
                   type="submit"
-                  className="h-10 px-6 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors"
+                  disabled={isSavingSettings}
+                  className="h-10 px-6 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] disabled:opacity-60 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>Save All Settings to Database</span>
+                  <span>{isSavingSettings ? 'Saving Settings...' : 'Save All Settings to Database'}</span>
                 </button>
               </div>
 
@@ -2901,17 +4012,28 @@ export default function AdminPage() {
       {/* ========================================================= */}
       {/* MODAL: ADD PRODUCT TO INVENTORY                          */}
       {/* ========================================================= */}
+      {/* ========================================================= */}
+      {/* MODAL: ADD PRODUCT TO INVENTORY                          */}
+      {/* ========================================================= */}
       {isAddProductOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 className="font-extrabold text-base text-[#111827]">
-                Add New Product to Showroom Inventory
-              </h3>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1A56DB] flex items-center justify-center font-bold">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-[#111827]">
+                    Add New Product to Catalog
+                  </h3>
+                  <p className="text-[11px] text-gray-500">Persists immediately to database and storefront</p>
+                </div>
+              </div>
               <button
                 onClick={() => setIsAddProductOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900"
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2923,7 +4045,7 @@ export default function AdminPage() {
                 <label className="font-bold text-gray-700 block mb-1">Product Title *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Dell Inspiron 15 (16GB RAM / 512GB SSD)"
+                  placeholder="e.g. HP 15s Intel Core i5 12th Gen (16GB / 512GB SSD)"
                   value={newProductName}
                   onChange={(e) => setNewProductName(e.target.value)}
                   className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
@@ -2933,23 +4055,28 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-bold text-gray-700 block mb-1">Category</label>
+                  <label className="font-bold text-gray-700 block mb-1">Category *</label>
                   <select
                     value={newProductCategory}
-                    onChange={(e) => setNewProductCategory(e.target.value as any)}
+                    onChange={(e) => setNewProductCategory(e.target.value)}
                     className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-2 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
                   >
-                    {categories.filter(c => c !== 'All').map(c => (
-                      <option key={c} value={c}>{c}</option>
+                    {distinctCategories.map((c) => (
+                      <option key={c.name} value={c.name}>{c.name}</option>
                     ))}
+                    {!distinctCategories.some(c => c.name === 'Laptops') && <option value="Laptops">Laptops</option>}
+                    {!distinctCategories.some(c => c.name === 'CCTV & Security') && <option value="CCTV & Security">CCTV & Security</option>}
+                    {!distinctCategories.some(c => c.name === 'Printers') && <option value="Printers">Printers</option>}
+                    {!distinctCategories.some(c => c.name === 'Computers') && <option value="Computers">Computers</option>}
+                    {!distinctCategories.some(c => c.name === 'Accessories') && <option value="Accessories">Accessories</option>}
                   </select>
                 </div>
 
                 <div>
-                  <label className="font-bold text-gray-700 block mb-1">Brand</label>
+                  <label className="font-bold text-gray-700 block mb-1">Brand *</label>
                   <input
                     type="text"
-                    placeholder="HP, Dell, CP-PLUS, Epson..."
+                    placeholder="HP, Dell, CP-PLUS, Frontech, Epson..."
                     value={newProductBrand}
                     onChange={(e) => setNewProductBrand(e.target.value)}
                     className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
@@ -2958,7 +4085,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-3 gap-2.5">
                 <div>
                   <label className="font-bold text-gray-700 block mb-1">Selling Price (₹) *</label>
                   <input
@@ -2966,7 +4093,7 @@ export default function AdminPage() {
                     placeholder="e.g. 52999"
                     value={newProductPrice}
                     onChange={(e) => setNewProductPrice(e.target.value)}
-                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 font-bold focus:outline-none focus:border-[#1A56DB]"
                     required
                   />
                 </div>
@@ -2978,6 +4105,17 @@ export default function AdminPage() {
                     placeholder="e.g. 64999"
                     value={newProductMrp}
                     onChange={(e) => setNewProductMrp(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Stock Qty</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 25"
+                    value={newProductStockQuantity}
+                    onChange={(e) => setNewProductStockQuantity(Number(e.target.value))}
                     className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
                   />
                 </div>
@@ -2995,29 +4133,279 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="font-bold text-gray-700 block mb-1">Image URL</label>
-                <input
-                  type="text"
-                  value={newProductImage}
-                  onChange={(e) => setNewProductImage(e.target.value)}
-                  className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                <label className="font-bold text-gray-700 block mb-1">Detailed Description</label>
+                <textarea
+                  rows={2}
+                  placeholder="Enter detailed features, warranty notes, box contents..."
+                  value={newProductDescription}
+                  onChange={(e) => setNewProductDescription(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-gray-700 block">Product Photo(s)</label>
+                  <label className="cursor-pointer text-[#1A56DB] hover:text-[#1E40AF] font-bold text-xs flex items-center gap-1">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload from Gallery (Single/Multiple)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleMultipleProductUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter image URL or pick from gallery above..."
+                    value={newProductImage}
+                    onChange={(e) => setNewProductImage(e.target.value)}
+                    className="flex-1 h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                  {newProductImage && (
+                    <div className="w-9 h-9 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 p-0.5 flex-shrink-0">
+                      <img src={newProductImage} alt="preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddProductOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200"
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs shadow-xs"
+                  className="px-5 py-2 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
-                  Save to Inventory
+                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Save to Catalog</span>
                 </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: EDIT PRODUCT DETAILS (FULL PRODUCT CONTROL)       */}
+      {/* ========================================================= */}
+      {isEditProductModalOpen && editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-[#111827]">
+                    Edit Product Details
+                  </h3>
+                  <p className="text-[11px] text-gray-500 font-mono">SKU: {editingProduct.sku || editingProduct.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsEditProductModalOpen(false);
+                  setEditingProduct(null);
+                }}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditProduct} className="space-y-3.5 text-xs">
+              
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Product Title *</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Category *</label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-2 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  >
+                    {distinctCategories.map((c) => (
+                      <option key={c.name} value={c.name}>{c.name}</option>
+                    ))}
+                    {!distinctCategories.some(c => c.name === editCategory) && (
+                      <option value={editCategory}>{editCategory}</option>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Brand *</label>
+                  <input
+                    type="text"
+                    value={editBrand}
+                    onChange={(e) => setEditBrand(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Live Selling Price (₹) *</label>
+                  <input
+                    type="number"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border-2 border-blue-500 rounded-lg px-3 text-xs text-gray-900 font-extrabold focus:outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">MRP (₹)</label>
+                  <input
+                    type="number"
+                    value={editMrp}
+                    onChange={(e) => setEditMrp(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Stock Quantity</label>
+                  <input
+                    type="number"
+                    value={editStockQuantity}
+                    onChange={(e) => setEditStockQuantity(Number(e.target.value))}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+              </div>
+
+              {/* In Stock Status Toggle */}
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-gray-800 block">Stock Availability Status</span>
+                  <span className="text-[11px] text-gray-500">Toggle whether this product is orderable by customers</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditInStock(!editInStock)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    editInStock
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-rose-100 text-rose-800 border border-rose-300'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${editInStock ? 'bg-emerald-600' : 'bg-rose-600'}`} />
+                  <span>{editInStock ? 'In Stock (Active)' : 'Out of Stock (Inactive)'}</span>
+                </button>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Specifications</label>
+                <input
+                  type="text"
+                  value={editSpecs}
+                  onChange={(e) => setEditSpecs(e.target.value)}
+                  className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Description</label>
+                <textarea
+                  rows={2}
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-gray-700 block">Product Image</label>
+                  <label className="cursor-pointer text-[#1A56DB] hover:text-[#1E40AF] font-bold text-xs flex items-center gap-1">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload from Gallery</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleProductFileUpload(e, true)}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={editImage}
+                    onChange={(e) => setEditImage(e.target.value)}
+                    className="flex-1 h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                  {editImage && (
+                    <div className="w-9 h-9 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 p-0.5 flex-shrink-0">
+                      <img src={editImage} alt="preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm(`Delete "${editingProduct.name}" completely from database?`)) {
+                      deleteProductFromDb(editingProduct.id);
+                      setIsEditProductModalOpen(false);
+                      setEditingProduct(null);
+                    }
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Product</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditProductModalOpen(false);
+                      setEditingProduct(null);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
               </div>
 
             </form>
@@ -3130,13 +4518,33 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="font-bold text-gray-700 block mb-1">Banner Image URL</label>
-                <input
-                  type="text"
-                  value={newBannerImage}
-                  onChange={(e) => setNewBannerImage(e.target.value)}
-                  className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-gray-700 block">Banner Image</label>
+                  <label className="cursor-pointer text-[#1A56DB] hover:text-[#1E40AF] font-bold text-xs flex items-center gap-1">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload from Gallery / Device</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Enter image URL or upload from gallery above..."
+                    value={newBannerImage}
+                    onChange={(e) => setNewBannerImage(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                  {newBannerImage && (
+                    <div className="h-24 w-full rounded-xl border border-gray-200 overflow-hidden bg-slate-900/5 p-1 flex items-center justify-center">
+                      <img src={newBannerImage} alt="Banner Preview" className="h-full w-full object-contain" />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
@@ -3733,6 +5141,179 @@ export default function AdminPage() {
               </div>
             </form>
 
+          </div>
+        </div>
+      )}
+
+      {/* 8. CREATE / EDIT COUPON MODAL */}
+      {isCouponModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-gray-200 overflow-hidden my-8">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1A56DB] flex items-center justify-center font-bold">
+                  <Percent className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-gray-900">
+                    {editingCouponId ? 'Edit Promotional Coupon' : 'Create New Promotional Coupon'}
+                  </h3>
+                  <p className="text-[11px] text-gray-500">
+                    Set discount rules for normal shoppers or premium VIP members.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCouponModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCoupon} className="p-5 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Coupon Code *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. WELCOME5"
+                    value={couponCodeInput}
+                    onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 font-mono font-bold text-sm text-gray-900 uppercase focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Target Audience *</label>
+                  <select
+                    value={couponAudience}
+                    onChange={(e) => setCouponAudience(e.target.value as any)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 font-semibold text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  >
+                    <option value="normal">Normal Shoppers (General)</option>
+                    <option value="premium">Premium / VIP Customers</option>
+                    <option value="all">All Shoppers</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Coupon Title / Headline *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Special 5% Welcome Discount"
+                  value={couponTitleInput}
+                  onChange={(e) => setCouponTitleInput(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Discount Type *</label>
+                  <select
+                    value={couponDiscountType}
+                    onChange={(e) => setCouponDiscountType(e.target.value as any)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 font-semibold text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  >
+                    <option value="percentage">Percentage OFF (%)</option>
+                    <option value="fixed">Flat Amount (₹)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">
+                    {couponDiscountType === 'percentage' ? 'Percentage (e.g. 5 for 5%) *' : 'Discount Amount (₹) *'}
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    placeholder="e.g. 5"
+                    value={couponDiscountValue}
+                    onChange={(e) => setCouponDiscountValue(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 font-bold focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Min Order Value (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="499"
+                    value={couponMinOrder}
+                    onChange={(e) => setCouponMinOrder(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Max Discount Cap (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="1000 (optional)"
+                    value={couponMaxDiscount}
+                    onChange={(e) => setCouponMaxDiscount(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Expiry Date</label>
+                  <input
+                    type="date"
+                    value={couponValidUntil}
+                    onChange={(e) => setCouponValidUntil(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                </div>
+                <div className="flex items-center pt-5">
+                  <label className="flex items-center gap-2 cursor-pointer font-bold text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={couponIsActive}
+                      onChange={(e) => setCouponIsActive(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#1A56DB] focus:ring-blue-500"
+                    />
+                    <span>Active & Redeemable</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Description / Short Terms</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Valid on all laptops and electronics across Lapiez showroom."
+                  value={couponDesc}
+                  onChange={(e) => setCouponDesc(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCouponModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold shadow-xs cursor-pointer"
+                >
+                  {editingCouponId ? 'Save Changes' : 'Create Coupon'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -1,12 +1,19 @@
 import { createClient, User } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rprmjhzjiuaktkubfuqt.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_75VfJ7bsDZvhM2wAiT-Q0Q_vbwU5K1O';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+function getSafeTarget(redirectTo?: string): string {
+  if (redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//') && !redirectTo.startsWith('/\\')) {
+    return typeof window !== 'undefined' ? `${window.location.origin}${redirectTo}` : redirectTo;
+  }
+  return typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '/auth/callback';
+}
+
 export async function signInWithGoogle(redirectTo?: string) {
-  const target = redirectTo || (typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '/auth/callback');
+  const target = getSafeTarget(redirectTo);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -27,3 +34,4 @@ export async function signOutCustomer() {
 }
 
 export type { User };
+

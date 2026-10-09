@@ -11,7 +11,7 @@ import { STORE_INFO } from '../data/storeData';
 
 export const MobileBottomNav: React.FC = () => {
   const pathname = usePathname();
-  const { cart, setIsCartOpen, setIsAccountOpen, setAccountTab } = useStore();
+  const { cart, setIsCartOpen, setIsAccountOpen, setAccountTab, siteSettings } = useStore();
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -38,7 +38,7 @@ export const MobileBottomNav: React.FC = () => {
     {
       label: 'WhatsApp',
       icon: MessageSquare,
-      href: `https://wa.me/${STORE_INFO.whatsapp}?text=${encodeURIComponent('Hello Lappy Solution Garhwa, I want to inquire about products.')}`,
+      href: `https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I want to inquire about products.`)}`,
       isExternal: true,
       isGreen: true
     }

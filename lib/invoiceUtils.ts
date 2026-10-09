@@ -1,4 +1,4 @@
-// Lappy Solution - Dynamic GST Tax Invoice & Billing Engine
+// Lapiez - Dynamic GST Tax Invoice & Billing Engine
 // Compliant with CBIC Rule 46 (GST Tax Invoice Rules)
 
 export interface InvoiceItem {
@@ -129,7 +129,7 @@ export interface Invoice {
 }
 
 export const DEFAULT_INVOICE_SETTINGS: InvoiceSettings = {
-  businessName: 'Lappy Solution',
+  businessName: 'Lapiez',
   tagline: 'Technology • Security • Complete Hardware Solutions',
   address: 'In front of G P Plaza, Chiniya Road',
   city: 'Garhwa',
@@ -147,8 +147,8 @@ export const DEFAULT_INVOICE_SETTINGS: InvoiceSettings = {
   financialYear: '2026-27',
   nextNumber: 10248,
 
-  upiId: '9608828288@okbizaxis',
-  upiName: 'LAPPY SOLUTION GARHWA',
+  upiId: 'lappy.solution@ybl',
+  upiName: 'LAPIEZ GARHWA',
   bankName: 'State Bank of India',
   accountNumber: '38947291048',
   ifscCode: 'SBIN0000080',
@@ -165,7 +165,7 @@ export const DEFAULT_INVOICE_SETTINGS: InvoiceSettings = {
     'Subject to realization of Cheque / UPI / Bank transfer.'
   ],
   declaration: 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.',
-  signatoryTitle: 'Authorized Signatory for Lappy Solution',
+  signatoryTitle: 'Authorized Signatory for Lapiez',
 
   showGstin: true,
   showHsn: true,
