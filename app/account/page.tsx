@@ -18,6 +18,7 @@ import { Product } from '../../data/products';
 
 type AccountTab = 
   | 'orders' 
+  | 'cart'
   | 'profile' 
   | 'addresses' 
   | 'wishlist' 
@@ -70,6 +71,10 @@ function AccountContent() {
   const router = useRouter();
   const { 
     orders, 
+    cart,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
     wishlistIds, 
     products, 
     addToCart, 
@@ -88,7 +93,7 @@ function AccountContent() {
 
   useEffect(() => {
     const tabParam = searchParams.get('tab') as AccountTab;
-    if (tabParam && ['orders', 'profile', 'addresses', 'wishlist', 'gst', 'payments', 'support'].includes(tabParam)) {
+    if (tabParam && ['orders', 'cart', 'profile', 'addresses', 'wishlist', 'gst', 'payments', 'support'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -354,6 +359,7 @@ function AccountContent() {
   const getTabTitle = (tab: AccountTab) => {
     switch (tab) {
       case 'orders': return 'My Orders';
+      case 'cart': return `My Active Cart (${cart.reduce((sum, item) => sum + item.quantity, 0)} items)`;
       case 'profile': return 'Profile Information';
       case 'addresses': return 'Manage Addresses';
       case 'wishlist': return `My Wishlist (${wishlistProducts.length})`;
@@ -444,8 +450,8 @@ function AccountContent() {
             {/* Navigation Menu Card */}
             <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-2xs divide-y divide-[#F3F4F6] overflow-hidden text-xs">
               
-              {/* GROUP 1: MY ORDERS */}
-              <div className="p-2">
+              {/* GROUP 1: MY ORDERS & MY CART */}
+              <div className="p-2 space-y-1">
                 <button
                   onClick={() => setActiveTab('orders')}
                   className={`w-full py-2.5 px-3 rounded-lg flex items-center justify-between font-bold transition-all ${
@@ -461,6 +467,28 @@ function AccountContent() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-100 text-[#1A56DB] font-extrabold">
                       {orders.length}
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('cart')}
+                  className={`w-full py-2.5 px-3 rounded-lg flex items-center justify-between font-bold transition-all ${
+                    activeTab === 'cart'
+                      ? 'bg-[#EFF6FF] text-[#1A56DB]'
+                      : 'text-[#374151] hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <ShoppingCart className={`w-4 h-4 ${activeTab === 'cart' ? 'text-[#1A56DB]' : 'text-gray-400'}`} />
+                    <span>MY ACTIVE CART</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                      cart.length > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {cart.reduce((s, i) => s + i.quantity, 0)}
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                   </div>
@@ -537,6 +565,20 @@ function AccountContent() {
                   <Tag className="w-3 h-3 text-[#1A56DB]" />
                   <span>MY STUFF</span>
                 </div>
+
+                <button
+                  onClick={() => setActiveTab('cart')}
+                  className={`w-full py-2 px-3 rounded-lg flex items-center justify-between transition-colors ${
+                    activeTab === 'cart'
+                      ? 'bg-[#EFF6FF] text-[#1A56DB] font-bold'
+                      : 'text-[#4B5563] hover:bg-gray-50'
+                  }`}
+                >
+                  <span>My Cart Items</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800">
+                    {cart.reduce((s, i) => s + i.quantity, 0)}
+                  </span>
+                </button>
 
                 <button
                   onClick={() => setActiveTab('wishlist')}
@@ -903,6 +945,246 @@ function AccountContent() {
                       <span>Explore Catalog ({products.length || 413} Items)</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* ======================================================= */}
+            {/* TAB: MY ACTIVE CART & CHOSEN HARDWARE                   */}
+            {/* ======================================================= */}
+            {activeTab === 'cart' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                
+                {/* Header Card */}
+                <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="p-1.5 rounded-lg bg-blue-50 text-[#1A56DB]">
+                        <ShoppingCart className="w-4 h-4" />
+                      </span>
+                      <h3 className="text-base sm:text-lg font-black text-[#111827]">
+                        My Selected Hardware & Cart ({cart.reduce((s, i) => s + i.quantity, 0)} Items)
+                      </h3>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Manage products chosen in your customer session, change quantity, or remove items before placing order.
+                    </p>
+                  </div>
+
+                  {cart.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Are you sure you want to remove all items from your cart?')) {
+                          clearCart();
+                          showToast('Cart cleared.');
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer w-fit"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Clear All Items</span>
+                    </button>
+                  )}
+                </div>
+
+                {cart.length === 0 ? (
+                  /* Empty State */
+                  <div className="bg-white border border-[#E5E7EB] rounded-2xl p-10 text-center shadow-2xs space-y-3">
+                    <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#1A56DB] mx-auto">
+                      <ShoppingCart className="w-8 h-8" />
+                    </div>
+                    <h4 className="text-base font-bold text-gray-900">Your Cart is Currently Empty</h4>
+                    <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                      You haven't chosen any products yet. Browse our Garhwa showroom catalog for laptops, parts, CCTV kits, and accessories.
+                    </p>
+                    <div className="pt-2">
+                      <Link
+                        href="/shop"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1A56DB] hover:bg-[#1545B0] text-white font-bold text-xs shadow-sm transition-all"
+                      >
+                        <span>Browse Products Catalog</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  /* Active Cart Grid */
+                  <div className="space-y-4">
+                    {/* Items List */}
+                    <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-2xs overflow-hidden divide-y divide-gray-100">
+                      {cart.map((item) => {
+                        const itemSubtotal = item.product.price * item.quantity;
+                        const itemSavings = (item.product.mrp || item.product.price) > item.product.price
+                          ? ((item.product.mrp || item.product.price) - item.product.price) * item.quantity
+                          : 0;
+
+                        return (
+                          <div key={item.product.id} className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
+                            {/* Product Info */}
+                            <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                              <Link href={`/product/${item.product.id}`} className="flex-shrink-0">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-[#F8FAFC] border border-gray-200 p-1.5 flex items-center justify-center overflow-hidden hover:border-blue-400 transition-colors">
+                                  <img
+                                    src={item.product.image || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80'}
+                                    alt={item.product.name}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              </Link>
+
+                              <div className="min-w-0 space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#1A56DB] bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                                    {item.product.brand || 'Showroom'}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                    {item.product.category}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
+                                    GST {item.product.gstRate ?? 18}%
+                                  </span>
+                                </div>
+
+                                <Link href={`/product/${item.product.id}`} className="block">
+                                  <h4 className="text-xs sm:text-sm font-bold text-gray-900 hover:text-[#1A56DB] transition-colors line-clamp-1">
+                                    {item.product.name}
+                                  </h4>
+                                </Link>
+
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="font-extrabold text-gray-900">
+                                    ₹{item.product.price.toLocaleString('en-IN')}
+                                  </span>
+                                  {(item.product.mrp || 0) > item.product.price && (
+                                    <span className="text-gray-400 line-through text-[11px]">
+                                      ₹{item.product.mrp?.toLocaleString('en-IN')}
+                                    </span>
+                                  )}
+                                  {itemSavings > 0 && (
+                                    <span className="text-emerald-700 font-bold text-[10px] bg-emerald-50 px-1.5 py-0.2 rounded">
+                                      Save ₹{itemSavings.toLocaleString('en-IN')}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <span className="text-[10.5px] text-gray-400 font-mono block">
+                                  SKU: {item.product.sku || item.product.id}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Quantity Controls & Total & Remove Action */}
+                            <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                              <div className="text-right">
+                                <span className="text-[10px] text-gray-400 uppercase font-semibold block">Item Total</span>
+                                <span className="text-sm sm:text-base font-black text-gray-900 font-mono">
+                                  ₹{itemSubtotal.toLocaleString('en-IN')}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2.5">
+                                {/* Quantity Step Counter */}
+                                <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 p-0.5 shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (item.quantity <= 1) {
+                                        removeFromCart(item.product.id);
+                                        showToast(`Removed "${item.product.name.slice(0, 18)}..." from cart`);
+                                      } else {
+                                        updateQuantity(item.product.id, item.quantity - 1);
+                                      }
+                                    }}
+                                    className="w-7 h-7 rounded-md bg-white text-gray-700 hover:bg-gray-100 flex items-center justify-center font-bold text-xs transition-colors border border-gray-200 cursor-pointer"
+                                    title="Decrease quantity"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="w-8 text-center text-xs font-black text-gray-900 font-mono">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      updateQuantity(item.product.id, item.quantity + 1);
+                                    }}
+                                    className="w-7 h-7 rounded-md bg-white text-gray-700 hover:bg-gray-100 flex items-center justify-center font-bold text-xs transition-colors border border-gray-200 cursor-pointer"
+                                    title="Increase quantity"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+
+                                {/* Remove Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    removeFromCart(item.product.id);
+                                    showToast(`Removed "${item.product.name.slice(0, 18)}..." from cart`);
+                                  }}
+                                  className="h-8 px-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                                  title="Remove item from cart"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">Remove</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Cart Bill & Checkout CTA Card */}
+                    <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 sm:p-6 shadow-2xs space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <span className="font-bold text-sm text-gray-900">Total Cart Breakdown</span>
+                        <span className="text-xs font-mono text-gray-500">{cart.reduce((s, i) => s + i.quantity, 0)} Items Selected</span>
+                      </div>
+
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between text-gray-600">
+                          <span>Subtotal (Base Price)</span>
+                          <span className="font-bold text-gray-900 font-mono">
+                            ₹{cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Showroom Testing & Counter Pickup</span>
+                          <span className="font-bold text-emerald-600 uppercase text-[11px]">FREE (Garhwa)</span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>GST Tax Invoice</span>
+                          <span className="font-bold text-blue-600">100% ITC Eligible</span>
+                        </div>
+
+                        <div className="pt-3 border-t border-gray-200 flex justify-between items-center text-sm sm:text-base">
+                          <span className="font-black text-gray-900">Total Payable Amount</span>
+                          <span className="font-black text-[#1A56DB] text-lg sm:text-xl font-mono">
+                            ₹{cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                        <Link
+                          href="/shop"
+                          className="py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs text-center transition-colors"
+                        >
+                          + Add More Hardware
+                        </Link>
+                        <Link
+                          href="/checkout"
+                          className="flex-1 py-3.5 px-6 rounded-xl bg-[#1A56DB] hover:bg-[#1545B0] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                        >
+                          <span>Proceed to Express Checkout</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                 )}
 

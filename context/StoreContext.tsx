@@ -126,13 +126,14 @@ interface StoreContextType {
   setIsCheckoutOpen: (open: boolean) => void;
   isAccountOpen: boolean;
   setIsAccountOpen: (open: boolean) => void;
-  accountTab: 'orders' | 'wishlist';
-  setAccountTab: (tab: 'orders' | 'wishlist') => void;
+  accountTab: 'orders' | 'cart' | 'wishlist';
+  setAccountTab: (tab: 'orders' | 'cart' | 'wishlist') => void;
   toast: string | null;
   showToast: (msg: string) => void;
   addToCart: (p: Product) => void;
   updateQuantity: (id: string, qty: number) => void;
   removeFromCart: (id: string) => void;
+  clearCart: () => void;
   toggleWishlist: (p: Product) => void;
   placeOrder: (order: any) => Promise<Invoice>;
   createLead: (lead: any) => void;
@@ -239,7 +240,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [accountTab, setAccountTab] = useState<'orders' | 'wishlist'>('orders');
+  const [accountTab, setAccountTab] = useState<'orders' | 'cart' | 'wishlist'>('orders');
   const [toast, setToast] = useState<string | null>(null);
   const [customer, setCustomer] = useState<User | null>(null);
   const [isCustomerLoading, setIsCustomerLoading] = useState(true);
@@ -582,6 +583,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem('ls_cart', JSON.stringify(updated));
     } catch (e) {}
     showToast('Item removed from cart');
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    try {
+      localStorage.removeItem('ls_cart');
+    } catch (e) {}
   };
 
   const toggleWishlist = (product: Product) => {
@@ -1345,6 +1353,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addToCart,
         updateQuantity,
         removeFromCart,
+        clearCart,
         toggleWishlist,
         placeOrder,
         createLead,

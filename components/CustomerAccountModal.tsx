@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   X, Package, Heart, ShoppingCart, Trash2, ArrowRight, ExternalLink, FileText,
-  LogOut, Sparkles, User as UserIcon
+  LogOut, Sparkles, User as UserIcon, Minus, Plus
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 
@@ -17,18 +17,24 @@ export const CustomerAccountModal: React.FC = () => {
     accountTab, 
     setAccountTab,
     orders,
-    wishlistIds,
-    products,
-    addToCart,
-    toggleWishlist,
+    cart,
+    updateQuantity,
+    removeFromCart,
+    wishlistIds, 
+    products, 
+    addToCart, 
+    toggleWishlist, 
     customer,
     signInWithGoogle,
-    signOutCustomer
+    signOutCustomer,
+    showToast
   } = useStore();
 
   if (!isAccountOpen) return null;
 
   const wishlistProducts = products.filter(p => wishlistIds.includes(p.id));
+  const totalCartCount = cart.reduce((s, i) => s + i.quantity, 0);
+  const totalCartAmount = cart.reduce((s, i) => s + (i.product.price * i.quantity), 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -40,7 +46,7 @@ export const CustomerAccountModal: React.FC = () => {
         <div className="flex items-center justify-between pb-4 border-b border-slate-200">
           <div>
             <h2 className="text-xl font-bold text-slate-900">Customer Account</h2>
-            <p className="text-xs text-slate-500">Track orders and manage saved hardware</p>
+            <p className="text-xs text-slate-500">Track orders, manage active cart, and view saved hardware</p>
           </div>
           <button
             onClick={() => setIsAccountOpen(false)}
@@ -116,11 +122,11 @@ export const CustomerAccountModal: React.FC = () => {
 
 
         {/* Tab switcher */}
-        <div className="flex items-center justify-between gap-2 pt-4 pb-4">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 pt-4 pb-4 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setAccountTab('orders')}
-              className={`py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 accountTab === 'orders'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -131,8 +137,20 @@ export const CustomerAccountModal: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setAccountTab('cart' as any)}
+              className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                accountTab === ('cart' as any)
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>My Cart ({totalCartCount})</span>
+            </button>
+
+            <button
               onClick={() => setAccountTab('wishlist')}
-              className={`py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 accountTab === 'wishlist'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -148,7 +166,7 @@ export const CustomerAccountModal: React.FC = () => {
             onClick={() => setIsAccountOpen(false)}
             className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
           >
-            <span>Full Account Page</span>
+            <span>Full Account Portal</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -197,6 +215,135 @@ export const CustomerAccountModal: React.FC = () => {
                 <Package className="w-10 h-10 mx-auto mb-2 text-slate-300" />
                 <p className="font-bold text-slate-800 text-sm">No orders yet</p>
                 <p className="text-xs mt-0.5">Your orders will appear here with live tracking updates.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Cart Items List */}
+        {accountTab === ('cart' as any) && (
+          <div className="space-y-3.5">
+            {cart.length > 0 ? (
+              <>
+                <div className="space-y-2.5 max-h-[42vh] overflow-y-auto pr-1">
+                  {cart.map((item) => (
+                    <div 
+                      key={item.product.id} 
+                      className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 hover:bg-slate-100/60 transition-colors"
+                    >
+                      {/* Product Thumbnail & Details */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <img 
+                          src={item.product.image || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80'} 
+                          alt={item.product.name} 
+                          className="w-12 h-12 object-contain rounded-lg bg-white p-1 border border-slate-200 flex-shrink-0" 
+                        />
+                        <div className="min-w-0 space-y-0.5">
+                          <h4 className="text-xs font-bold text-slate-900 truncate" title={item.product.name}>
+                            {item.product.name}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[11px]">
+                            <span className="font-extrabold text-blue-600 font-mono">
+                              ₹{item.product.price.toLocaleString('en-IN')}
+                            </span>
+                            <span className="text-slate-400">•</span>
+                            <span className="text-slate-500 font-mono">
+                              Total: <strong className="text-slate-800">₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</strong>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Quantity Modifier & Remove Button */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Qty Selector */}
+                        <div className="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (item.quantity <= 1) {
+                                removeFromCart(item.product.id);
+                                showToast(`Removed ${item.product.name.slice(0, 16)}... from cart`);
+                              } else {
+                                updateQuantity(item.product.id, item.quantity - 1);
+                              }
+                            }}
+                            className="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+                            title="Decrease"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-6 text-center text-xs font-bold text-slate-900 font-mono">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            className="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+                            title="Increase"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        {/* Direct Trash / Remove Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            removeFromCart(item.product.id);
+                            showToast(`Removed ${item.product.name.slice(0, 18)}... from cart`);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer border border-transparent hover:border-red-200"
+                          title="Remove item from cart"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Subtotal & Checkout Action Bar */}
+                <div className="pt-3 border-t border-slate-200 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-medium">Cart Total ({totalCartCount} items):</span>
+                    <span className="text-base font-extrabold text-blue-600 font-mono">
+                      ₹{totalCartAmount.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAccountOpen(false);
+                        router.push('/checkout');
+                      }}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>Proceed to Checkout</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12 text-slate-400 space-y-2">
+                <ShoppingCart className="w-10 h-10 mx-auto text-slate-300" />
+                <p className="font-bold text-slate-800 text-sm">Your cart is empty</p>
+                <p className="text-xs">Browse our catalog and choose products to add to your order.</p>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAccountOpen(false);
+                      router.push('/shop');
+                    }}
+                    className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                  >
+                    Browse Products
+                  </button>
+                </div>
               </div>
             )}
           </div>
