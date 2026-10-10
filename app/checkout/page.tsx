@@ -7,7 +7,7 @@ import {
   ShieldCheck, Truck, Store, Check, ArrowLeft, 
   ArrowRight, QrCode, CreditCard, Banknote, Smartphone, 
   Copy, CheckCircle2, Lock, Building, UploadCloud, AlertCircle, Tag,
-  User, UserCheck, LogIn, LogOut
+  User, UserCheck, LogIn, LogOut, Clock, RotateCcw
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useStore } from '../../context/StoreContext';
@@ -65,11 +65,52 @@ export default function CheckoutPage() {
   const [inputCouponCode, setInputCouponCode] = useState('');
   const [couponError, setCouponError] = useState('');
 
+  // 1 min 30 sec (90s) Dynamic Transaction Countdown Timer State
+  const [paymentTimerSeconds, setPaymentTimerSeconds] = useState(90);
+  const [isTimerExpired, setIsTimerExpired] = useState(false);
+
   // Generate unique order ID on mount
   useEffect(() => {
     const randomDigits = Math.floor(10000 + Math.random() * 90000);
     setTempOrderId(`LPZ-${randomDigits}`);
   }, []);
+
+  // 90s Countdown Timer Effect for UPI QR Payment
+  useEffect(() => {
+    if (step !== 3 || paymentMethod !== 'upi_qr') return;
+    
+    if (paymentTimerSeconds <= 0) {
+      setIsTimerExpired(true);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setPaymentTimerSeconds((prev) => {
+        if (prev <= 1) {
+          setIsTimerExpired(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [step, paymentMethod, paymentTimerSeconds]);
+
+  const handleRegenerateUpiSession = () => {
+    const randomDigits = Math.floor(10000 + Math.random() * 90000);
+    setTempOrderId(`LPZ-${randomDigits}`);
+    setPaymentTimerSeconds(90);
+    setIsTimerExpired(false);
+    setUtrNumber('');
+    showToast('UPI payment session refreshed! 1m 30s timer restarted.');
+  };
+
+  const formatTimer = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const finalTotal = Math.max(0, subtotal - (couponDiscount || 0));
@@ -249,9 +290,15 @@ export default function CheckoutPage() {
       showToast('Please sign in to your customer account before placing an order');
       return;
     }
-    if (paymentMethod === 'upi_qr' && !utrNumber.trim()) {
-      showToast('Please enter the 12-digit UPI UTR / Transaction Reference number after scanning the QR code');
-      return;
+    if (paymentMethod === 'upi_qr') {
+      if (isTimerExpired) {
+        showToast('UPI payment session timed out. Please tap "Regenerate QR & Restart Timer" to proceed.');
+        return;
+      }
+      if (!utrNumber.trim()) {
+        showToast('Please enter the 12-digit UPI UTR / Transaction Reference number after scanning the QR code');
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -910,7 +957,7 @@ export default function CheckoutPage() {
                   </button>
                 </div>
 
-                {/* PAYMENT METHOD A: DYNAMIC UPI QR CODE SYSTEM */}
+                {/* PAYMENT METHOD A: DYNAMIC UPI QR CODE SYSTEM WITH 90s TRANSACTION TIMER */}
                 {paymentMethod === 'upi_qr' && (
                   <div className="rounded-2xl border-2 border-blue-500 bg-gradient-to-b from-blue-50/30 to-white p-6 space-y-6">
                     
@@ -926,44 +973,111 @@ export default function CheckoutPage() {
                       </p>
                     </div>
 
-                    {/* Dynamic QR Code Card */}
-                    <div className="flex flex-col items-center justify-center p-6 rounded-3xl bg-white border border-slate-200 shadow-md max-w-xs mx-auto">
+                    {/* Dynamic 90-Second Transaction Countdown Bar */}
+                    <div className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${
+                      isTimerExpired
+                        ? 'bg-rose-50 border-rose-300 text-rose-900 shadow-sm'
+                        : paymentTimerSeconds <= 20
+                        ? 'bg-amber-50 border-amber-300 text-amber-900 animate-pulse'
+                        : 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shadow-xs ${
+                          isTimerExpired 
+                            ? 'bg-rose-600 text-white' 
+                            : paymentTimerSeconds <= 20 
+                            ? 'bg-amber-600 text-white' 
+                            : 'bg-emerald-600 text-white'
+                        }`}>
+                          <Clock className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-black flex items-center gap-2">
+                            <span>{isTimerExpired ? 'Session Expired (1m 30s Time Limit)' : 'Transaction Timer Active'}</span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/80 border font-bold">
+                              1 Min 30 Sec
+                            </span>
+                          </div>
+                          <p className="text-[11px] opacity-80 mt-0.5">
+                            {isTimerExpired
+                              ? 'Payment session expired for security. Tap regenerate to get a new QR code.'
+                              : 'Complete UPI payment and enter UTR reference before timer expires.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right flex flex-col items-end">
+                        <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">Time Left</span>
+                        <span className={`text-xl font-mono font-black tracking-tight ${
+                          isTimerExpired ? 'text-rose-700' : paymentTimerSeconds <= 20 ? 'text-amber-700' : 'text-emerald-700'
+                        }`}>
+                          {formatTimer(paymentTimerSeconds)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Dynamic QR Code Card or Expired State */}
+                    <div className="flex flex-col items-center justify-center p-6 rounded-3xl bg-white border border-slate-200 shadow-md max-w-xs mx-auto text-center relative overflow-hidden">
                       
-                      {/* Merchant Logo Badge */}
-                      <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-slate-900">
-                        <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center text-[10px]">LS</div>
-                        <span>LAPIEZ GARHWA</span>
-                      </div>
+                      {isTimerExpired ? (
+                        <div className="py-4 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                          <div className="w-16 h-16 rounded-2xl bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-600 mx-auto">
+                            <AlertCircle className="w-8 h-8" />
+                          </div>
+                          <div className="space-y-1">
+                            <h5 className="text-sm font-black text-slate-900">QR Code Expired</h5>
+                            <p className="text-xs text-slate-500 max-w-[240px] mx-auto">
+                              The 1 min 30 sec payment window has ended to prevent duplicate or stalled transactions.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRegenerateUpiSession}
+                            className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer active:scale-95"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            <span>Regenerate QR & Restart Timer (1:30)</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Merchant Logo Badge */}
+                          <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-slate-900">
+                            <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center text-[10px]">LS</div>
+                            <span>LAPIEZ GARHWA</span>
+                          </div>
 
-                      {/* Live Generated QR Code */}
-                      <div className="p-3 bg-white border-2 border-slate-900 rounded-2xl shadow-inner">
-                        <QRCodeSVG
-                          value={upiPaymentUri}
-                          size={190}
-                          level="H"
-                          includeMargin={false}
-                        />
-                      </div>
+                          {/* Live Generated QR Code */}
+                          <div className="p-3 bg-white border-2 border-slate-900 rounded-2xl shadow-inner">
+                            <QRCodeSVG
+                              value={upiPaymentUri}
+                              size={190}
+                              level="H"
+                              includeMargin={false}
+                            />
+                          </div>
 
-                      <div className="mt-3 text-center space-y-1">
-                        <span className="text-xs font-black text-slate-900 block font-mono">
-                          Payable: ₹{finalTotal.toLocaleString('en-IN')}
-                        </span>
-                        <span className="text-[10px] text-slate-500 block">
-                          Order Ref: {tempOrderId}
-                        </span>
-                      </div>
+                          <div className="mt-3 text-center space-y-1">
+                            <span className="text-xs font-black text-slate-900 block font-mono">
+                              Payable: ₹{finalTotal.toLocaleString('en-IN')}
+                            </span>
+                            <span className="text-[10px] text-slate-500 block">
+                              Order Ref: {tempOrderId}
+                            </span>
+                          </div>
 
-                      {/* Direct UPI Mobile Intent Link */}
-                      <div className="mt-4 w-full">
-                        <a
-                          href={upiPaymentUri}
-                          className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors"
-                        >
-                          <Smartphone className="w-3.5 h-3.5" />
-                          <span>Pay via PhonePe / GPay App</span>
-                        </a>
-                      </div>
+                          {/* Direct UPI Mobile Intent Link */}
+                          <div className="mt-4 w-full">
+                            <a
+                              href={upiPaymentUri}
+                              className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors"
+                            >
+                              <Smartphone className="w-3.5 h-3.5" />
+                              <span>Pay via PhonePe / GPay App</span>
+                            </a>
+                          </div>
+                        </>
+                      )}
 
                     </div>
 
@@ -984,9 +1098,16 @@ export default function CheckoutPage() {
 
                     {/* Verification Step: Enter UTR / Transaction Ref */}
                     <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>Step 2: Enter 12-Digit UPI Transaction ID / UTR Number *</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>Step 2: Enter 12-Digit UPI Transaction ID / UTR Number *</span>
+                        </div>
+                        {isTimerExpired && (
+                          <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                            Session Expired
+                          </span>
+                        )}
                       </div>
                       <p className="text-[11px] text-slate-500">
                         After completing payment in your UPI app, enter the 12-digit UTR / UPI Reference Number shown on your transaction screen:
@@ -994,10 +1115,15 @@ export default function CheckoutPage() {
                       <input
                         type="text"
                         required
+                        disabled={isTimerExpired}
                         placeholder="e.g. 428172918273"
                         value={utrNumber}
                         onChange={(e) => setUtrNumber(e.target.value.trim())}
-                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm font-mono tracking-wider text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                        className={`w-full h-11 px-3.5 rounded-xl border text-xs sm:text-sm font-mono tracking-wider focus:outline-none ${
+                          isTimerExpired 
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-blue-600 focus:bg-white'
+                        }`}
                       />
                     </div>
 

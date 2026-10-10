@@ -176,15 +176,18 @@ export async function POST(request: Request) {
     }));
     const totalAmount = items.reduce((total, item) => total + item.price * item.quantity, 0);
 
-    const isUpi = body.paymentMethod === 'upi_qr';
-    const isCod = body.paymentMethod === 'cod';
-    if (!isUpi && !isCod) {
+    const rawMethod = String(body.paymentMethod || '').toLowerCase();
+    const isUpi = rawMethod.includes('upi') || rawMethod === 'upi_qr';
+    const isCod = rawMethod.includes('cod') || rawMethod.includes('cash') || rawMethod.includes('pickup') || rawMethod.includes('counter');
+    const isNetbanking = rawMethod.includes('netbanking') || rawMethod.includes('bank');
+
+    if (!isUpi && !isCod && !isNetbanking) {
       return NextResponse.json({ error: 'Unsupported payment method. Please select UPI QR or Cash on Counter/Delivery.' }, { status: 400 });
     }
 
     const utrNumber = typeof body.utrNumber === 'string' ? body.utrNumber.trim() : null;
-    if (isUpi && (!utrNumber || !/^[A-Za-z0-9-]{8,40}$/.test(utrNumber))) {
-      return NextResponse.json({ error: 'Please enter a valid UPI transaction reference (8-40 alphanumeric characters).' }, { status: 400 });
+    if (isUpi && (!utrNumber || !/^[A-Za-z0-9-]{6,40}$/.test(utrNumber))) {
+      return NextResponse.json({ error: 'Please enter a valid UPI transaction reference (UTR / Reference number).' }, { status: 400 });
     }
 
     // Generate canonical order ID on server

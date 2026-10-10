@@ -106,6 +106,8 @@ model Product {
   rating        Float    @default(4.5)
   featured      Boolean  @default(false)
   status        String   @default("active")
+  gstRate       Int?     @default(18)
+  hsnCode       String?  @default("8471")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

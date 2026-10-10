@@ -96,6 +96,8 @@ export async function POST(request: Request) {
         rating: Number(body.rating) || 4.5,
         featured: body.featured ?? false,
         status: 'active',
+        gstRate: body.gstRate !== undefined ? Number(body.gstRate) : 18,
+        hsnCode: body.hsnCode || '8471',
       },
     });
 
@@ -112,7 +114,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { id } = body;
     if (typeof id !== 'string') return NextResponse.json({ error: 'Product ID is required.' }, { status: 400 });
-    const allowedFields = ['name', 'slug', 'category', 'brand', 'price', 'mrp', 'discount', 'specs', 'description', 'image', 'inStock', 'stockQuantity', 'sku', 'rating', 'featured', 'status'];
+    const allowedFields = ['name', 'slug', 'category', 'brand', 'price', 'mrp', 'discount', 'specs', 'description', 'image', 'inStock', 'stockQuantity', 'sku', 'rating', 'featured', 'status', 'gstRate', 'hsnCode'];
     const data: Record<string, any> = Object.fromEntries(
       Object.entries(body).filter(([key]) => allowedFields.includes(key))
     );
@@ -123,6 +125,7 @@ export async function PUT(request: Request) {
     if (data.stockQuantity !== undefined) data.stockQuantity = Number(data.stockQuantity);
     if (data.discount !== undefined) data.discount = Number(data.discount);
     if (data.rating !== undefined) data.rating = Number(data.rating);
+    if (data.gstRate !== undefined) data.gstRate = Number(data.gstRate);
 
     let product;
     try {

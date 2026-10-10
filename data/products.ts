@@ -37,6 +37,8 @@ export interface Product {
   isScraped?: boolean;
   sourceUrl?: string;
   reviews?: ProductReview[];
+  gstRate?: number;
+  hsnCode?: string;
 }
 
 const BASE_PRODUCTS: Product[] = [

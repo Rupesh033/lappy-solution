@@ -99,6 +99,8 @@ export default function AdminPage() {
   const [editImage, setEditImage] = useState('');
   const [editSpecs, setEditSpecs] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editGstRate, setEditGstRate] = useState(18);
+  const [editHsnCode, setEditHsnCode] = useState('8471');
 
   // New Product Modal State
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
@@ -111,6 +113,8 @@ export default function AdminPage() {
   const [newProductSpecs, setNewProductSpecs] = useState('');
   const [newProductDescription, setNewProductDescription] = useState('');
   const [newProductImage, setNewProductImage] = useState('https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80');
+  const [newProductGstRate, setNewProductGstRate] = useState(18);
+  const [newProductHsnCode, setNewProductHsnCode] = useState('8471');
 
   // New Banner Modal State
   const [isAddBannerOpen, setIsAddBannerOpen] = useState(false);
@@ -409,6 +413,8 @@ export default function AdminPage() {
     setEditImage(p.image || '');
     setEditSpecs(p.specs || '');
     setEditDescription(p.description || '');
+    setEditGstRate(p.gstRate !== undefined ? Number(p.gstRate) : 18);
+    setEditHsnCode(p.hsnCode || '8471');
     setIsEditProductModalOpen(true);
   };
 
@@ -434,10 +440,13 @@ export default function AdminPage() {
       image: editImage.trim() || editingProduct.image,
       specs: editSpecs.trim(),
       description: editDescription.trim(),
+      gstRate: Number(editGstRate) !== undefined && !isNaN(Number(editGstRate)) ? Number(editGstRate) : 18,
+      hsnCode: editHsnCode.trim() || '8471',
     });
     if (success) {
       setIsEditProductModalOpen(false);
       setEditingProduct(null);
+      showToast(`Product "${editName.slice(0, 20)}..." updated successfully!`);
     }
   };
 
@@ -477,7 +486,7 @@ export default function AdminPage() {
 
   // Export Inventory CSV
   const handleExportInventoryCsv = (itemsToExport: Product[]) => {
-    const headers = ['ID', 'SKU', 'Name', 'Brand', 'Category', 'Price', 'MRP', 'Stock', 'InStock', 'Rating'];
+    const headers = ['ID', 'SKU', 'Name', 'Brand', 'Category', 'Price', 'MRP', 'Stock', 'InStock', 'GST_Rate', 'HSN', 'Rating'];
     const rows = itemsToExport.map(p => [
       `"${p.id}"`,
       `"${p.sku || ''}"`,
@@ -488,6 +497,8 @@ export default function AdminPage() {
       p.mrp,
       p.stockQuantity ?? 10,
       p.inStock ? 'In Stock' : 'Out of Stock',
+      `${p.gstRate ?? 18}%`,
+      `"${p.hsnCode || '8471'}"`,
       p.rating || 4.5
     ]);
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -527,6 +538,8 @@ export default function AdminPage() {
       stockQuantity: Number(newProductStockQuantity) || 10,
       sku: `LS-${newProductCategory.substring(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
       rating: 4.8,
+      gstRate: Number(newProductGstRate) !== undefined && !isNaN(Number(newProductGstRate)) ? Number(newProductGstRate) : 18,
+      hsnCode: newProductHsnCode.trim() || '8471',
     };
 
     await addProductToDb(newProd);
@@ -536,6 +549,9 @@ export default function AdminPage() {
     setNewProductMrp('');
     setNewProductSpecs('');
     setNewProductDescription('');
+    setNewProductGstRate(18);
+    setNewProductHsnCode('8471');
+    showToast('Product added successfully to catalog!');
   };
 
   // Image Upload Handlers (Device / Mobile Gallery)
@@ -2685,6 +2701,7 @@ export default function AdminPage() {
                           <th className="py-3 px-3">CATEGORY</th>
                           <th className="py-3 px-3">STOCK LEVEL</th>
                           <th className="py-3 px-3">LIVE PRICE</th>
+                          <th className="py-3 px-3">GST & HSN</th>
                           <th className="py-3 px-3">STATUS</th>
                           <th className="py-3 px-3">UPDATED</th>
                           <th className="py-3 px-3 text-right pr-4">ACTIONS</th>
@@ -2835,6 +2852,26 @@ export default function AdminPage() {
                                     <Pencil className="w-3 h-3 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                                   </div>
                                 )}
+                              </td>
+
+                              {/* GST & HSN Rate Badge */}
+                              <td className="py-3 px-3 whitespace-nowrap">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className={`px-2 py-0.5 rounded-md text-[10.5px] font-extrabold w-fit border ${
+                                    product.gstRate === 0 
+                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                                      : product.gstRate === 28 
+                                      ? 'bg-rose-50 text-rose-800 border-rose-200' 
+                                      : 'bg-blue-50 text-blue-800 border-blue-200'
+                                  }`}>
+                                    GST {product.gstRate ?? 18}%
+                                  </span>
+                                  {product.hsnCode && (
+                                    <span className="text-[9.5px] text-gray-400 font-mono">
+                                      HSN: {product.hsnCode}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
 
                               {/* Status Toggle Pill Button */}
@@ -4121,6 +4158,61 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* GST Tax Rate & Invoicing Slab */}
+              <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-gray-900 block text-xs">GST Tax Rate & HSN Code</span>
+                    <span className="text-[11px] text-gray-500">Set specific GST slab & HSN for billing & invoices</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white font-black text-xs">
+                    {newProductGstRate}% GST
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[0, 5, 12, 18, 28].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => setNewProductGstRate(rate)}
+                      className={`px-3 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                        newProductGstRate === rate
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      {rate}% {rate === 18 ? '(Standard)' : rate === 0 ? '(Exempt)' : ''}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Custom GST Rate (%)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder="18"
+                      value={newProductGstRate}
+                      onChange={(e) => setNewProductGstRate(Number(e.target.value))}
+                      className="w-full h-8 bg-white border border-gray-200 rounded-lg px-2.5 text-xs text-gray-900 font-bold focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">HSN / SAC Code</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 8471"
+                      value={newProductHsnCode}
+                      onChange={(e) => setNewProductHsnCode(e.target.value)}
+                      className="w-full h-8 bg-white border border-gray-200 rounded-lg px-2.5 text-xs text-gray-900 font-mono focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="font-bold text-gray-700 block mb-1">Key Specifications</label>
                 <input
@@ -4299,6 +4391,61 @@ export default function AdminPage() {
                     onChange={(e) => setEditStockQuantity(Number(e.target.value))}
                     className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
                   />
+                </div>
+              </div>
+
+              {/* GST Tax Rate & Invoicing Slab */}
+              <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-gray-900 block text-xs">GST Tax Rate & HSN Code</span>
+                    <span className="text-[11px] text-gray-500">Edit specific GST rate slab & HSN code for this product</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white font-black text-xs">
+                    {editGstRate}% GST
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[0, 5, 12, 18, 28].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => setEditGstRate(rate)}
+                      className={`px-3 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer ${
+                        editGstRate === rate
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      {rate}% {rate === 18 ? '(Standard)' : rate === 0 ? '(Exempt)' : ''}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Custom GST Rate (%)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder="18"
+                      value={editGstRate}
+                      onChange={(e) => setEditGstRate(Number(e.target.value))}
+                      className="w-full h-8 bg-white border border-gray-200 rounded-lg px-2.5 text-xs text-gray-900 font-bold focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">HSN / SAC Code</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 8471"
+                      value={editHsnCode}
+                      onChange={(e) => setEditHsnCode(e.target.value)}
+                      className="w-full h-8 bg-white border border-gray-200 rounded-lg px-2.5 text-xs text-gray-900 font-mono focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
                 </div>
               </div>
 
