@@ -249,6 +249,12 @@ export default function InvoicePage() {
                   <strong className="text-[#1A56DB] print:text-black font-mono">#{invoice.orderId}</strong>
                 </div>
               )}
+              {invoice.poNumber && (
+                <div>
+                  <span className="text-gray-500">P.O. Number: </span>
+                  <strong className="text-purple-800 print:text-black font-mono font-bold">{invoice.poNumber}</strong>
+                </div>
+              )}
               <div>
                 <span className="text-gray-500">Place of Supply: </span>
                 <strong className="text-gray-900">{invoice.placeOfSupply}</strong>
@@ -292,6 +298,11 @@ export default function InvoicePage() {
             {invoice.buyerGstin && (
               <div className="text-xs font-bold text-blue-800 pt-0.5">
                 Buyer GSTIN: {invoice.buyerGstin}
+              </div>
+            )}
+            {invoice.poNumber && (
+              <div className="text-xs font-bold text-purple-800 pt-0.5 font-mono">
+                P.O. Number: {invoice.poNumber}
               </div>
             )}
           </div>

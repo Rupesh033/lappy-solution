@@ -11,7 +11,8 @@ import {
   ArrowUp, ArrowDown, Palette, Sliders, Image as ImageIcon, 
   Trash2, Save, Lock, Key, FileText, Printer, Building2, Percent, DollarSign,
   BookOpen, Star, Crown, Laptop, Box, Award, AlertTriangle, MoreVertical,
-  SlidersHorizontal, ArrowUpDown, Pencil, ChevronDown, Download, Upload, Tag
+  SlidersHorizontal, ArrowUpDown, Pencil, ChevronDown, Download, Upload, Tag,
+  Share2, Globe
 } from 'lucide-react';
 import { useStore, CMSBanner, CMSSection, CMSCustomPage, CMSBlogPost } from '../../context/StoreContext';
 import { STORE_INFO } from '../../data/storeData';
@@ -153,6 +154,21 @@ export default function AdminPage() {
   const [storeAddress, setStoreAddress] = useState(siteSettings?.address || `${STORE_INFO.address}, ${STORE_INFO.city} - ${STORE_INFO.pincode}`);
   const [storeTimings, setStoreTimings] = useState(siteSettings?.timings || STORE_INFO.timings);
 
+  // Social Links State
+  const [facebookUrl, setFacebookUrl] = useState(siteSettings?.facebookUrl || '');
+  const [instagramUrl, setInstagramUrl] = useState(siteSettings?.instagramUrl || '');
+  const [youtubeUrl, setYoutubeUrl] = useState(siteSettings?.youtubeUrl || '');
+  const [twitterUrl, setTwitterUrl] = useState(siteSettings?.twitterUrl || '');
+
+  // Admin Password Change State
+  const [currentAdminPassword, setCurrentAdminPassword] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [confirmAdminPassword, setConfirmAdminPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showPasswordChangeForm, setShowPasswordChangeForm] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+
   const [upiId, setUpiId] = useState(paymentSettings?.upiId || 'lappy.solution@ybl');
   const [upiName, setUpiName] = useState(paymentSettings?.upiName || 'LAPIEZ GARHWA');
   const [gstRate, setGstRate] = useState(paymentSettings?.gstRate || 18);
@@ -168,6 +184,10 @@ export default function AdminPage() {
       setStoreEmail(siteSettings.email);
       setStoreAddress(siteSettings.address);
       setStoreTimings(siteSettings.timings);
+      setFacebookUrl(siteSettings.facebookUrl || '');
+      setInstagramUrl(siteSettings.instagramUrl || '');
+      setYoutubeUrl(siteSettings.youtubeUrl || '');
+      setTwitterUrl(siteSettings.twitterUrl || '');
     }
     if (paymentSettings) {
       setUpiId(paymentSettings.upiId);
@@ -249,9 +269,12 @@ export default function AdminPage() {
   // Manual Counter Billing Form State
   const [manualCustomerName, setManualCustomerName] = useState('');
   const [manualPhone, setManualPhone] = useState('');
+  const [manualBuyerEmail, setManualBuyerEmail] = useState('');
+  const [manualPoNumber, setManualPoNumber] = useState('');
   const [manualAddress, setManualAddress] = useState('Garhwa, Jharkhand');
   const [manualBuyerGstin, setManualBuyerGstin] = useState('');
   const [manualPaymentMethod, setManualPaymentMethod] = useState('Cash on Counter');
+  const [manualPaymentStatus, setManualPaymentStatus] = useState<'Paid' | 'Pending'>('Paid');
   const [manualSelectedProductId, setManualSelectedProductId] = useState('');
   const [manualProductName, setManualProductName] = useState('');
   const [manualQty, setManualQty] = useState(1);
@@ -988,6 +1011,10 @@ export default function AdminPage() {
           email: storeEmail,
           address: storeAddress,
           timings: storeTimings,
+          facebookUrl,
+          instagramUrl,
+          youtubeUrl,
+          twitterUrl,
         },
         {
           upiId,
@@ -1001,6 +1028,56 @@ export default function AdminPage() {
       console.error('Error saving settings:', err);
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  // Admin Password Change Handler (8 to 14 chars, mixed alphanumeric/special)
+  const handleChangeAdminPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentAdminPassword) {
+      showToast('Please enter your current master password.');
+      return;
+    }
+    if (newAdminPassword.length < 8 || newAdminPassword.length > 14) {
+      showToast('Password length must be between 8 and 14 characters.');
+      return;
+    }
+    const hasLetters = /[a-zA-Z]/.test(newAdminPassword);
+    const hasOther = /[0-9\W]/.test(newAdminPassword);
+    if (!hasLetters || !hasOther) {
+      showToast('Password must contain a mix of letters and numbers/symbols.');
+      return;
+    }
+    if (newAdminPassword !== confirmAdminPassword) {
+      showToast('New password and confirmation do not match.');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: currentAdminPassword,
+          newPassword: newAdminPassword,
+          confirmPassword: confirmAdminPassword,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Master Admin Password updated successfully!');
+        setCurrentAdminPassword('');
+        setNewAdminPassword('');
+        setConfirmAdminPassword('');
+        setShowPasswordChangeForm(false);
+      } else {
+        showToast(data.error || 'Failed to update password');
+      }
+    } catch (err: any) {
+      showToast('Network error while updating password');
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -1843,7 +1920,7 @@ export default function AdminPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
                       Customer Full Name *
@@ -1872,6 +1949,45 @@ export default function AdminPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Customer Email (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g. customer@example.com"
+                      value={manualBuyerEmail}
+                      onChange={(e) => setManualBuyerEmail(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Purchase Order (P.O.) Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. PO-2026-8821 (Company PO)"
+                      value={manualPoNumber}
+                      onChange={(e) => setManualPoNumber(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Customer GSTIN (For ITC)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 20XXXXXXXXXXXXX"
+                      value={manualBuyerGstin}
+                      onChange={(e) => setManualBuyerGstin(e.target.value.toUpperCase())}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
                       Billing & Delivery Address
                     </label>
                     <input
@@ -1880,19 +1996,6 @@ export default function AdminPage() {
                       value={manualAddress}
                       onChange={(e) => setManualAddress(e.target.value)}
                       className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#1A56DB]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Customer GSTIN (Optional for Business ITC)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 20XXXXXXXXXXXXX"
-                      value={manualBuyerGstin}
-                      onChange={(e) => setManualBuyerGstin(e.target.value.toUpperCase())}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#1A56DB]"
                     />
                   </div>
                 </div>
@@ -2038,20 +2141,38 @@ export default function AdminPage() {
                   );
                 })()}
 
-                {/* Payment Method & Submit */}
+                {/* Payment Method, Status & Submit */}
                 <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <span className="text-xs font-bold text-gray-700">Settlement:</span>
-                    <select
-                      value={manualPaymentMethod}
-                      onChange={(e) => setManualPaymentMethod(e.target.value)}
-                      className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold"
-                    >
-                      <option value="Cash on Counter">Cash on Counter</option>
-                      <option value="UPI (GPay / PhonePe / Paytm)">UPI (GPay / PhonePe / Paytm)</option>
-                      <option value="Debit / Credit Card">Debit / Credit Card</option>
-                      <option value="Net Banking / NEFT">Net Banking / NEFT</option>
-                    </select>
+                  <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-gray-700">Payment:</span>
+                      <select
+                        value={manualPaymentMethod}
+                        onChange={(e) => setManualPaymentMethod(e.target.value)}
+                        className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold"
+                      >
+                        <option value="Cash on Counter">Cash on Counter</option>
+                        <option value="UPI (GPay / PhonePe / Paytm)">UPI (GPay / PhonePe / Paytm)</option>
+                        <option value="Debit / Credit Card">Debit / Credit Card</option>
+                        <option value="Net Banking / NEFT">Net Banking / NEFT</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-gray-700">Status:</span>
+                      <select
+                        value={manualPaymentStatus}
+                        onChange={(e) => setManualPaymentStatus(e.target.value as any)}
+                        className={`border rounded-lg px-3 py-1.5 text-xs font-bold ${
+                          manualPaymentStatus === 'Paid' 
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                            : 'bg-amber-50 border-amber-200 text-amber-700'
+                        }`}
+                      >
+                        <option value="Paid">✓ Paid (Settled)</option>
+                        <option value="Pending">⏳ Pending</option>
+                      </select>
+                    </div>
                   </div>
 
                   <button
@@ -2091,9 +2212,12 @@ export default function AdminPage() {
                       const newInv = createManualInvoice({
                         buyerName: manualCustomerName,
                         buyerPhone: manualPhone,
+                        buyerEmail: manualBuyerEmail || undefined,
                         buyerAddress: manualAddress,
                         buyerGstin: manualBuyerGstin || undefined,
+                        poNumber: manualPoNumber || undefined,
                         paymentMethod: manualPaymentMethod,
+                        paymentStatus: manualPaymentStatus,
                         items: [item],
                         subtotal: gross,
                         discountTotal: manualDiscount,
@@ -2107,6 +2231,8 @@ export default function AdminPage() {
                       // Reset form
                       setManualCustomerName('');
                       setManualPhone('');
+                      setManualBuyerEmail('');
+                      setManualPoNumber('');
                       setManualProductName('');
                       setManualPrice(0);
                       setManualDiscount(0);
@@ -2117,7 +2243,7 @@ export default function AdminPage() {
                         window.open(`/invoice/${encodeURIComponent(newInv.invoiceNumber)}`, '_blank');
                       }
                     }}
-                    className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#1A56DB] hover:bg-[#1E40AF] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
+                    className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#1A56DB] hover:bg-[#1E40AF] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
                   >
                     <Printer className="w-4 h-4" />
                     <span>Generate Tax Invoice & Print A4</span>
@@ -4035,10 +4161,229 @@ export default function AdminPage() {
                   className="h-10 px-6 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] disabled:opacity-60 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>{isSavingSettings ? 'Saving Settings...' : 'Save All Settings to Database'}</span>
+                  <span>{isSavingSettings ? 'Saving Settings...' : 'Save Store Details to Database'}</span>
                 </button>
               </div>
 
+            </div>
+
+            {/* 3. Social Media & Public Channels */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div>
+                  <h3 className="font-extrabold text-base text-[#111827]">
+                    Social Media & Public Online Profiles
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Configure your official social handles. These links are dynamically displayed in the website footer and contact sections.
+                  </p>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center">
+                  <Share2 className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Facebook Profile / Page URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://facebook.com/your-page"
+                    value={facebookUrl}
+                    onChange={(e) => setFacebookUrl(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                  <span className="text-[10.5px] text-gray-400 mt-0.5 block">e.g. https://facebook.com/lapiezsolution</span>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Instagram Handle / Profile URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://instagram.com/your-handle"
+                    value={instagramUrl}
+                    onChange={(e) => setInstagramUrl(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                  <span className="text-[10.5px] text-gray-400 mt-0.5 block">e.g. https://instagram.com/lapiez_garhwa</span>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">YouTube Channel URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://youtube.com/@yourchannel"
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                  <span className="text-[10.5px] text-gray-400 mt-0.5 block">e.g. https://youtube.com/@lapiez</span>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Twitter / X URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://x.com/yourhandle"
+                    value={twitterUrl}
+                    onChange={(e) => setTwitterUrl(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                  />
+                  <span className="text-[10.5px] text-gray-400 mt-0.5 block">e.g. https://x.com/lapiez_tech</span>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end">
+                <button
+                  type="submit"
+                  disabled={isSavingSettings}
+                  className="h-10 px-6 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] disabled:opacity-60 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{isSavingSettings ? 'Saving Links...' : 'Save Social Links'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 4. Admin Security & Password Management */}
+            <div className="bg-white border border-amber-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-amber-100">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-base text-gray-900">
+                      Admin Security & Master Password
+                    </h3>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                      8–14 Chars Mixed Policy
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Change your master admin console login password. The password must be between 8 and 14 characters and contain a mix of letters and numbers/symbols.
+                  </p>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+                  <Key className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Current Password */}
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Current Master Password *</label>
+                    <div className="relative">
+                      <input
+                        type={showCurrentPw ? 'text' : 'password'}
+                        placeholder="Current password"
+                        value={currentAdminPassword}
+                        onChange={(e) => setCurrentAdminPassword(e.target.value)}
+                        className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 pr-8 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPw(!showCurrentPw)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                      >
+                        {showCurrentPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">New Password (8-14 Chars) *</label>
+                    <div className="relative">
+                      <input
+                        type={showNewPw ? 'text' : 'password'}
+                        placeholder="New mixed password"
+                        maxLength={14}
+                        value={newAdminPassword}
+                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                        className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 pr-8 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPw(!showNewPw)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                      >
+                        {showNewPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="font-bold text-gray-700 block mb-1">Confirm New Password *</label>
+                    <input
+                      type={showNewPw ? 'text' : 'password'}
+                      placeholder="Repeat new password"
+                      maxLength={14}
+                      value={confirmAdminPassword}
+                      onChange={(e) => setConfirmAdminPassword(e.target.value)}
+                      className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB]"
+                    />
+                  </div>
+                </div>
+
+                {/* Password Policy Checklist */}
+                {newAdminPassword && (
+                  <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5 text-[11px]">
+                    <span className="font-bold text-gray-700 block">Password Requirements:</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className={`flex items-center gap-1.5 ${
+                        newAdminPassword.length >= 8 && newAdminPassword.length <= 14 
+                          ? 'text-emerald-700 font-bold' 
+                          : 'text-amber-700'
+                      }`}>
+                        {newAdminPassword.length >= 8 && newAdminPassword.length <= 14 ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        ) : (
+                          <Clock className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                        )}
+                        <span>8 to 14 characters ({newAdminPassword.length}/14)</span>
+                      </div>
+
+                      <div className={`flex items-center gap-1.5 ${
+                        /[a-zA-Z]/.test(newAdminPassword) && /[0-9\W]/.test(newAdminPassword)
+                          ? 'text-emerald-700 font-bold'
+                          : 'text-amber-700'
+                      }`}>
+                        {/[a-zA-Z]/.test(newAdminPassword) && /[0-9\W]/.test(newAdminPassword) ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        ) : (
+                          <Clock className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                        )}
+                        <span>Letters + Numbers/Symbols</span>
+                      </div>
+
+                      <div className={`flex items-center gap-1.5 ${
+                        confirmAdminPassword && newAdminPassword === confirmAdminPassword
+                          ? 'text-emerald-700 font-bold'
+                          : 'text-gray-500'
+                      }`}>
+                        {confirmAdminPassword && newAdminPassword === confirmAdminPassword ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        ) : (
+                          <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                        )}
+                        <span>Passwords match</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleChangeAdminPassword}
+                    disabled={isChangingPassword || !currentAdminPassword || !newAdminPassword || !confirmAdminPassword}
+                    className="h-10 px-6 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>{isChangingPassword ? 'Updating Password...' : 'Update Master Admin Password'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
           </form>

@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  if (!body || typeof body.password !== 'string' || !verifyAdminPassword(body.password)) {
+  const isValidPass = body && typeof body.password === 'string' && (await verifyAdminPassword(body.password));
+  if (!isValidPass) {
     recordFailedAttempt(clientIp);
     const updated = checkRateLimit(clientIp);
     return NextResponse.json(

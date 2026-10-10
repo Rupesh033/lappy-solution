@@ -97,6 +97,7 @@ export interface Invoice {
   buyerState: string;
   buyerStateCode: string;
   buyerGstin?: string;
+  poNumber?: string;
 
   // Items
   items: InvoiceItem[];
@@ -451,6 +452,7 @@ export function buildInvoiceFromOrder(params: {
     buyerState: isInterstate ? 'Bihar' : settings.state,
     buyerStateCode: isInterstate ? '10' : settings.stateCode,
     buyerGstin: customBuyerGstin || order.buyerGstin || undefined,
+    poNumber: order.poNumber || order.po_number || undefined,
 
     items: invoiceItems,
 
@@ -467,7 +469,7 @@ export function buildInvoiceFromOrder(params: {
     amountInWords: convertAmountToWords(roundedGrand),
 
     paymentMethod: order.paymentMethod || 'UPI / Counter Pickup',
-    paymentStatus: order.paymentStatus === 'Paid' ? 'Paid' : 'Pending',
+    paymentStatus: (order.paymentStatus === 'Paid' || order.paymentStatus === 'Verified' || order.paymentStatus === 'Verification In Progress' || String(order.paymentMethod || '').toLowerCase().includes('upi') || Boolean(order.utrNumber)) ? 'Paid' : (order.paymentStatus === 'Cancelled' ? 'Cancelled' : 'Pending'),
     upiId: settings.upiId,
     upiQrData: qrCodeUrl,
 

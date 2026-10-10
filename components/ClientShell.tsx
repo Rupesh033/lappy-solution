@@ -28,9 +28,10 @@ const ToastNotification: React.FC = () => {
 export const ClientShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const isInvoicePage = pathname?.startsWith('/invoice');
+  const isAdminPage = pathname?.startsWith('/admin') || pathname?.startsWith('/portal-access');
 
-  // For invoice pages, render pure standalone document without website headers or footers
-  if (isInvoicePage) {
+  // For Admin Portal and Invoice pages, render pure standalone screen without customer website headers or footers
+  if (isInvoicePage || isAdminPage) {
     return (
       <StoreProvider>
         <div className="min-h-screen bg-[#F1F3F6] print:bg-white">

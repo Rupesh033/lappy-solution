@@ -154,7 +154,7 @@ export const Footer: React.FC = () => {
               <div className="pt-2 flex items-center gap-2">
                 {/* WhatsApp */}
                 <a
-                  href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}`}
+                  href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
@@ -167,7 +167,7 @@ export const Footer: React.FC = () => {
 
                 {/* Facebook */}
                 <a
-                  href="https://facebook.com"
+                  href={siteSettings?.facebookUrl || "https://facebook.com"}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
@@ -180,7 +180,7 @@ export const Footer: React.FC = () => {
 
                 {/* Instagram */}
                 <a
-                  href="https://instagram.com"
+                  href={siteSettings?.instagramUrl || "https://instagram.com"}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
@@ -193,7 +193,7 @@ export const Footer: React.FC = () => {
 
                 {/* YouTube */}
                 <a
-                  href="https://youtube.com"
+                  href={siteSettings?.youtubeUrl || "https://youtube.com"}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="YouTube"

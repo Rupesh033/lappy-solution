@@ -29,6 +29,10 @@ export interface SiteSettings {
   timings: string;
   announcementText: string;
   maintenanceMode: boolean;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  twitterUrl?: string;
 }
 
 export interface ThemeSettings {
@@ -197,6 +201,10 @@ const defaultSiteSettings: SiteSettings = {
   timings: STORE_INFO.timings,
   announcementText: '100% Asli Samaan • 18% GST Bill • Garhwa & Palamu Delivery',
   maintenanceMode: false,
+  facebookUrl: 'https://facebook.com',
+  instagramUrl: 'https://instagram.com',
+  youtubeUrl: 'https://youtube.com',
+  twitterUrl: 'https://twitter.com',
 };
 
 const defaultThemeSettings: ThemeSettings = {

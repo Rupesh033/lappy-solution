@@ -42,7 +42,11 @@ export async function PUT(request: Request) {
     let updatedPayment;
 
     if (siteSettings && typeof siteSettings === 'object') {
-      const siteFields = ['siteName', 'tagline', 'logo', 'favicon', 'phone', 'whatsapp', 'email', 'address', 'timings', 'announcementText', 'maintenanceMode'];
+      const siteFields = [
+        'siteName', 'tagline', 'logo', 'favicon', 'phone', 'whatsapp', 'email', 
+        'address', 'timings', 'announcementText', 'maintenanceMode',
+        'facebookUrl', 'instagramUrl', 'youtubeUrl', 'twitterUrl', 'adminPassword'
+      ];
       const safeSiteSettings = Object.fromEntries(
         Object.entries(siteSettings).filter(([key, val]) => siteFields.includes(key) && val !== undefined)
       );

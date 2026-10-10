@@ -50,10 +50,11 @@ export default function CheckoutPage() {
   const [pincode, setPincode] = useState('822114');
   const [orderNotes, setOrderNotes] = useState('');
 
-  // GST Invoice
+  // GST Invoice & Purchase Order
   const [needGst, setNeedGst] = useState(false);
   const [gstin, setGstin] = useState('');
   const [businessName, setBusinessName] = useState('');
+  const [poNumber, setPoNumber] = useState('');
 
   // Payment State
   const [paymentMethod, setPaymentMethod] = useState<'upi_qr' | 'cod' | 'netbanking'>('upi_qr');
@@ -330,12 +331,13 @@ export default function CheckoutPage() {
       couponCode: appliedCoupon?.code || null,
       couponDiscount: couponDiscount || 0,
       paymentMethod: paymentMethod === 'upi_qr' ? 'UPI Dynamic QR (GPay/PhonePe)' : paymentMethod === 'cod' ? 'Cash on Delivery / Pickup' : `NetBanking (${selectedBank})`,
-      paymentStatus: paymentMethod === 'upi_qr' ? 'Verification In Progress' : 'Pending Payment',
+      paymentStatus: (paymentMethod === 'upi_qr' || paymentMethod === 'netbanking' || Boolean(utrNumber)) ? 'Paid' : (paymentMethod === 'cod' ? 'Pending' : 'Paid'),
       utrNumber: utrNumber || null,
       orderDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
       gstin: needGst ? gstin : null,
       businessName: needGst ? businessName : null,
+      poNumber: poNumber.trim() || null,
       notes: appliedCoupon 
         ? `${orderNotes ? orderNotes + ' | ' : ''}Coupon Applied: ${appliedCoupon.code} (₹${couponDiscount} OFF)`
         : orderNotes || null,
@@ -772,6 +774,16 @@ export default function CheckoutPage() {
                           value={gstin}
                           onChange={(e) => setGstin(e.target.value.toUpperCase())}
                           className="w-full h-10 px-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 font-mono uppercase"
+                        />
+                      </div>
+                      <div className="sm:col-span-2 space-y-1 pt-1">
+                        <label className="text-xs font-semibold text-slate-700">Corporate Purchase Order (P.O.) Number (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. PO-GARHWA-2026-042"
+                          value={poNumber}
+                          onChange={(e) => setPoNumber(e.target.value)}
+                          className="w-full h-10 px-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 font-mono"
                         />
                       </div>
                     </div>

@@ -10,19 +10,24 @@ generator client {
 }
 
 model SiteSettings {
-  id              String   @id @default("default")
-  siteName        String   @default("Lapiez")
-  tagline         String   @default("Technology • Security • Solutions")
-  logo            String   @default("/images/logo.png")
-  favicon         String   @default("/favicon.ico")
-  phone           String   @default("+91 9608828288")
-  whatsapp        String   @default("919608828288")
-  email           String   @default("lappysolution2018@gmail.com")
-  address         String   @default("In front of G P Plaza, Chiniya Road, Garhwa, Jharkhand - 822114")
-  timings         String   @default("Monday - Saturday: 10:00 AM - 8:30 PM")
-  announcementText String  @default("100% Asli Samaan • 18% GST Bill • Garhwa & Palamu Delivery")
-  maintenanceMode Boolean  @default(false)
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default("default")
+  siteName         String   @default("Lapiez")
+  tagline          String   @default("Technology • Security • Solutions")
+  logo             String   @default("/images/logo.png")
+  favicon          String   @default("/favicon.ico")
+  phone            String   @default("+91 9608828288")
+  whatsapp         String   @default("919608828288")
+  email            String   @default("lappysolution2018@gmail.com")
+  address          String   @default("In front of G P Plaza, Chiniya Road, Garhwa, Jharkhand - 822114")
+  timings          String   @default("Monday - Saturday: 10:00 AM - 8:30 PM")
+  announcementText String   @default("100% Asli Samaan • 18% GST Bill • Garhwa & Palamu Delivery")
+  facebookUrl      String?  @default("")
+  instagramUrl     String?  @default("")
+  youtubeUrl       String?  @default("")
+  twitterUrl       String?  @default("")
+  adminPassword    String?  @default("")
+  maintenanceMode  Boolean  @default(false)
+  updatedAt        DateTime @updatedAt
 }
 
 model ThemeSettings {
