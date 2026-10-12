@@ -7,8 +7,11 @@ import { ProductCatalog } from '../../components/ProductCatalog';
 function ShopContent() {
   const searchParams = useSearchParams();
   const catParam = searchParams.get('cat');
+  const subcatParam = searchParams.get('subcat');
   const searchParam = searchParams.get('search');
+  const brandParam = searchParams.get('brand');
   const initialCategory = catParam || 'All';
+  const initialSubcategory = subcatParam || 'All';
 
   return (
     <div className="py-6 sm:py-8 bg-[#F1F3F6]">
@@ -16,7 +19,7 @@ function ShopContent() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-gray-200 pb-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-[#111827] tracking-tight">
-              {searchParam ? `Search: "${searchParam}"` : initialCategory === 'All' ? 'Complete Technology Catalog' : `${initialCategory} Collection`}
+              {brandParam ? `${brandParam} Products` : searchParam ? `Search: "${searchParam}"` : initialSubcategory !== 'All' ? `${initialSubcategory} Collection` : initialCategory === 'All' ? 'Complete Technology Catalog' : `${initialCategory} Collection`}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
               Over 280+ certified genuine products available for same-day delivery in Garhwa or showroom pickup.
@@ -28,7 +31,12 @@ function ShopContent() {
           </div>
         </div>
       </div>
-      <ProductCatalog initialCategory={initialCategory} initialSearch={searchParam || ''} />
+      <ProductCatalog 
+        initialCategory={initialCategory} 
+        initialSubcategory={initialSubcategory}
+        initialSearch={searchParam || ''} 
+        initialBrand={brandParam || 'All'}
+      />
     </div>
   );
 }

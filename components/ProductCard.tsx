@@ -83,12 +83,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           href={`/product/${product.id}`} 
           className="block relative aspect-[4/3] rounded-lg bg-[#F8FAFC] p-2 sm:p-3 overflow-hidden mb-3 border border-[#F1F5F9] group-hover:border-blue-100 transition-colors"
         >
-          <img 
-            src={product.image} 
-            alt={product.name}
-            className="w-full h-full object-contain mx-auto transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
+          {(() => {
+            const primaryImage = product.image?.includes('|||')
+              ? product.image.split('|||')[0].trim()
+              : (Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : product.image);
+            return (
+              <img 
+                src={primaryImage || '/images/categories/laptop-adapters.png'} 
+                alt={product.name}
+                className="w-full h-full object-contain mx-auto transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
+            );
+          })()}
         </Link>
 
         {/* Product Title */}

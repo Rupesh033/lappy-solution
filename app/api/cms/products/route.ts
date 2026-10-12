@@ -49,14 +49,7 @@ export async function GET(request: Request) {
 
     const enrichedProducts = products.map((p) => {
       const rich = richMap.get(p.sku) || idMap.get(p.id);
-      return {
-        ...p,
-        images: rich?.images && rich.images.length > 0 ? rich.images : [p.image],
-        reviews: rich?.reviews || [],
-        subcategory: rich?.subcategory || p.category,
-        isScraped: rich?.isScraped || false,
-        sourceUrl: rich?.sourceUrl || '',
-      };
+      return formatProductPayload(p, rich);
     });
 
     return NextResponse.json({ products: enrichedProducts });
@@ -64,8 +57,43 @@ export async function GET(request: Request) {
     console.error('Error fetching products:', error);
     // Fallback to static PRODUCTS
     const { PRODUCTS } = await import('@/data/products');
-    return NextResponse.json({ products: PRODUCTS });
+    return NextResponse.json({ products: PRODUCTS.map(p => formatProductPayload(p)) });
   }
+}
+
+export function formatProductPayload(p: any, rich?: any) {
+  let galleryImages: string[] = [];
+  if (Array.isArray(p.images) && p.images.length > 0) {
+    galleryImages = p.images
+      .flatMap((s: any) => typeof s === 'string' && s.includes('|||') ? s.split('|||') : [s])
+      .map((s: string) => String(s).trim())
+      .filter(Boolean);
+  } else if (typeof p.image === 'string' && p.image.includes('|||')) {
+    galleryImages = p.image.split('|||').map((s: string) => s.trim()).filter(Boolean);
+  } else if (typeof p.image === 'string' && p.image.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(p.image);
+      if (Array.isArray(parsed)) {
+        galleryImages = parsed.map((s: string) => String(s).trim()).filter(Boolean);
+      }
+    } catch (e) {}
+  } else if (rich?.images && rich.images.length > 0) {
+    galleryImages = rich.images;
+  } else if (p.image) {
+    galleryImages = [p.image.trim()];
+  }
+
+  const primaryImage = galleryImages[0] || (typeof p.image === 'string' ? p.image.split('|||')[0].trim() : '') || '';
+
+  return {
+    ...p,
+    image: primaryImage,
+    images: galleryImages.length > 0 ? galleryImages : (primaryImage ? [primaryImage] : []),
+    reviews: rich?.reviews || p.reviews || [],
+    subcategory: rich?.subcategory || p.subcategory || p.category,
+    isScraped: rich?.isScraped ?? p.isScraped ?? false,
+    sourceUrl: rich?.sourceUrl || p.sourceUrl || '',
+  };
 }
 
 export async function POST(request: Request) {
@@ -75,8 +103,37 @@ export async function POST(request: Request) {
     if (typeof body.name !== 'string' || typeof body.category !== 'string' || typeof body.brand !== 'string' || !Number.isFinite(Number(body.price)) || Number(body.price) < 0) {
       return NextResponse.json({ error: 'Name, category, brand, and a valid price are required.' }, { status: 400 });
     }
-    const slug = body.slug || (body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now());
+    const trimmedName = body.name.trim();
     const sku = body.sku || (`LS-${body.category.substring(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`);
+
+    // Duplicate Check: ensure no product with the same exact/case-insensitive name or SKU already exists
+    const existing = await prisma.product.findFirst({
+      where: {
+        OR: [
+          { name: { equals: trimmedName, mode: 'insensitive' } },
+          { sku: sku }
+        ]
+      }
+    });
+
+    if (existing) {
+      return NextResponse.json({
+        error: `Duplicate Product Detected: A product with the name "${existing.name}" already exists in inventory (SKU: ${existing.sku}).`,
+        isDuplicate: true,
+        existingProduct: { id: existing.id, name: existing.name, sku: existing.sku, price: existing.price }
+      }, { status: 409 });
+    }
+
+    const slug = body.slug || (trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now());
+
+    const rawImages = Array.isArray(body.images) && body.images.length > 0
+      ? body.images
+      : (body.image ? [body.image] : []);
+    const cleanGallery = rawImages
+      .flatMap((img: any) => typeof img === 'string' && img.includes('|||') ? img.split('|||') : [img])
+      .map((img: any) => String(img).trim())
+      .filter(Boolean);
+    const imageToStore = cleanGallery.length > 0 ? cleanGallery.join('|||') : (body.image || '');
 
     const product = await prisma.product.create({
       data: {
@@ -89,7 +146,7 @@ export async function POST(request: Request) {
         discount: Number(body.discount) || 0,
         specs: body.specs || '',
         description: body.description || body.specs || '',
-        image: body.image,
+        image: imageToStore,
         inStock: body.inStock ?? true,
         stockQuantity: Number(body.stockQuantity) || 10,
         sku,
@@ -101,7 +158,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, product });
+    return NextResponse.json({ success: true, product: formatProductPayload(product) });
   } catch (error) {
     console.error('Error creating product:', error);
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
@@ -118,6 +175,13 @@ export async function PUT(request: Request) {
     const data: Record<string, any> = Object.fromEntries(
       Object.entries(body).filter(([key]) => allowedFields.includes(key))
     );
+    if (Array.isArray(body.images) && body.images.length > 0) {
+      const cleanGallery = body.images
+        .flatMap((img: any) => typeof img === 'string' && img.includes('|||') ? img.split('|||') : [img])
+        .map((img: any) => String(img).trim())
+        .filter(Boolean);
+      data.image = cleanGallery.join('|||');
+    }
     if (Object.keys(data).length === 0) return NextResponse.json({ error: 'No valid product fields provided.' }, { status: 400 });
 
     if (data.price !== undefined) data.price = Number(data.price);
@@ -155,7 +219,7 @@ export async function PUT(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, product });
+    return NextResponse.json({ success: true, product: formatProductPayload(product) });
   } catch (error) {
     console.error('Error updating product:', error);
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });

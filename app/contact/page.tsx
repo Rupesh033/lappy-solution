@@ -418,7 +418,7 @@ export default function ContactPage() {
               </div>
               <div className="p-3 text-center">
                 <span className="text-[11px] text-slate-500">
-                  📍 Located centrally near Chiniya Road, Garhwa with ample bike & car parking.
+                  Located centrally near Chiniya Road, Garhwa with ample bike & car parking.
                 </span>
               </div>
             </div>

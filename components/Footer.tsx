@@ -312,6 +312,11 @@ export const Footer: React.FC = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/faq" className="text-[#2563EB] font-bold hover:underline block">
+                    FAQ & Helpdesk
+                  </Link>
+                </li>
+                <li>
                   <Link href="/blogs" className="text-[#2563EB] font-bold hover:underline block">
                     Tech Guides & Blog
                   </Link>

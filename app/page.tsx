@@ -13,7 +13,8 @@ import { Hero } from '../components/Hero';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { ProductCard } from '../components/ProductCard';
 import { BrandShowcase } from '../components/BrandShowcase';
-import { useStore, CMSSection } from '../context/StoreContext';
+import { FaqSection } from '../components/FaqSection';
+import { useStore, CMSSection, isDemoProduct } from '../context/StoreContext';
 import { STORE_INFO } from '../data/storeData';
 import { Product } from '../data/products';
 
@@ -122,11 +123,11 @@ export default function Home() {
 
     if (ids.length > 0) {
       const selected = ids
-        .map((id) => products.find((p) => p.id === id))
+        .map((id) => products.find((p) => p.id === id && !isDemoProduct(p)))
         .filter(Boolean) as Product[];
       if (selected.length > 0) return selected;
     }
-    return defaultFallback;
+    return defaultFallback.filter(p => !isDemoProduct(p));
   };
 
   const renderSection = (sec: CMSSection) => {
@@ -194,7 +195,8 @@ export default function Home() {
       // 1. TRENDING PRODUCTS SECTION
       case 'trending':
       case 'featured': {
-        const trendingItems = getSectionProducts(sec, defaultTrendingProducts);
+        const trendingItems = getSectionProducts(sec, defaultTrendingProducts).filter(p => !isDemoProduct(p));
+        if (trendingItems.length === 0) return null;
         return (
           <div key={sec.id || 'trending'} className="max-w-7xl mx-auto px-3 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-3.5 sm:mb-4.5">
@@ -258,10 +260,10 @@ export default function Home() {
         );
       }
 
-      // 2. BEST SELLERS SECTION
       case 'bestsellers': {
-        const bestSellerFallback = products.filter(p => (p.rating && p.rating >= 4.4) || p.featured).slice(0, 8);
-        const bestsellerItems = getSectionProducts(sec, bestSellerFallback);
+        const bestSellerFallback = products.filter(p => !isDemoProduct(p) && ((p.rating && p.rating >= 4.4) || p.featured)).slice(0, 8);
+        const bestsellerItems = getSectionProducts(sec, bestSellerFallback).filter(p => !isDemoProduct(p));
+        if (bestsellerItems.length === 0) return null;
         return (
           <div key={sec.id || 'bestsellers'} className="max-w-7xl mx-auto px-3 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-3.5 sm:mb-4.5">
@@ -295,13 +297,16 @@ export default function Home() {
       // 3. PREMIUM SEGMENT SECTION
       case 'premium': {
         const premiumFallback = products.filter(p => 
-          p.price >= 20000 || 
-          p.name.toLowerCase().includes('200hz') || 
-          p.name.toLowerCase().includes('165hz') ||
-          p.name.toLowerCase().includes('gaming') ||
-          p.name.toLowerCase().includes('curved')
+          !isDemoProduct(p) && (
+            p.price >= 14000 || 
+            p.name.toLowerCase().includes('200hz') || 
+            p.name.toLowerCase().includes('165hz') ||
+            p.name.toLowerCase().includes('gaming') ||
+            p.name.toLowerCase().includes('curved')
+          )
         ).slice(0, 8);
-        const premiumItems = getSectionProducts(sec, premiumFallback);
+        const premiumItems = getSectionProducts(sec, premiumFallback).filter(p => !isDemoProduct(p));
+        if (premiumItems.length === 0) return null;
         return (
           <div key={sec.id || 'premium'} className="max-w-7xl mx-auto px-3 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-3.5 sm:mb-4.5">
@@ -335,10 +340,11 @@ export default function Home() {
       // 4. REFURBISHED LAPTOPS & PRINTERS SECTION
       case 'refurbished_laptops': {
         const refurbishedFallback = [
-          ...trendingLaptops.slice(0, 4),
-          ...trendingPrinters.slice(0, 4)
+          ...trendingLaptops.filter(p => !isDemoProduct(p)).slice(0, 4),
+          ...trendingPrinters.filter(p => !isDemoProduct(p)).slice(0, 4)
         ];
-        const refItems = getSectionProducts(sec, refurbishedFallback);
+        const refItems = getSectionProducts(sec, refurbishedFallback).filter(p => !isDemoProduct(p));
+        if (refItems.length === 0) return null;
         return (
           <div key={sec.id || 'refurbished_laptops'} className="max-w-7xl mx-auto px-3 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-3.5 sm:mb-4.5">
@@ -429,8 +435,9 @@ export default function Home() {
 
       // 6. CCTV SPOTLIGHT
       case 'cctv_spotlight': {
-        const cctvFallback = trendingCctv.slice(0, 8);
-        const cctvItems = getSectionProducts(sec, cctvFallback);
+        const cctvFallback = trendingCctv.filter(p => !isDemoProduct(p)).slice(0, 8);
+        const cctvItems = getSectionProducts(sec, cctvFallback).filter(p => !isDemoProduct(p));
+        if (cctvItems.length === 0) return null;
         return (
           <div key={sec.id || 'cctv_spotlight'} className="max-w-7xl mx-auto px-3 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-3.5 sm:mb-4.5">
@@ -643,6 +650,9 @@ export default function Home() {
           </div>
         );
 
+      case 'faq':
+        return <FaqSection key={sec.id || 'faq'} />;
+
       // GENERIC PRODUCT SECTION CREATED/EDITED BY ADMIN
       default: {
         const genericProducts = getSectionProducts(sec, products.slice(0, 8));
@@ -683,6 +693,7 @@ export default function Home() {
   return (
     <div className="space-y-6 sm:space-y-9 pb-20 sm:pb-14 bg-[#F1F3F6] overflow-x-hidden">
       {sortedSections.map((sec) => renderSection(sec))}
+      {!sortedSections.some((s) => s.sectionKey === 'faq') && <FaqSection />}
     </div>
   );
 }

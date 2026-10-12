@@ -286,7 +286,7 @@ export const Hero: React.FC = () => {
                     onClick={handleInstantBuy}
                     className="h-10 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-[13px] flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-[0.98]"
                   >
-                    <span>⚡ Buy Now</span>
+                    <span>Buy Now</span>
                   </button>
 
                   <button

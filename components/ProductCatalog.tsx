@@ -6,7 +6,7 @@ import {
   Filter, Search, ArrowUpDown, ChevronDown, Check, X,
   Star, Laptop, Monitor, Camera, Printer, HardDrive, 
   Wifi, LayoutGrid, Sparkles, SlidersHorizontal, ChevronRight,
-  ShieldCheck, CheckCircle2, Tag
+  ShieldCheck, CheckCircle2, Tag, Layers
 } from 'lucide-react';
 import { Product } from '../data/products';
 import { ProductCard } from './ProductCard';
@@ -14,17 +14,22 @@ import { useStore } from '../context/StoreContext';
 
 interface ProductCatalogProps {
   initialCategory?: string;
+  initialSubcategory?: string;
   initialSearch?: string;
+  initialBrand?: string;
 }
 
 export const ProductCatalog: React.FC<ProductCatalogProps> = ({ 
   initialCategory = 'All',
-  initialSearch = ''
+  initialSubcategory = 'All',
+  initialSearch = '',
+  initialBrand = 'All'
 }) => {
-  const { products } = useStore();
+  const { products, brands, categories: cmsCategories } = useStore();
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
-  const [selectedBrand, setSelectedBrand] = useState<string>('All');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>(initialSubcategory);
+  const [selectedBrand, setSelectedBrand] = useState<string>(initialBrand);
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'discount'>('featured');
   const [mobileSortOpen, setMobileSortOpen] = useState<boolean>(false);
   const [onlyInStock, setOnlyInStock] = useState<boolean>(false);
@@ -36,11 +41,11 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
   const [showAllBrands, setShowAllBrands] = useState<boolean>(false);
 
   const sortOptions = [
-    { id: 'featured', label: 'Featured Deals', desc: 'Curated & Trending at Showroom', icon: '🔥' },
-    { id: 'price-asc', label: 'Price: Low to High', desc: 'Budget & Affordable First', icon: '💰' },
-    { id: 'price-desc', label: 'Price: High to Low', desc: 'Premium Laptops & Rigs First', icon: '⚡' },
-    { id: 'rating', label: 'Top Customer Rating', desc: 'Highest Rated by Buyers', icon: '⭐' },
-    { id: 'discount', label: 'Biggest Discount', desc: 'Maximum % Savings (Up to 70% Off)', icon: '🏷️' },
+    { id: 'featured', label: 'Featured Deals', desc: 'Curated & Trending at Showroom' },
+    { id: 'price-asc', label: 'Price: Low to High', desc: 'Budget & Affordable First' },
+    { id: 'price-desc', label: 'Price: High to Low', desc: 'Premium Laptops & Rigs First' },
+    { id: 'rating', label: 'Top Customer Rating', desc: 'Highest Rated by Buyers' },
+    { id: 'discount', label: 'Biggest Discount', desc: 'Maximum % Savings (Up to 70% Off)' },
   ] as const;
 
   const currentSortLabel = sortOptions.find(o => o.id === sortBy)?.label || 'Featured Deals';
@@ -52,36 +57,157 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
   }, [initialCategory]);
 
   useEffect(() => {
+    if (initialSubcategory) {
+      setSelectedSubcategory(initialSubcategory);
+    }
+  }, [initialSubcategory]);
+
+  useEffect(() => {
+    if (initialBrand) {
+      setSelectedBrand(initialBrand);
+    }
+  }, [initialBrand]);
+
+  useEffect(() => {
     if (initialSearch !== undefined) {
       setSearchQuery(initialSearch);
     }
   }, [initialSearch]);
 
-  const categories = [
-    { name: 'All', icon: LayoutGrid },
-    { name: 'Laptops', icon: Laptop },
-    { name: 'Computers', icon: Monitor },
-    { name: 'CCTV & Security', icon: Camera },
-    { name: 'Printers', icon: Printer },
-    { name: 'Accessories', icon: Sparkles },
-    { name: 'Storage & Parts', icon: HardDrive },
-    { name: 'Networking', icon: Wifi }
-  ];
+  // Clean Category Icon Resolver (No Stickers / Emojis / Sparkles)
+  const getCategoryIcon = (categoryName: string) => {
+    const n = categoryName.toLowerCase();
+    if (n === 'all' || n === 'all products') return LayoutGrid;
+    if (n.includes('laptop')) return Laptop;
+    if (n.includes('computer') || n.includes('desktop') || n.includes('pc') || n.includes('monitor')) return Monitor;
+    if (n.includes('cctv') || n.includes('security') || n.includes('camera')) return ShieldCheck;
+    if (n.includes('printer') || n.includes('toner') || n.includes('cartridge')) return Printer;
+    if (n.includes('storage') || n.includes('ssd') || n.includes('hard') || n.includes('ram')) return HardDrive;
+    if (n.includes('network') || n.includes('wifi') || n.includes('router')) return Wifi;
+    if (n.includes('accessories') || n.includes('keyboard') || n.includes('mouse') || n.includes('cable') || n.includes('adapter')) return Layers;
+    return Layers;
+  };
 
-  // Derive unique brands with product count
-  const brandListWithCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
+  // Dynamic Categories organized from CMS & Real Inventory
+  const categories = useMemo(() => {
+    const list: { name: string; icon: any; count: number }[] = [
+      { name: 'All', icon: LayoutGrid, count: products.length }
+    ];
+
+    // Tally actual product counts per category name
+    const catProductCounts = new Map<string, number>();
     products.forEach((p) => {
-      if (p.brand) {
-        counts[p.brand] = (counts[p.brand] || 0) + 1;
+      const catName = p.category?.trim();
+      if (catName) {
+        catProductCounts.set(catName, (catProductCounts.get(catName) || 0) + 1);
       }
     });
-    const unique = Array.from(new Set(products.map((p) => p.brand).filter(Boolean))).sort();
-    return unique.map((b) => ({
-      name: b,
-      count: counts[b] || 0
-    }));
-  }, [products]);
+
+    const seen = new Set<string>();
+    seen.add('all');
+
+    // Add active CMS categories that have products or are top-level parent categories
+    if (Array.isArray(cmsCategories) && cmsCategories.length > 0) {
+      cmsCategories
+        .filter((c) => c.status !== 'inactive' && !c.parentId)
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .forEach((c) => {
+          const cName = c.name.trim();
+          const count = catProductCounts.get(cName) || 0;
+          if (count > 0) {
+            seen.add(cName.toLowerCase());
+            list.push({
+              name: cName,
+              icon: getCategoryIcon(cName),
+              count,
+            });
+          }
+        });
+    }
+
+    // Ensure any category that has active products is included
+    catProductCounts.forEach((count, catName) => {
+      if (!seen.has(catName.toLowerCase()) && count > 0) {
+        seen.add(catName.toLowerCase());
+        list.push({
+          name: catName,
+          icon: getCategoryIcon(catName),
+          count,
+        });
+      }
+    });
+
+    // Sort: 'All' first, then categories by count descending
+    const allItem = list[0];
+    const otherItems = list.slice(1).sort((a, b) => b.count - a.count);
+
+    return [allItem, ...otherItems];
+  }, [cmsCategories, products]);
+
+  // Subcategories available under currently selected category
+  const availableSubcategories = useMemo(() => {
+    if (selectedCategory === 'All' || selectedCategory === 'All Products') return [];
+    const matched = (cmsCategories || []).find(c => c.name.toLowerCase() === selectedCategory.toLowerCase());
+    if (matched && matched.subcategories && matched.subcategories.length > 0) {
+      return matched.subcategories.map(s => ({ name: s.name, slug: s.slug }));
+    }
+    const set = new Set<string>();
+    products.forEach(p => {
+      if (p.category.toLowerCase() === selectedCategory.toLowerCase() && p.subcategory?.trim()) {
+        set.add(p.subcategory.trim());
+      }
+    });
+    return Array.from(set).map(name => ({ name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-') }));
+  }, [selectedCategory, cmsCategories, products]);
+
+  // Derive unique brands with product count (Connected with Admin CMS Brands & Products)
+  const brandListWithCounts = useMemo(() => {
+    // 1. Tally product counts per normalized brand name
+    const counts: Record<string, number> = {};
+    products.forEach((p) => {
+      const b = (p.brand || '').trim().toLowerCase();
+      if (b) {
+        counts[b] = (counts[b] || 0) + 1;
+      }
+    });
+
+    const brandMap = new Map<string, { name: string; count: number; position: number }>();
+
+    // 2. Load active brands from Admin CMS (only visible ones)
+    const activeCmsBrands = (brands || [])
+      .filter((b) => b.isVisible !== false)
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+    activeCmsBrands.forEach((b, idx) => {
+      const key = b.name.trim().toLowerCase();
+      const queryKey = (b.query || '').trim().toLowerCase();
+      const count = counts[key] || (queryKey ? counts[queryKey] : 0) || 0;
+      brandMap.set(key, {
+        name: b.name.trim().toUpperCase(),
+        count,
+        position: b.position ?? idx
+      });
+    });
+
+    // 3. Include any brands on catalog products that might not be in CMS
+    products.forEach((p) => {
+      const raw = (p.brand || '').trim();
+      if (!raw) return;
+      const key = raw.toLowerCase();
+      if (!brandMap.has(key)) {
+        brandMap.set(key, {
+          name: raw.toUpperCase(),
+          count: counts[key] || 1,
+          position: 999
+        });
+      }
+    });
+
+    return Array.from(brandMap.values()).sort((a, b) => {
+      if (a.position !== b.position) return a.position - b.position;
+      return a.name.localeCompare(b.name);
+    });
+  }, [products, brands]);
 
   const displayedBrands = useMemo(() => {
     let list = brandListWithCounts;
@@ -94,11 +220,33 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
   // Filtered products
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      if (selectedCategory !== 'All' && selectedCategory !== 'All Products' && p.category !== selectedCategory) {
-        return false;
+      // Category Match
+      if (selectedCategory !== 'All' && selectedCategory !== 'All Products') {
+        const catLower = selectedCategory.toLowerCase();
+        const matchesDirect = (p.category || '').toLowerCase() === catLower;
+        const matchesSub = (p.subcategory || '').toLowerCase().includes(catLower);
+        const matchesName = p.name.toLowerCase().includes(catLower);
+        if (!matchesDirect && !matchesSub && !matchesName) {
+          return false;
+        }
       }
-      if (selectedBrand !== 'All' && p.brand !== selectedBrand) {
-        return false;
+
+      // Subcategory Match
+      if (selectedSubcategory !== 'All') {
+        const subLower = selectedSubcategory.toLowerCase();
+        const matchesSubDirect = (p.subcategory || '').toLowerCase() === subLower;
+        const matchesSubName = p.name.toLowerCase().includes(subLower);
+        if (!matchesSubDirect && !matchesSubName) {
+          return false;
+        }
+      }
+
+      if (selectedBrand !== 'All') {
+        const pBrand = (p.brand || '').trim().toLowerCase();
+        const selBrand = selectedBrand.trim().toLowerCase();
+        if (pBrand !== selBrand) {
+          return false;
+        }
       }
       if (onlyInStock && !p.inStock) {
         return false;
@@ -112,10 +260,11 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = p.name.toLowerCase().includes(q);
-        const matchesCat = p.category.toLowerCase().includes(q);
-        const matchesBrand = p.brand.toLowerCase().includes(q);
-        const matchesSpecs = p.specs.toLowerCase().includes(q);
-        if (!matchesName && !matchesCat && !matchesBrand && !matchesSpecs) {
+        const matchesCat = (p.category || '').toLowerCase().includes(q);
+        const matchesSubcat = (p.subcategory || '').toLowerCase().includes(q);
+        const matchesBrand = (p.brand || '').toLowerCase().includes(q);
+        const matchesSpecs = (p.specs || '').toLowerCase().includes(q);
+        if (!matchesName && !matchesCat && !matchesSubcat && !matchesBrand && !matchesSpecs) {
           return false;
         }
       }
@@ -127,7 +276,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
       if (sortBy === 'discount') return (b.discount || 0) - (a.discount || 0);
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
-  }, [products, selectedCategory, selectedBrand, onlyInStock, searchQuery, maxPrice, minRating, sortBy]);
+  }, [products, selectedCategory, selectedSubcategory, selectedBrand, onlyInStock, searchQuery, maxPrice, minRating, sortBy]);
 
   const visibleProducts = filteredProducts.slice(0, displayLimit);
 
@@ -211,6 +360,7 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
                 key={cat.name}
                 onClick={() => {
                   setSelectedCategory(cat.name);
+                  setSelectedSubcategory('All');
                   setDisplayLimit(24);
                 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 flex-shrink-0 ${
@@ -298,7 +448,6 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-lg">{opt.icon}</span>
                         <div>
                           <p className={`text-xs font-bold ${isSelected ? 'text-[#1A56DB]' : 'text-gray-900'}`}>
                             {opt.label}
@@ -348,43 +497,90 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
               )}
             </div>
 
-            {/* 1. Category Tree Filter */}
+            {/* 1. Category Tree Filter (Clean Organization, No Sparkle Stickers) */}
             <div>
-              <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2 flex items-center justify-between">
-                <span>Categories</span>
-                <span className="text-[10px] font-semibold text-gray-400">{products.length} Items</span>
-              </h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                  Categories
+                </h3>
+                <Link
+                  href="/admin?tab=categories"
+                  className="text-[10px] font-bold text-[#1A56DB] hover:underline"
+                  title="Manage categories in Admin CMS"
+                >
+                  + Manage
+                </Link>
+              </div>
               <div className="space-y-1">
                 {categories.map((cat) => {
                   const Icon = cat.icon;
-                  const count = cat.name === 'All' 
-                    ? products.length 
-                    : products.filter(p => p.category === cat.name).length;
-                  const isSelected = selectedCategory === cat.name || (cat.name === 'All' && selectedCategory === 'All Products');
+                  const isSelected = selectedCategory.toLowerCase() === cat.name.toLowerCase() || (cat.name === 'All' && selectedCategory === 'All Products');
 
                   return (
-                    <button
-                      key={cat.name}
-                      onClick={() => {
-                        setSelectedCategory(cat.name);
-                        setDisplayLimit(24);
-                      }}
-                      className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex justify-between items-center transition-all ${
-                        isSelected
-                          ? 'bg-blue-50 text-[#1A56DB] font-extrabold border border-blue-200 shadow-2xs'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#1A56DB]' : 'text-gray-400'}`} />
-                        <span>{cat.name}</span>
-                      </div>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                        isSelected ? 'bg-[#1A56DB] text-white font-bold' : 'text-gray-400 bg-gray-100 font-semibold'
-                      }`}>
-                        {count}
-                      </span>
-                    </button>
+                    <div key={cat.name} className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(cat.name);
+                          setSelectedSubcategory('All');
+                          setDisplayLimit(24);
+                        }}
+                        className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex justify-between items-center transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-50 text-[#1A56DB] font-extrabold border border-blue-200 shadow-2xs'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 font-medium'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isSelected ? 'text-[#1A56DB]' : 'text-gray-400'}`} />
+                          <span className="truncate">{cat.name}</span>
+                        </div>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                          isSelected ? 'bg-[#1A56DB] text-white font-bold' : 'text-gray-500 bg-gray-100 font-semibold'
+                        }`}>
+                          {cat.count}
+                        </span>
+                      </button>
+
+                      {/* Expandable Subcategories when category is selected */}
+                      {isSelected && cat.name !== 'All' && availableSubcategories.length > 0 && (
+                        <div className="pl-4 pr-1 py-1 space-y-1 border-l-2 border-blue-200 ml-2 animate-in slide-in-from-top-1">
+                          <button
+                            onClick={() => setSelectedSubcategory('All')}
+                            className={`w-full text-left py-1 px-2 rounded-lg text-[11px] flex items-center justify-between transition-colors cursor-pointer ${
+                              selectedSubcategory === 'All'
+                                ? 'font-bold text-[#1A56DB] bg-blue-50'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            <span>All {cat.name}</span>
+                          </button>
+                          {availableSubcategories.map((sub) => {
+                            const isSubActive = selectedSubcategory.toLowerCase() === sub.name.toLowerCase();
+                            const subCount = products.filter(
+                              p => p.category.toLowerCase() === cat.name.toLowerCase() && 
+                              p.subcategory?.toLowerCase() === sub.name.toLowerCase()
+                            ).length;
+
+                            return (
+                              <button
+                                key={sub.name}
+                                onClick={() => setSelectedSubcategory(sub.name)}
+                                className={`w-full text-left py-1 px-2 rounded-lg text-[11px] flex items-center justify-between transition-colors cursor-pointer ${
+                                  isSubActive
+                                    ? 'font-bold text-[#1A56DB] bg-blue-100/70 shadow-2xs'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                              >
+                                <span className="truncate">↳ {sub.name}</span>
+                                {subCount > 0 && (
+                                  <span className="text-[9.5px] text-gray-400 font-semibold">{subCount}</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -446,8 +642,8 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
               </h3>
               <div className="space-y-1">
                 {[
-                  { rating: 4, label: '4★ & Above' },
-                  { rating: 3, label: '3★ & Above' },
+                  { rating: 4, label: '4 Stars & Above' },
+                  { rating: 3, label: '3 Stars & Above' },
                   { rating: 0, label: 'All Ratings' }
                 ].map((r) => (
                   <button
@@ -493,8 +689,8 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
           {/* Right Product Grid Area */}
           <main className="lg:col-span-9 space-y-3.5">
             
-            {/* Top Brand Filter Ribbon (Moved to Top as Requested) */}
-            <div className="bg-white border border-[#E5E7EB] rounded-xl p-3 sm:p-3.5 shadow-2xs space-y-2.5">
+            {/* Top Brand Filter Ribbon (Matching Image 2) */}
+            <div className="bg-white border border-[#E5E7EB] rounded-xl p-3 sm:p-3.5 shadow-2xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5 text-[#1A56DB]" />
@@ -506,9 +702,25 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
                   </span>
                 </div>
 
-                {/* Brand Search & Quick Reset */}
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1 sm:w-52">
+                {/* Brand Dropdown (Matching Image 2 Reference) + Search & Quick Reset */}
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  {/* Brand: All Companies Select Menu (Image 2) */}
+                  <div className="relative">
+                    <select
+                      value={selectedBrand}
+                      onChange={(e) => setSelectedBrand(e.target.value)}
+                      className="h-7.5 px-2.5 bg-[#F9FAFB] hover:bg-white border border-gray-200 hover:border-[#1A56DB] rounded-lg text-xs font-bold text-gray-800 focus:outline-none focus:border-[#1A56DB] focus:bg-white transition-all cursor-pointer shadow-2xs"
+                    >
+                      <option value="All">Brand: All Companies</option>
+                      {displayedBrands.map((b) => (
+                        <option key={b.name} value={b.name}>
+                          Brand: {b.name} {b.count > 0 ? `(${b.count})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="relative flex-1 sm:w-44">
                     <Search className="w-3 h-3 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
@@ -538,48 +750,71 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
                   )}
                 </div>
               </div>
-
-              {/* Horizontal Scrollable Brand Chips Ribbon */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
-                <button
-                  onClick={() => setSelectedBrand('All')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                    selectedBrand === 'All'
-                      ? 'bg-[#1A56DB] text-white shadow-xs font-bold'
-                      : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <span>All Brands</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                    selectedBrand === 'All' ? 'bg-blue-800/60 text-white' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {products.length}
-                  </span>
-                </button>
-
-                {displayedBrands.map((b) => {
-                  const isSelected = selectedBrand === b.name;
-                  return (
-                    <button
-                      key={b.name}
-                      onClick={() => setSelectedBrand(b.name)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                        isSelected
-                          ? 'bg-[#1A56DB] text-white shadow-xs font-bold border border-[#1A56DB]'
-                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                      }`}
-                    >
-                      <span>{b.name}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                        isSelected ? 'bg-blue-800/60 text-white' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {b.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
+
+            {/* Subcategories Filter Ribbon (Displays dynamically when a Category is chosen) */}
+            {availableSubcategories.length > 0 && (
+              <div className="bg-white border border-[#E5E7EB] rounded-xl p-3 sm:p-3.5 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-[#1A56DB]" />
+                    <span className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">
+                      Subcategories for {selectedCategory}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#1A56DB] border border-blue-100">
+                      {availableSubcategories.length}
+                    </span>
+                  </div>
+
+                  {selectedSubcategory !== 'All' && (
+                    <button
+                      onClick={() => setSelectedSubcategory('All')}
+                      className="text-[11px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer"
+                    >
+                      View All {selectedCategory}
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                  <button
+                    onClick={() => setSelectedSubcategory('All')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex-shrink-0 cursor-pointer ${
+                      selectedSubcategory === 'All'
+                        ? 'bg-[#1A56DB] text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    All Subcategories
+                  </button>
+
+                  {availableSubcategories.map((sub) => {
+                    const isSelected = selectedSubcategory.toLowerCase() === sub.name.toLowerCase();
+                    const subCount = products.filter(p => 
+                      (p.subcategory && p.subcategory.toLowerCase() === sub.name.toLowerCase()) ||
+                      p.name.toLowerCase().includes(sub.name.toLowerCase())
+                    ).length;
+
+                    return (
+                      <button
+                        key={sub.name}
+                        onClick={() => setSelectedSubcategory(isSelected ? 'All' : sub.name)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 flex-shrink-0 cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#1A56DB] text-white font-bold shadow-xs'
+                            : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 border border-gray-200'
+                        }`}
+                      >
+                        <span>{sub.name}</span>
+                        <span className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-gray-400 font-bold'}`}>
+                          ({subCount})
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             
             {/* Sorting & Result Controls Strip (Desktop) */}
             <div className="hidden lg:flex bg-white border border-[#E5E7EB] rounded-xl p-3 items-center justify-between gap-2 shadow-2xs">

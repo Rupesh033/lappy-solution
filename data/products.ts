@@ -1,6 +1,7 @@
 // Generated Lapiez Catalog Data
 // Scraped live from www.lappysolution.com + enriched with Showroom Flagships & Official Frontech Catalog
 import frontechProductsData from './frontechProducts.json';
+import scrapedBrandProductsData from './scrapedBrandProducts.json';
 
 export interface ProductReview {
   id: string;
@@ -18,7 +19,7 @@ export interface Product {
   slug?: string;
   numericId?: number;
   name: string;
-  category: 'Laptops' | 'Computers' | 'CCTV & Security' | 'Printers' | 'Accessories' | 'Storage & Parts' | 'Networking';
+  category: 'Laptops' | 'Computers' | 'CCTV & Security' | 'Printers' | 'Accessories' | 'Storage & Parts' | 'Networking' | (string & {});
   subcategory?: string;
   brand: string;
   price: number;
@@ -42,227 +43,6 @@ export interface Product {
 }
 
 const BASE_PRODUCTS: Product[] = [
-  {
-    "id": "prod-flagship-1",
-    "numericId": 90001,
-    "name": "HP 15s Intel Core i5 12th Gen",
-    "category": "Laptops",
-    "brand": "HP",
-    "price": 52999,
-    "mrp": 65999,
-    "discount": 20,
-    "specs": "Intel Core i5-1235U | 16GB DDR4 | 512GB NVMe SSD | 15.6\" FHD IPS | Backlit KB | Win 11 + MSO",
-    "image": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "The HP 15s delivers power, speed, and elegance with the 12th Gen Intel Core i5 processor. Engineered for students, executives, and business professionals in Garhwa who demand premium build quality, crisp FHD anti-glare display, and all-day battery life with fast charging.",
-    "inStock": true,
-    "stockQuantity": 12,
-    "sku": "HP15-I5-16-512",
-    "rating": 4.9,
-    "reviewsCount": 88,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-2",
-    "numericId": 90002,
-    "name": "Dell Inspiron 15 Business & Productivity",
-    "category": "Laptops",
-    "brand": "Dell",
-    "price": 48999,
-    "mrp": 58500,
-    "discount": 16,
-    "specs": "Intel Core i5 12th Gen | 16GB RAM | 512GB High-speed SSD | 120Hz 15.6\" Borderless | Carbon Black",
-    "image": "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "Engineered for uninterrupted work. Dell Inspiron 15 features lift hinges for ergonomic typing, ExpressCharge to 80% in 60 minutes, and Dell ComfortView software to reduce harmful blue light emission during extended work sessions.",
-    "inStock": true,
-    "stockQuantity": 8,
-    "sku": "DELL-INSP15-512",
-    "rating": 4.8,
-    "reviewsCount": 64,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-3",
-    "numericId": 90003,
-    "name": "Lenovo ThinkPad E14 Enterprise Grade",
-    "category": "Laptops",
-    "brand": "Lenovo",
-    "price": 58999,
-    "mrp": 72000,
-    "discount": 18,
-    "specs": "AMD Ryzen 7 7730U | 16GB DDR4 | 512GB PCIe 4.0 SSD | MIL-STD 810H Tested | Fingerprint Reader",
-    "image": "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "Legendary ThinkPad durability meets modern power. Built to withstand extreme military-grade stress tests. Ideal for business leaders, accountants, and heavy multitasking in office environments.",
-    "inStock": true,
-    "stockQuantity": 6,
-    "sku": "LEN-TP-E14-R7",
-    "rating": 4.9,
-    "reviewsCount": 42,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-4",
-    "numericId": 90004,
-    "name": "ASUS TUF Gaming A15 GeForce RTX",
-    "category": "Laptops",
-    "brand": "ASUS",
-    "price": 64999,
-    "mrp": 81990,
-    "discount": 21,
-    "specs": "AMD Ryzen 7 Octa-Core | 16GB DDR5 | 512GB Gen4 SSD | NVIDIA GeForce RTX 3050 4GB | 144Hz FHD",
-    "image": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "High performance gaming & video editing powerhouse. Armed with dual Arc Flow fans, military-grade chassis, RGB backlit keyboard, and ray-tracing graphics for AAA gaming and 4K editing.",
-    "inStock": true,
-    "stockQuantity": 4,
-    "sku": "ASUS-TUF-A15-RTX",
-    "rating": 4.9,
-    "reviewsCount": 51,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-5",
-    "numericId": 90005,
-    "name": "Lapiez Custom Gaming Rig - Ryzen 5 + RTX 4060",
-    "category": "Computers",
-    "brand": "Lapiez Custom",
-    "price": 76999,
-    "mrp": 94000,
-    "discount": 18,
-    "specs": "AMD Ryzen 5 5600X | RTX 4060 8GB | 32GB 3600MHz RAM | 1TB NVMe Gen4 | 650W Gold | ARGB Tempered Glass",
-    "image": "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "Handcrafted custom gaming and workstation PC assembled in our Garhwa lab with precision cable management, thermal optimization, stress testing, and 2-year on-site local warranty support.",
-    "inStock": true,
-    "stockQuantity": 5,
-    "sku": "LSPC-RYZEN5-4060",
-    "rating": 5,
-    "reviewsCount": 39,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-6",
-    "numericId": 90006,
-    "name": "Lapiez Pro Office Desktop Tower",
-    "category": "Computers",
-    "brand": "Lapiez",
-    "price": 28999,
-    "mrp": 35000,
-    "discount": 17,
-    "specs": "Intel Core i5 10th/11th Gen | 16GB RAM | 512GB NVMe SSD | Wi-Fi + Bluetooth | USB 3.2 | Silent 400W",
-    "image": "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "The preferred choice for schools, hospitals, retail shops, and corporate offices in Garhwa & Palamu. Fast boot in 8 seconds, quiet fan operation, and low electricity consumption.",
-    "inStock": true,
-    "stockQuantity": 15,
-    "sku": "LSPC-OFFICE-I5",
-    "rating": 4.8,
-    "reviewsCount": 73,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-7",
-    "numericId": 90007,
-    "name": "CP-PLUS 4-Camera 5MP Full HD Security System Kit",
-    "category": "CCTV & Security",
-    "brand": "CP-PLUS",
-    "price": 18499,
-    "mrp": 23999,
-    "discount": 23,
-    "specs": "4x 5MP Cameras (2 Dome + 2 Bullet) | 4-Ch DVR | 1TB Surveillance HDD | 4-Ch SMPS | 90m Cable + BNC/DC",
-    "image": "https://cdn.dotpe.in/longtail/store-items/8473996/cduCywRf.webp",
-    "images": [
-      "https://cdn.dotpe.in/longtail/store-items/8473996/cduCywRf.webp"
-    ],
-    "description": "Complete all-in-one surveillance package for homes and shops in Garhwa. Crystal clear 5MP night vision, audio recording, smartphone live monitoring with gCMOB app, and free doorstep installation guidance.",
-    "inStock": true,
-    "stockQuantity": 10,
-    "sku": "CP-KIT-4CAM-5MP",
-    "rating": 4.9,
-    "reviewsCount": 112,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-8",
-    "numericId": 90008,
-    "name": "Hikvision 8-Camera Complete Surveillance Solution",
-    "category": "CCTV & Security",
-    "brand": "Hikvision",
-    "price": 34999,
-    "mrp": 44500,
-    "discount": 21,
-    "specs": "8x ColorVu 2MP Cameras (Full Color 24/7) | 8-Ch DVR | 2TB WD Purple HDD | Heavy Duty SMPS | 180m Wire",
-    "image": "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "Industrial and commercial grade security system for factories, warehouses, schools, and large retail outlets across Garhwa. 24/7 vibrant color night vision with built-in warm lighting and smart human/vehicle motion detection.",
-    "inStock": true,
-    "stockQuantity": 7,
-    "sku": "HIK-KIT-8CAM-COLORVU",
-    "rating": 4.9,
-    "reviewsCount": 56,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-9",
-    "numericId": 90009,
-    "name": "Epson EcoTank L3210 All-in-One Ink Tank Printer",
-    "category": "Printers",
-    "brand": "Epson",
-    "price": 12999,
-    "mrp": 14999,
-    "discount": 13,
-    "specs": "Print, Scan, Copy | Ultra-low Cost: 9p Black, 24p Color | 4500 Black / 7500 Color Pages In Box",
-    "image": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "The #1 best-selling color tank printer in India. High capacity integrated ink tank with spill-free key-lock bottles. Space-saving compact design with borderless 4R photo printing.",
-    "inStock": true,
-    "stockQuantity": 14,
-    "sku": "EPSON-L3210-TANK",
-    "rating": 4.8,
-    "reviewsCount": 97,
-    "featured": true
-  },
-  {
-    "id": "prod-flagship-10",
-    "numericId": 90010,
-    "name": "TP-Link Archer AX1500 Wi-Fi 6 Gigabit Router",
-    "category": "Networking",
-    "brand": "TP-Link",
-    "price": 3299,
-    "mrp": 4999,
-    "discount": 34,
-    "specs": "Wi-Fi 6 Technology (1500 Mbps) | Triple-Core CPU | 4 High-Gain Antennas | Beamforming | Gigabit Ports",
-    "image": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80"
-    ],
-    "description": "Upgrade your home and office in Garhwa to the next generation of Wi-Fi 6 speeds. Handles 30+ simultaneous smart devices, 4K streaming, and CCTV camera feeds without lag or buffering.",
-    "inStock": true,
-    "stockQuantity": 20,
-    "sku": "TPL-AX1500-WIFI6",
-    "rating": 4.7,
-    "reviewsCount": 82,
-    "featured": true
-  },
   {
     "id": "prod-33095033",
     "numericId": 33095033,
@@ -6616,6 +6396,7 @@ const BASE_PRODUCTS: Product[] = [
 
 export const PRODUCTS: Product[] = [
   ...BASE_PRODUCTS,
-  ...(frontechProductsData as Product[])
+  ...(frontechProductsData as Product[]),
+  ...(scrapedBrandProductsData as Product[])
 ];
 

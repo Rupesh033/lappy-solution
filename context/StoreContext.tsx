@@ -13,8 +13,40 @@ import {
 } from '../lib/invoiceUtils';
 import { supabase, signInWithGoogle, signOutCustomer, User } from '../lib/supabase';
 import { Coupon, INITIAL_COUPONS, calculateCouponDiscount } from '../data/coupons';
+import { CMSBrand, DEFAULT_BRANDS } from '../data/brands';
+import { CATEGORIES } from '../data/categories';
 
-export type { Coupon };
+export interface CMSSubcategory {
+  id: string;
+  name: string;
+  slug: string;
+  image?: string;
+  imageUrl?: string;
+  parentId?: string | null;
+  startingPrice?: string | null;
+  position?: number;
+  status?: string;
+  itemCount?: number;
+}
+
+export interface CMSCategory {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  imageUrl?: string;
+  href?: string;
+  startingPrice?: string | null;
+  position?: number;
+  status?: string;
+  parentId?: string | null;
+  title?: string;
+  shortDesc?: string;
+  iconName?: string;
+  subcategories: CMSSubcategory[];
+}
+
+export type { Coupon, CMSBrand };
 
 
 export interface SiteSettings {
@@ -159,7 +191,7 @@ interface StoreContextType {
   addBanner: (banner: Partial<CMSBanner>) => Promise<void>;
   editBanner: (banner: CMSBanner) => Promise<void>;
   deleteBanner: (id: string) => Promise<void>;
-  addProductToDb: (prod: Partial<Product>) => Promise<void>;
+  addProductToDb: (prod: Partial<Product>) => Promise<Product | void>;
   updateProductInDb: (id: string, updatedFields: Partial<Product>) => Promise<boolean>;
   deleteProductFromDb: (id: string) => Promise<void>;
   updateHomepageSections: (sections: CMSSection[]) => Promise<void>;
@@ -186,7 +218,275 @@ interface StoreContextType {
   updateCoupon: (id: string, couponData: any) => Promise<{ success: boolean; message?: string }>;
   deleteCoupon: (id: string) => Promise<{ success: boolean; message?: string }>;
   fetchCoupons: () => Promise<void>;
+  brands: CMSBrand[];
+  addBrand: (brandData: Partial<CMSBrand>) => Promise<CMSBrand | null>;
+  updateBrand: (id: string, updates: Partial<CMSBrand>) => Promise<boolean>;
+  deleteBrand: (id: string) => Promise<boolean>;
+  reorderBrands: (newBrands: CMSBrand[]) => Promise<boolean>;
+  resetBrandsToDefault: () => Promise<boolean>;
+  categories: CMSCategory[];
+  addCategory: (catData: Partial<CMSCategory>) => Promise<CMSCategory | null>;
+  updateCategory: (id: string, updates: Partial<CMSCategory>) => Promise<boolean>;
+  deleteCategory: (id: string) => Promise<boolean>;
+  addSubcategory: (parentId: string, subData: Partial<CMSSubcategory>) => Promise<CMSSubcategory | null>;
+  updateSubcategory: (id: string, updates: Partial<CMSSubcategory>) => Promise<boolean>;
+  deleteSubcategory: (id: string) => Promise<boolean>;
+  reorderCategories: (newCategories: CMSCategory[]) => Promise<boolean>;
+  resetCategoriesToDefault: () => Promise<boolean>;
+  fetchCategories: () => Promise<void>;
 }
+
+export const DEFAULT_SHOP_BY_CATEGORIES: CMSCategory[] = [
+  {
+    id: 'cat-laptop-adapters',
+    name: 'Laptop Adapters',
+    slug: 'laptop-adapters',
+    image: '/images/categories/laptop-adapters.png',
+    imageUrl: '/images/categories/laptop-adapters.png',
+    startingPrice: 'From ₹899',
+    position: 0,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Adapter',
+  },
+  {
+    id: 'cat-laptop-keyboard',
+    name: 'Laptop Keyboard',
+    slug: 'laptop-keyboard',
+    image: '/images/categories/laptop-keyboard.png',
+    imageUrl: '/images/categories/laptop-keyboard.png',
+    startingPrice: 'From ₹650',
+    position: 1,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Keyboard',
+  },
+  {
+    id: 'cat-headsets',
+    name: 'Headsets & Audio',
+    slug: 'headsets',
+    image: '/images/categories/headsets.png',
+    imageUrl: '/images/categories/headsets.png',
+    startingPrice: 'From ₹499',
+    position: 2,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Headset',
+  },
+  {
+    id: 'cat-laptop-bags',
+    name: 'Laptop Bags',
+    title: 'Backpacks and Carry Case',
+    slug: 'backpacks-and-carry-case',
+    image: '/images/categories/backpacks.png',
+    imageUrl: '/images/categories/backpacks.png',
+    startingPrice: 'From ₹799',
+    position: 3,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Bag',
+  },
+  {
+    id: 'cat-cables-hdmi',
+    name: 'Cables & HDMI',
+    slug: 'cables-and-connectors',
+    image: '/images/categories/cables-and-connectors.png',
+    imageUrl: '/images/categories/cables-and-connectors.png',
+    startingPrice: 'From ₹199',
+    position: 4,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Cable',
+  },
+  {
+    id: 'cat-laptop-batteries',
+    name: 'Laptop Batteries',
+    slug: 'laptop-batteries',
+    image: '/images/categories/laptop-batteries.png',
+    imageUrl: '/images/categories/laptop-batteries.png',
+    startingPrice: 'From ₹1,499',
+    position: 5,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Battery',
+  },
+  {
+    id: 'cat-laptop-screens',
+    name: 'Laptop Screens',
+    slug: 'laptop-screen',
+    image: '/images/categories/laptop-screen.png',
+    imageUrl: '/images/categories/laptop-screen.png',
+    startingPrice: 'From ₹2,800',
+    position: 6,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Screen',
+  },
+  {
+    id: 'cat-wireless-mouse',
+    name: 'Wireless Mouse',
+    slug: 'mouse',
+    image: '/images/categories/mouse.png',
+    imageUrl: '/images/categories/mouse.png',
+    startingPrice: 'From ₹299',
+    position: 7,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Mouse',
+  },
+  {
+    id: 'cat-fhd-webcams',
+    name: 'FHD Webcams',
+    slug: 'web-cams',
+    image: '/images/categories/web-cams.png',
+    imageUrl: '/images/categories/web-cams.png',
+    startingPrice: 'From ₹999',
+    position: 8,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Webcam',
+  },
+  {
+    id: 'cat-nvme-ssds-ram',
+    name: 'NVMe SSDs & RAM',
+    slug: 'laptop-ssd',
+    image: '/images/categories/laptop-ssd.png',
+    imageUrl: '/images/categories/laptop-ssd.png',
+    startingPrice: 'From ₹1,299',
+    position: 9,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=SSD',
+  },
+];
+
+export const CORE_STORE_DEPARTMENTS: CMSCategory[] = [
+  {
+    id: 'cat-laptops',
+    name: 'Laptops',
+    slug: 'laptops',
+    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp',
+    startingPrice: 'From ₹14,999',
+    position: 0,
+    status: 'active',
+    subcategories: [
+      { id: 'sub-lap-refurb', name: 'Refurbished Business Laptops', slug: 'refurbished-business-laptops', startingPrice: 'From ₹14,999' },
+      { id: 'sub-lap-new', name: 'Brand New Laptops', slug: 'brand-new-laptops', startingPrice: 'From ₹24,999' },
+      { id: 'sub-lap-gaming', name: 'Gaming Laptops', slug: 'gaming-laptops', startingPrice: 'From ₹48,999' },
+      { id: 'sub-lap-macbook', name: 'Apple MacBook Pro & Air', slug: 'apple-macbook', startingPrice: 'From ₹35,000' },
+    ],
+    href: '/shop?cat=Laptops',
+  },
+  {
+    id: 'cat-computers',
+    name: 'Computers',
+    slug: 'computers',
+    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp',
+    startingPrice: 'From ₹8,500',
+    position: 1,
+    status: 'active',
+    subcategories: [
+      { id: 'sub-comp-desktop', name: 'Desktop PC Rigs', slug: 'desktop-pc-rigs', startingPrice: 'From ₹9,999' },
+      { id: 'sub-comp-aio', name: 'All-in-One Desktops', slug: 'all-in-one-desktops', startingPrice: 'From ₹18,999' },
+      { id: 'sub-comp-monitors', name: 'Monitors & Displays', slug: 'monitors-displays', startingPrice: 'From ₹3,499' },
+    ],
+    href: '/shop?cat=Computers',
+  },
+  {
+    id: 'cat-printers',
+    name: 'Printers',
+    slug: 'printers',
+    image: 'https://cdn.dotpe.in/longtail/item_category/8473996/mdA1IsmY.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_category/8473996/mdA1IsmY.webp',
+    startingPrice: 'From ₹150',
+    position: 2,
+    status: 'active',
+    subcategories: [
+      { id: 'sub-pr-toner', name: 'Laser Toner Cartridges', slug: 'laser-toner-cartridges', startingPrice: 'From ₹450' },
+      { id: 'sub-pr-parts', name: 'Printer Spare Rollers & Gears', slug: 'printer-spare-parts', startingPrice: 'From ₹150' },
+      { id: 'sub-pr-ink', name: 'Printer Ink Refills & Powder', slug: 'printer-ink-powder', startingPrice: 'From ₹199' },
+      { id: 'sub-pr-box', name: 'Maintenance Box & Waste Pads', slug: 'maintenance-box', startingPrice: 'From ₹340' },
+    ],
+    href: '/shop?cat=Printers',
+  },
+  {
+    id: 'cat-cctv',
+    name: 'CCTV & Security',
+    slug: 'cctv-and-security',
+    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/cJZR0B6A.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/cJZR0B6A.webp',
+    startingPrice: 'From ₹850',
+    position: 3,
+    status: 'active',
+    subcategories: [
+      { id: 'sub-cctv-cameras', name: 'HD CCTV Cameras (CP Plus/Dahua)', slug: 'hd-cctv-cameras', startingPrice: 'From ₹850' },
+      { id: 'sub-cctv-dvr', name: '4CH & 8CH DVR Surveillance Kits', slug: 'dvr-kits', startingPrice: 'From ₹2,499' },
+      { id: 'sub-cctv-smps', name: 'CCTV Power Supply SMPS & Wire', slug: 'cctv-power-wire', startingPrice: 'From ₹450' },
+    ],
+    href: '/shop?cat=CCTV%20%26%20Security',
+  },
+  {
+    id: 'cat-storage-parts',
+    name: 'Storage & Parts',
+    slug: 'storage-and-parts',
+    image: '/images/categories/laptop-ssd.png',
+    imageUrl: '/images/categories/laptop-ssd.png',
+    startingPrice: 'From ₹650',
+    position: 4,
+    status: 'active',
+    subcategories: [
+      { id: 'sub-sp-ssd', name: 'NVMe M.2 & SATA SSDs', slug: 'ssd-storage', startingPrice: 'From ₹1,299' },
+      { id: 'sub-sp-ram', name: 'Laptop & Desktop RAM (DDR4/DDR5)', slug: 'ram-modules', startingPrice: 'From ₹899' },
+      { id: 'sub-sp-screens', name: 'Laptop Screens & Hinges', slug: 'laptop-screens-hinges', startingPrice: 'From ₹2,800' },
+      { id: 'sub-sp-batteries', name: 'Laptop Batteries & Power', slug: 'laptop-batteries-spares', startingPrice: 'From ₹1,499' },
+    ],
+    href: '/shop?cat=Storage%20%26%20Parts',
+  },
+  {
+    id: 'cat-accessories',
+    name: 'Accessories',
+    slug: 'accessories',
+    image: '/images/categories/laptop-keyboard.png',
+    imageUrl: '/images/categories/laptop-keyboard.png',
+    startingPrice: 'From ₹199',
+    position: 5,
+    status: 'active',
+    subcategories: [
+      { id: 'sub-acc-adapters', name: 'Laptop Chargers & Adapters', slug: 'laptop-adapters', startingPrice: 'From ₹899' },
+      { id: 'sub-acc-keyboard', name: 'Keyboards & Combos', slug: 'keyboards-combos', startingPrice: 'From ₹350' },
+      { id: 'sub-acc-mouse', name: 'Wireless & Optical Mouse', slug: 'mouse-accessories', startingPrice: 'From ₹199' },
+      { id: 'sub-acc-bags', name: 'Laptop Backpacks & Sleeves', slug: 'laptop-backpacks', startingPrice: 'From ₹699' },
+      { id: 'sub-acc-cables', name: 'HDMI & High-Speed Cables', slug: 'hdmi-data-cables', startingPrice: 'From ₹149' },
+      { id: 'sub-acc-headsets', name: 'Headsets & HD Webcams', slug: 'headsets-webcams', startingPrice: 'From ₹499' },
+    ],
+    href: '/shop?cat=Accessories',
+  },
+  {
+    id: 'cat-networking',
+    name: 'Networking',
+    slug: 'networking',
+    image: '/images/categories/cables-and-connectors.png',
+    imageUrl: '/images/categories/cables-and-connectors.png',
+    startingPrice: 'From ₹399',
+    position: 6,
+    status: 'active',
+    subcategories: [
+      { id: 'sub-net-routers', name: 'Wi-Fi Routers & Extenders', slug: 'wifi-routers', startingPrice: 'From ₹999' },
+      { id: 'sub-net-cables', name: 'CAT6 Ethernet Patch Cables', slug: 'cat6-cables', startingPrice: 'From ₹150' },
+    ],
+    href: '/shop?cat=Networking',
+  },
+];
+
+export const DEFAULT_CMS_CATEGORIES: CMSCategory[] = [
+  ...CORE_STORE_DEPARTMENTS,
+  ...DEFAULT_SHOP_BY_CATEGORIES.map((cat, idx) => ({
+    ...cat,
+    position: CORE_STORE_DEPARTMENTS.length + idx,
+  })),
+];
 
 
 const defaultSiteSettings: SiteSettings = {
@@ -226,8 +526,45 @@ const defaultPaymentSettings: PaymentSettings = {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
+export function isDemoProduct(p: any): boolean {
+  if (!p) return false;
+  if (p.id && (String(p.id).startsWith('prod-flagship-') || String(p.id).startsWith('prod-demo-'))) return true;
+  if (typeof p.image === 'string' && p.image.includes('images.unsplash.com')) return true;
+  if (Array.isArray(p.images) && p.images.some((img: any) => typeof img === 'string' && img.includes('images.unsplash.com'))) return true;
+  return false;
+}
+
+export function normalizeProduct(p: any): Product {
+  let galleryImages: string[] = [];
+  if (Array.isArray(p.images) && p.images.length > 0) {
+    galleryImages = p.images
+      .flatMap((s: any) => typeof s === 'string' && s.includes('|||') ? s.split('|||') : [s])
+      .map((s: string) => String(s).trim())
+      .filter(Boolean);
+  } else if (typeof p.image === 'string' && p.image.includes('|||')) {
+    galleryImages = p.image.split('|||').map((s: string) => s.trim()).filter(Boolean);
+  } else if (typeof p.image === 'string' && p.image.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(p.image);
+      if (Array.isArray(parsed)) galleryImages = parsed.map((s: string) => String(s).trim()).filter(Boolean);
+    } catch (e) {}
+  } else if (p.image) {
+    galleryImages = [String(p.image).trim()];
+  }
+
+  const primaryImage = galleryImages[0] || (typeof p.image === 'string' ? p.image.split('|||')[0].trim() : '') || '/images/categories/laptop-adapters.png';
+
+  return {
+    ...p,
+    image: primaryImage,
+    images: galleryImages.length > 0 ? galleryImages : [primaryImage],
+  };
+}
+
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(() =>
+    PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct)
+  );
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -240,6 +577,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [customPages, setCustomPages] = useState<CMSCustomPage[]>([]);
   const [blogPosts, setBlogPosts] = useState<CMSBlogPost[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>(INITIAL_COUPONS);
+  const [brands, setBrands] = useState<CMSBrand[]>(DEFAULT_BRANDS);
+  const [categories, setCategories] = useState<CMSCategory[]>(DEFAULT_CMS_CATEGORIES);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -388,9 +727,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const resProducts = await fetch('/api/cms/products');
       if (resProducts.ok) {
         const data = await resProducts.json();
-        if (data.products && data.products.length > 0) {
-          setProducts(data.products);
-          localStorage.setItem('ls_products', JSON.stringify(data.products));
+        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+          const cleanProds = data.products
+            .filter((p: any) => !isDemoProduct(p))
+            .map(normalizeProduct);
+          setProducts(cleanProds);
+          try {
+            localStorage.setItem('ls_products', JSON.stringify(cleanProds));
+          } catch (e) {}
         }
       }
 
@@ -400,7 +744,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const data = await resOrders.json();
         if (data.orders && data.orders.length > 0) {
           setOrders(data.orders);
-          localStorage.setItem('ls_orders', JSON.stringify(data.orders));
+          try {
+            localStorage.setItem('ls_orders', JSON.stringify(data.orders));
+          } catch (e) {}
         }
       }
 
@@ -438,6 +784,34 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
         }
       } catch (e) {}
+
+      // 10. Brands
+      try {
+        const resBrands = await fetch('/api/cms/brands');
+        if (resBrands.ok) {
+          const data = await resBrands.json();
+          if (Array.isArray(data.brands) && data.brands.length > 0) {
+            setBrands(data.brands);
+            try {
+              localStorage.setItem('ls_brands', JSON.stringify(data.brands));
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
+      // 11. Categories & Subcategories
+      try {
+        const resCats = await fetch('/api/cms/categories');
+        if (resCats.ok) {
+          const data = await resCats.json();
+          if (Array.isArray(data.categories) && data.categories.length > 0) {
+            setCategories(data.categories);
+            try {
+              localStorage.setItem('ls_categories', JSON.stringify(data.categories));
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
     } catch (e) {
       console.warn('CMS DB sync fallback to local cache:', e);
     }
@@ -451,6 +825,50 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const savedWishlist = localStorage.getItem('ls_wishlist');
       if (savedWishlist) setWishlistIds(JSON.parse(savedWishlist));
+
+      const savedBrands = localStorage.getItem('ls_brands');
+      if (savedBrands) {
+        try {
+          const parsed = JSON.parse(savedBrands);
+          if (Array.isArray(parsed) && parsed.length >= DEFAULT_BRANDS.length) {
+            setBrands(parsed);
+          } else {
+            setBrands(DEFAULT_BRANDS);
+            try {
+              localStorage.setItem('ls_brands', JSON.stringify(DEFAULT_BRANDS));
+            } catch (e) {}
+          }
+        } catch (e) {
+          setBrands(DEFAULT_BRANDS);
+        }
+      } else {
+        setBrands(DEFAULT_BRANDS);
+      }
+
+      const savedCats = localStorage.getItem('ls_categories');
+      if (savedCats) {
+        try {
+          const parsed = JSON.parse(savedCats);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Filter out old phantom dummy categories that had 0 products
+            const cleaned = parsed.filter((c: any) => 
+              c.name !== 'Computer & Laptops' && 
+              c.name !== 'Laptop Parts & Spares' && 
+              c.name !== 'Computer Peripherals' && 
+              c.name !== 'Printers & Parts' && 
+              c.name !== 'Storage & Memory' && 
+              c.name !== 'Antivirus & Software' && 
+              c.name !== 'Electronics & Audio'
+            );
+            if (cleaned.length >= CORE_STORE_DEPARTMENTS.length) {
+              setCategories(cleaned);
+            } else {
+              setCategories(DEFAULT_CMS_CATEGORIES);
+              try { localStorage.setItem('ls_categories', JSON.stringify(DEFAULT_CMS_CATEGORIES)); } catch (e) {}
+            }
+          }
+        } catch (e) {}
+      }
 
       const savedOrders = localStorage.getItem('ls_orders');
       if (savedOrders) {
@@ -488,20 +906,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedProducts) {
         try {
           const parsed = JSON.parse(savedProducts);
-          const hasFrontech = Array.isArray(parsed) && parsed.some((p: any) => p.brand === 'Frontech');
-          if (hasFrontech && parsed.length >= PRODUCTS.length) {
-            setProducts(parsed);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const clean = parsed
+              .filter((p: any) => !isDemoProduct(p))
+              .map(normalizeProduct);
+            if (clean.length > 0) {
+              setProducts(clean);
+            } else {
+              setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
+            }
           } else {
-            setProducts(PRODUCTS);
-            try {
-              localStorage.setItem('ls_products', JSON.stringify(PRODUCTS));
-            } catch (e) {}
+            setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
           }
         } catch {
-          setProducts(PRODUCTS);
+          setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
         }
       } else {
-        setProducts(PRODUCTS);
+        setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
       }
 
       const savedInvoices = localStorage.getItem('ls_invoices');
@@ -882,6 +1303,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const addProductToDb = async (prod: Partial<Product>) => {
+    // 1. Prevent duplicate product upload
+    const cleanName = (prod.name || '').trim().toLowerCase();
+    const cleanSku = (prod.sku || '').trim().toLowerCase();
+    const existing = products.find(p => {
+      if (cleanName && p.name.trim().toLowerCase() === cleanName) return true;
+      if (cleanSku && p.sku && p.sku.trim().toLowerCase() === cleanSku) return true;
+      return false;
+    });
+
+    if (existing) {
+      showToast(`Duplicate Blocked: "${existing.name}" already exists in inventory!`);
+      throw new Error(`Product "${existing.name}" already exists (SKU: ${existing.sku}). Duplicate upload blocked.`);
+    }
+
     try {
       const res = await fetch('/api/cms/products', {
         method: 'POST',
@@ -890,12 +1325,50 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       if (res.ok) {
         const data = await res.json();
-        const created = data.product;
-        setProducts((prev) => [created, ...prev]);
+        const created = normalizeProduct(data.product);
+        setProducts((prev) => {
+          const updated = [created, ...prev.filter(p => p.id !== created.id && p.sku !== created.sku)];
+          try { localStorage.setItem('ls_products', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
         showToast(`Product "${created.name}" added to database!`);
+        return created;
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || 'Failed to add product');
+        throw new Error(err.error || 'Failed to add product');
       }
-    } catch (e) {
-      console.error('Failed to add product:', e);
+    } catch (e: any) {
+      console.error('Failed to add product to DB:', e);
+      // Fallback local save if offline
+      if (!existing && !e.message?.includes('Duplicate')) {
+        const fallbackProd: Product = {
+          id: `prod-${Date.now()}`,
+          name: prod.name || 'New Product',
+          price: prod.price || 0,
+          mrp: prod.mrp || Math.round((prod.price || 0) * 1.2),
+          discount: prod.discount || 10,
+          category: (prod.category || 'Laptops') as any,
+          brand: prod.brand || 'Lapiez',
+          image: prod.image || '/images/categories/laptop-adapters.png',
+          images: prod.images || [prod.image || '/images/categories/laptop-adapters.png'],
+          specs: prod.specs || '',
+          description: prod.description || '',
+          rating: prod.rating || 4.8,
+          inStock: prod.inStock ?? true,
+          stockQuantity: prod.stockQuantity || 10,
+          sku: prod.sku || `LS-${Date.now()}`,
+          ...prod
+        } as Product;
+        setProducts(prev => {
+          const next = [fallbackProd, ...prev];
+          try { localStorage.setItem('ls_products', JSON.stringify(next)); } catch (err) {}
+          return next;
+        });
+        showToast(`Product "${fallbackProd.name}" saved locally!`);
+        return fallbackProd;
+      }
+      throw e;
     }
   };
 
@@ -934,9 +1407,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (res.ok) {
         const data = await res.json();
         if (data.product) {
-          setProducts((prev) =>
-            prev.map((p) => (p.id === data.product.id || p.sku === data.product.sku ? { ...p, ...data.product } : p))
-          );
+          const updatedProd = normalizeProduct(data.product);
+          setProducts((prev) => {
+            const next = prev.map((p) => (p.id === updatedProd.id || p.sku === updatedProd.sku ? updatedProd : p));
+            try { localStorage.setItem('ls_products', JSON.stringify(next)); } catch (e) {}
+            return next;
+          });
         }
         showToast('Product updated successfully!');
         return true;
@@ -1202,6 +1678,310 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [fetchCoupons]);
 
+  // Brand Engine Methods
+  const addBrand = async (brandData: Partial<CMSBrand>): Promise<CMSBrand | null> => {
+    try {
+      const res = await fetch('/api/cms/brands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(brandData),
+      });
+      const data = await res.json();
+      if (data.brands) {
+        setBrands(data.brands);
+        localStorage.setItem('ls_brands', JSON.stringify(data.brands));
+        showToast(`Brand "${brandData.name || 'New'}" added successfully!`);
+        return data.brand || null;
+      }
+    } catch (e) {
+      console.error('Failed to add brand:', e);
+    }
+    const newBrand: CMSBrand = {
+      id: `brand-${Date.now()}`,
+      name: brandData.name || 'New Brand',
+      query: brandData.query || brandData.name || 'Brand',
+      logoType: brandData.logoType || 'preset',
+      presetKey: brandData.presetKey,
+      imageUrl: brandData.imageUrl,
+      bgColor: brandData.bgColor,
+      textColor: brandData.textColor,
+      position: brands.length,
+      isVisible: brandData.isVisible !== undefined ? brandData.isVisible : true,
+    };
+    const updated = [...brands, newBrand];
+    setBrands(updated);
+    localStorage.setItem('ls_brands', JSON.stringify(updated));
+    showToast(`Brand "${newBrand.name}" added!`);
+    return newBrand;
+  };
+
+  const updateBrand = async (id: string, updates: Partial<CMSBrand>): Promise<boolean> => {
+    const updated = brands.map((b) => (b.id === id ? { ...b, ...updates } : b));
+    setBrands(updated);
+    localStorage.setItem('ls_brands', JSON.stringify(updated));
+    try {
+      await fetch('/api/cms/brands', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+      showToast('Brand updated successfully!');
+      return true;
+    } catch (e) {
+      console.error('Failed to update brand:', e);
+      showToast('Saved locally!');
+      return true;
+    }
+  };
+
+  const deleteBrand = async (id: string): Promise<boolean> => {
+    const filtered = brands.filter((b) => b.id !== id).map((b, idx) => ({ ...b, position: idx }));
+    setBrands(filtered);
+    localStorage.setItem('ls_brands', JSON.stringify(filtered));
+    try {
+      await fetch(`/api/cms/brands?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      showToast('Brand removed!');
+      return true;
+    } catch (e) {
+      console.error('Failed to delete brand:', e);
+      showToast('Removed locally!');
+      return true;
+    }
+  };
+
+  const reorderBrands = async (newBrands: CMSBrand[]): Promise<boolean> => {
+    const reindexed = newBrands.map((b, idx) => ({ ...b, position: idx }));
+    setBrands(reindexed);
+    localStorage.setItem('ls_brands', JSON.stringify(reindexed));
+    try {
+      await fetch('/api/cms/brands', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brands: reindexed }),
+      });
+      showToast('Brand order saved!');
+      return true;
+    } catch (e) {
+      console.error('Failed to save brand order:', e);
+      return true;
+    }
+  };
+
+  const resetBrandsToDefault = async (): Promise<boolean> => {
+    setBrands(DEFAULT_BRANDS);
+    localStorage.setItem('ls_brands', JSON.stringify(DEFAULT_BRANDS));
+    try {
+      await fetch('/api/cms/brands', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resetToDefaults: true }),
+      });
+      showToast('Brands restored to defaults!');
+      return true;
+    } catch (e) {
+      console.error('Failed to reset brands:', e);
+      return true;
+    }
+  };
+
+  // Categories & Subcategories CMS Methods
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/cms/categories');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(data.categories);
+          try { localStorage.setItem('ls_categories', JSON.stringify(data.categories)); } catch (e) {}
+        }
+      }
+    } catch (e) {}
+  };
+
+  const addCategory = async (catData: Partial<CMSCategory>) => {
+    const newCat: CMSCategory = {
+      id: catData.id || `cat-${Date.now()}`,
+      name: catData.name || 'New Category',
+      slug: catData.slug || (catData.name || 'new-category').toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      image: catData.image || catData.imageUrl || '/images/categories/laptop-adapters.png',
+      imageUrl: catData.imageUrl || catData.image || '/images/categories/laptop-adapters.png',
+      startingPrice: catData.startingPrice || 'From ₹499',
+      position: categories.length,
+      status: catData.status || 'active',
+      subcategories: catData.subcategories || [],
+      href: catData.href || `/shop?search=${encodeURIComponent((catData.name || '').replace(/^Laptop\s*/i, ''))}`,
+      ...catData,
+    };
+
+    // Optimistic local state update
+    const updated = [...categories, newCat];
+    setCategories(updated);
+    try { localStorage.setItem('ls_categories', JSON.stringify(updated)); } catch (e) {}
+    showToast(`Category "${newCat.name}" added!`);
+
+    try {
+      const res = await fetch('/api/cms/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(catData),
+      });
+      if (res.ok) {
+        await fetchCategories();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return newCat;
+  };
+
+  const updateCategory = async (id: string, updates: Partial<CMSCategory>) => {
+    // Optimistic local state update
+    const updated = categories.map((c) => (c.id === id || c.slug === id ? { ...c, ...updates } : c));
+    setCategories(updated);
+    try { localStorage.setItem('ls_categories', JSON.stringify(updated)); } catch (e) {}
+    showToast('Category updated!');
+
+    try {
+      await fetch('/api/cms/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+    } catch (e) {
+      console.error(e);
+    }
+    return true;
+  };
+
+  const deleteCategory = async (id: string) => {
+    // Optimistic local state update
+    const updated = categories.filter((c) => c.id !== id && c.slug !== id).map((c, idx) => ({ ...c, position: idx }));
+    setCategories(updated);
+    try { localStorage.setItem('ls_categories', JSON.stringify(updated)); } catch (e) {}
+    showToast('Category deleted!');
+
+    try {
+      await fetch(`/api/cms/categories?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+    } catch (e) {
+      console.error(e);
+    }
+    return true;
+  };
+
+  const addSubcategory = async (parentId: string, subData: Partial<CMSSubcategory>) => {
+    const newSub: CMSSubcategory = {
+      id: subData.id || `sub-${Date.now()}`,
+      name: subData.name || 'New Subcategory',
+      slug: subData.slug || (subData.name || 'new-sub').toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      parentId,
+      startingPrice: subData.startingPrice || '',
+      position: 0,
+      status: 'active',
+      ...subData,
+    };
+
+    // Optimistic local state update
+    const updated = categories.map((c) => {
+      if (c.id === parentId || c.slug === parentId) {
+        return {
+          ...c,
+          subcategories: [...(c.subcategories || []), newSub],
+        };
+      }
+      return c;
+    });
+    setCategories(updated);
+    try { localStorage.setItem('ls_categories', JSON.stringify(updated)); } catch (e) {}
+    showToast(`Subcategory "${newSub.name}" added!`);
+
+    try {
+      const res = await fetch('/api/cms/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...subData, parentId }),
+      });
+      if (res.ok) {
+        await fetchCategories();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return newSub;
+  };
+
+  const updateSubcategory = async (id: string, updates: Partial<CMSSubcategory>) => {
+    // Optimistic local state update
+    const updated = categories.map((c) => ({
+      ...c,
+      subcategories: (c.subcategories || []).map((s) => (s.id === id || s.slug === id ? { ...s, ...updates } : s)),
+    }));
+    setCategories(updated);
+    try { localStorage.setItem('ls_categories', JSON.stringify(updated)); } catch (e) {}
+    showToast('Subcategory updated!');
+
+    try {
+      await fetch('/api/cms/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+    } catch (e) {
+      console.error(e);
+    }
+    return true;
+  };
+
+  const deleteSubcategory = async (id: string) => {
+    // Optimistic local state update
+    const updated = categories.map((c) => ({
+      ...c,
+      subcategories: (c.subcategories || []).filter((s) => s.id !== id && s.slug !== id),
+    }));
+    setCategories(updated);
+    try { localStorage.setItem('ls_categories', JSON.stringify(updated)); } catch (e) {}
+    showToast('Subcategory removed!');
+
+    try {
+      await fetch(`/api/cms/categories?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+    } catch (e) {
+      console.error(e);
+    }
+    return true;
+  };
+
+  const reorderCategories = async (newCategories: CMSCategory[]) => {
+    const reindexed = newCategories.map((c, i) => ({ ...c, position: i }));
+    setCategories(reindexed);
+    try { localStorage.setItem('ls_categories', JSON.stringify(reindexed)); } catch (e) {}
+    showToast('Category order saved!');
+
+    try {
+      const items = reindexed.map((c, i) => ({ id: c.id, position: i }));
+      await fetch('/api/cms/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categories: items }),
+      });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  const resetCategoriesToDefault = async (): Promise<boolean> => {
+    setCategories(DEFAULT_CMS_CATEGORIES);
+    try { localStorage.setItem('ls_categories', JSON.stringify(DEFAULT_CMS_CATEGORIES)); } catch (e) {}
+    showToast('Categories restored to 10 homepage showroom defaults!');
+    return true;
+  };
+
   // Invoicing Engine Methods
   const createInvoiceFromOrder = (order: any, buyerGstin?: string, isInterstate: boolean = false): Invoice => {
     const currentSettings = { ...invoiceSettings };
@@ -1410,6 +2190,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateCoupon,
         deleteCoupon,
         fetchCoupons,
+        brands,
+        addBrand,
+        updateBrand,
+        deleteBrand,
+        reorderBrands,
+        resetBrandsToDefault,
+        categories,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        addSubcategory,
+        updateSubcategory,
+        deleteSubcategory,
+        reorderCategories,
+        resetCategoriesToDefault,
+        fetchCategories,
       }}
     >
 

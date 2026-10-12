@@ -109,8 +109,30 @@ export default function ProductDetailPage() {
   }
 
   const isWishlisted = wishlistIds.includes(product.id);
-  const images = product.images && product.images.length > 0 ? product.images : [product.image];
-  const activeImage = images[activeImageIndex] || product.image;
+  const images = useMemo(() => {
+    if (!product) return [];
+    let list: string[] = [];
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      list = product.images
+        .flatMap((s: any) => typeof s === 'string' && s.includes('|||') ? s.split('|||') : [s])
+        .map((s: string) => String(s).trim())
+        .filter(Boolean);
+    }
+    if (list.length === 0 && product.image) {
+      if (typeof product.image === 'string' && product.image.includes('|||')) {
+        list = product.image.split('|||').map((s: string) => s.trim()).filter(Boolean);
+      } else if (typeof product.image === 'string' && product.image.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(product.image);
+          if (Array.isArray(parsed)) list = parsed.map((s: string) => String(s).trim()).filter(Boolean);
+        } catch (e) {}
+      } else {
+        list = [String(product.image).trim()];
+      }
+    }
+    return list.length > 0 ? list : (product.image ? [product.image] : []);
+  }, [product]);
+  const activeImage = images[activeImageIndex] || images[0] || product.image;
 
   const savings = product.mrp > product.price ? product.mrp - product.price : 0;
 

@@ -25,12 +25,32 @@ export const ProductDetailModal: React.FC = () => {
 
   if (!selectedProduct) return null;
 
-  const currentImg = activeImage || selectedProduct.image;
-  const isWishlisted = wishlistIds.includes(selectedProduct.id);
+  const imagesList = React.useMemo(() => {
+    if (!selectedProduct) return [];
+    let list: string[] = [];
+    if (Array.isArray(selectedProduct.images) && selectedProduct.images.length > 0) {
+      list = selectedProduct.images
+        .flatMap((s: any) => typeof s === 'string' && s.includes('|||') ? s.split('|||') : [s])
+        .map((s: string) => String(s).trim())
+        .filter(Boolean);
+    }
+    if (list.length === 0 && selectedProduct.image) {
+      if (typeof selectedProduct.image === 'string' && selectedProduct.image.includes('|||')) {
+        list = selectedProduct.image.split('|||').map((s: string) => s.trim()).filter(Boolean);
+      } else if (typeof selectedProduct.image === 'string' && selectedProduct.image.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(selectedProduct.image);
+          if (Array.isArray(parsed)) list = parsed.map((s: string) => String(s).trim()).filter(Boolean);
+        } catch (e) {}
+      } else {
+        list = [String(selectedProduct.image).trim()];
+      }
+    }
+    return list.length > 0 ? list : (selectedProduct.image ? [selectedProduct.image] : []);
+  }, [selectedProduct]);
 
-  const imagesList = selectedProduct.images && selectedProduct.images.length > 0 
-    ? selectedProduct.images 
-    : [selectedProduct.image];
+  const currentImg = activeImage || imagesList[0] || selectedProduct.image;
+  const isWishlisted = wishlistIds.includes(selectedProduct.id);
 
   const handleWhatsApp = () => {
     const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';

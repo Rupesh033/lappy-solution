@@ -29,7 +29,7 @@ export const MobileBottomNav: React.FC = () => {
       isActive: pathname === '/shop'
     },
     {
-      label: 'Deals 🔥',
+      label: 'Deals',
       icon: Flame,
       href: '/shop?search=Deal',
       isActive: false,
