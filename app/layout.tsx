@@ -18,10 +18,18 @@ export const metadata: Metadata = {
     "Jharkhand laptop store"
   ],
   authors: [{ name: "Lapiez Garhwa" }],
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/icon.svg',
+  },
   openGraph: {
     title: "Lapiez Garhwa | Best Deals on Laptops, Desktops & CCTV",
     description: "100% Original Products, 18% GST Invoicing, Direct Brand Warranty & Showroom Counter in Garhwa.",
-    url: "https://www.lappysolution.com",
+    url: "https://www.lapiez.in",
     siteName: "Lapiez",
     locale: "en_IN",
     type: "website",

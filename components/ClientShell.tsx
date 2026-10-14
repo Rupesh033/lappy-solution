@@ -25,6 +25,32 @@ const ToastNotification: React.FC = () => {
   );
 };
 
+const DynamicHeadSync: React.FC = () => {
+  const { siteSettings } = useStore();
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const targetFavicon = siteSettings?.favicon && siteSettings.favicon.trim() !== ''
+      ? siteSettings.favicon
+      : '/icon.svg';
+
+    const links = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']");
+    if (links.length > 0) {
+      links.forEach((l) => {
+        l.href = targetFavicon;
+      });
+    } else {
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.href = targetFavicon;
+      document.head.appendChild(link);
+    }
+  }, [siteSettings?.favicon]);
+
+  return null;
+};
+
 export const ClientShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const isInvoicePage = pathname?.startsWith('/invoice');
@@ -34,6 +60,7 @@ export const ClientShell: React.FC<{ children: React.ReactNode }> = ({ children 
   if (isInvoicePage || isAdminPage) {
     return (
       <StoreProvider>
+        <DynamicHeadSync />
         <div className="min-h-screen bg-[#F1F3F6] print:bg-white">
           {children}
           <ToastNotification />
@@ -44,6 +71,7 @@ export const ClientShell: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <StoreProvider>
+      <DynamicHeadSync />
       <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A]">
         {/* Global Sticky Navbar */}
         <Navbar />

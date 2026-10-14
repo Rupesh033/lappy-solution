@@ -15,6 +15,11 @@ export const Footer: React.FC = () => {
 
   // Policy Modal state
   const [activePolicy, setActivePolicy] = useState<'privacy' | 'refund' | 'shipping' | 'terms' | 'gst' | null>(null);
+  const [footerLogoError, setFooterLogoError] = useState(false);
+
+  React.useEffect(() => {
+    setFooterLogoError(false);
+  }, [siteSettings?.logo]);
 
   const handleOpenTracking = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -105,25 +110,38 @@ export const Footer: React.FC = () => {
               
               {/* Brand Logo */}
               <Link href="/" className="inline-flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-[10px] bg-[#2563EB] flex items-center justify-center text-white font-bold text-lg shadow-sm transition-transform group-hover:scale-105">
-                  LP
-                </div>
-                <div>
-                  <span className="font-bold text-[#0F172A] text-[19px] tracking-tight block">
-                    {siteSettings?.siteName ? (
-                      siteSettings.siteName.toLowerCase().includes('lapiez') ? (
-                        <>LAP<span className="text-[#2563EB]">IEZ</span></>
-                      ) : (
-                        siteSettings.siteName
-                      )
-                    ) : (
-                      <>LAP<span className="text-[#2563EB]">IEZ</span></>
-                    )}
-                  </span>
-                  <span className="text-[10px] text-[#64748B] uppercase tracking-widest font-semibold block">
-                    {siteSettings?.tagline || 'Technology • Security • Solutions'}
-                  </span>
-                </div>
+                {!footerLogoError && siteSettings?.logo && siteSettings.logo.trim() !== '' ? (
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={siteSettings.logo} 
+                      alt={siteSettings?.siteName || "Lapiez"} 
+                      onError={() => setFooterLogoError(true)}
+                      className="h-10 w-auto max-w-[200px] object-contain transition-transform group-hover:scale-105"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-10 h-10 rounded-[10px] bg-[#2563EB] flex items-center justify-center text-white font-bold text-lg shadow-sm transition-transform group-hover:scale-105">
+                      LP
+                    </div>
+                    <div>
+                      <span className="font-bold text-[#0F172A] text-[19px] tracking-tight block">
+                        {siteSettings?.siteName ? (
+                          siteSettings.siteName.toLowerCase().includes('lapiez') ? (
+                            <>LAP<span className="text-[#2563EB]">IEZ</span></>
+                          ) : (
+                            siteSettings.siteName
+                          )
+                        ) : (
+                          <>LAP<span className="text-[#2563EB]">IEZ</span></>
+                        )}
+                      </span>
+                      <span className="text-[10px] text-[#64748B] uppercase tracking-widest font-semibold block">
+                        {siteSettings?.tagline || 'Technology • Security • Solutions'}
+                      </span>
+                    </div>
+                  </>
+                )}
               </Link>
 
               <p className="text-[13px] text-[#64748B] leading-relaxed">

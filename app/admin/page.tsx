@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ShieldCheck, Check, X, Clock, CheckCircle2, XCircle, 
-  Search, Filter, ShoppingBag, Truck, Package, User, 
+  Search, Filter, ShoppingBag, ShoppingCart, Truck, Package, User, 
   Phone, MessageSquare, ExternalLink, MapPin, AlertCircle, 
   RefreshCw, Plus, Edit2, ArrowRight, BarChart3, Layers, 
   QrCode, Receipt, Store, Sparkles, Copy, Eye, EyeOff, 
@@ -356,6 +356,12 @@ export default function AdminPage() {
   const [storeAddress, setStoreAddress] = useState(siteSettings?.address || `${STORE_INFO.address}, ${STORE_INFO.city} - ${STORE_INFO.pincode}`);
   const [storeTimings, setStoreTimings] = useState(siteSettings?.timings || STORE_INFO.timings);
 
+  // Site Logo & Favicon State
+  const [siteLogo, setSiteLogo] = useState(siteSettings?.logo || '');
+  const [siteFavicon, setSiteFavicon] = useState(siteSettings?.favicon || '/favicon.ico');
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
+
   // Social Links State
   const [facebookUrl, setFacebookUrl] = useState(siteSettings?.facebookUrl || '');
   const [instagramUrl, setInstagramUrl] = useState(siteSettings?.instagramUrl || '');
@@ -381,6 +387,8 @@ export default function AdminPage() {
     if (siteSettings) {
       setStoreName(siteSettings.siteName);
       setStoreTagline(siteSettings.tagline);
+      setSiteLogo(siteSettings.logo || '');
+      setSiteFavicon(siteSettings.favicon || '/favicon.ico');
       setStorePhone(siteSettings.phone);
       setStoreWhatsapp(siteSettings.whatsapp);
       setStoreEmail(siteSettings.email);
@@ -1679,6 +1687,84 @@ export default function AdminPage() {
   // Save Settings Form State & Handler
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
+  const handleUploadLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'branding');
+
+      const res = await fetch('/api/cms/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Upload failed');
+      }
+      setSiteLogo(data.url);
+      await updateSiteSettings({ logo: data.url });
+      showToast('Official Site Logo uploaded and saved successfully!');
+    } catch (err: any) {
+      console.error('Logo upload error:', err);
+      showToast(`Upload failed: ${err.message || 'Error'}`);
+    } finally {
+      setIsUploadingLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleUploadFaviconFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingFavicon(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'branding');
+
+      const res = await fetch('/api/cms/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Upload failed');
+      }
+      setSiteFavicon(data.url);
+      await updateSiteSettings({ favicon: data.url });
+      showToast('Official Favicon uploaded and updated successfully!');
+    } catch (err: any) {
+      console.error('Favicon upload error:', err);
+      showToast(`Upload failed: ${err.message || 'Error'}`);
+    } finally {
+      setIsUploadingFavicon(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    setSiteLogo('');
+    try {
+      await updateSiteSettings({ logo: '' });
+      showToast('Custom logo removed. Default stylized Lapiez branding restored!');
+    } catch (err: any) {
+      showToast(`Error removing logo: ${err.message || 'Failed'}`);
+    }
+  };
+
+  const handleRemoveFavicon = async () => {
+    setSiteFavicon('/favicon.ico');
+    try {
+      await updateSiteSettings({ favicon: '/favicon.ico' });
+      showToast('Favicon reset to default Lapiez icon!');
+    } catch (err: any) {
+      showToast(`Error resetting favicon: ${err.message || 'Failed'}`);
+    }
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingSettings(true);
@@ -1687,6 +1773,8 @@ export default function AdminPage() {
         {
           siteName: storeName,
           tagline: storeTagline,
+          logo: siteLogo,
+          favicon: siteFavicon,
           phone: storePhone,
           whatsapp: storeWhatsapp,
           email: storeEmail,
@@ -6856,6 +6944,196 @@ export default function AdminPage() {
               </button>
             </div>
 
+            {/* Official Site Logo & Browser Favicon Management */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div>
+                  <h3 className="font-extrabold text-base text-[#111827] flex items-center gap-2">
+                    <span>Official Brand Logo & Website Favicon</span>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#1A56DB] text-[10px] font-bold">
+                      Live Control
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Upload official Lapiez logo, customize browser tab icon, or remove anytime with instant dynamic fallback.
+                  </p>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1A56DB] flex items-center justify-center">
+                  <ImageIcon className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 1. Site Header Logo Control */}
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-200/80 space-y-3.5 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-xs">Header & Navbar Logo</h4>
+                        <p className="text-[11px] text-gray-500">Displayed in top navigation bar and footer</p>
+                      </div>
+                      {siteLogo && (
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[10px] font-bold">
+                          Active
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Live Logo Preview Box */}
+                    <div className="p-4 rounded-xl bg-white border border-gray-200 flex flex-col items-center justify-center min-h-[90px] shadow-2xs">
+                      {siteLogo ? (
+                        <div className="relative group max-w-full">
+                          <img 
+                            src={siteLogo} 
+                            alt="Current Logo" 
+                            className="h-10 sm:h-12 w-auto max-w-[240px] object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1A56DB] to-[#0A2560] text-white flex items-center justify-center shadow-sm">
+                            <ShoppingCart className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[18px] font-black tracking-tight text-[#111827] leading-none">
+                              LAP<span className="text-[#1A56DB]">IEZ</span>
+                            </span>
+                            <span className="text-[9px] uppercase tracking-wider text-gray-400 font-bold leading-none mt-0.5">
+                              Garhwa Hardware Store (Default)
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions & URL Input */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      <label 
+                        htmlFor="site-logo-file-input"
+                        className={`flex-1 h-9 px-3 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs ${isUploadingLogo ? 'opacity-60 pointer-events-none' : ''}`}
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isUploadingLogo ? 'Uploading to Cloudinary...' : 'Upload New Logo'}</span>
+                      </label>
+                      <input 
+                        type="file" 
+                        id="site-logo-file-input" 
+                        accept="image/*" 
+                        onChange={handleUploadLogoFile}
+                        className="hidden" 
+                      />
+
+                      {siteLogo && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveLogo}
+                          className="h-9 px-3 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Remove custom logo and restore default Lapiez brandmark"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Remove</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-600 block mb-1">Direct Logo Image URL / Path</label>
+                      <input 
+                        type="text" 
+                        value={siteLogo}
+                        onChange={(e) => setSiteLogo(e.target.value)}
+                        placeholder="e.g. https://res.cloudinary.com/... or /images/logo.svg"
+                        className="w-full h-8 bg-white border border-gray-200 rounded-lg px-2.5 text-xs text-gray-800 font-mono focus:outline-none focus:border-[#1A56DB]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Favicon Control */}
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-200/80 space-y-3.5 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-xs">Browser Tab Favicon</h4>
+                        <p className="text-[11px] text-gray-500">Displayed in browser tabs, bookmarks & mobile icons</p>
+                      </div>
+                      {siteFavicon && siteFavicon !== '/favicon.ico' && (
+                        <span className="px-2 py-0.5 bg-blue-100 text-[#1A56DB] rounded text-[10px] font-bold">
+                          Active
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Browser Tab Mockup Live Preview */}
+                    <div className="p-3 rounded-xl bg-white border border-gray-200 shadow-2xs flex flex-col justify-center min-h-[90px]">
+                      <div className="w-full max-w-xs mx-auto bg-slate-100 border border-slate-300 rounded-t-lg px-3 py-1.5 flex items-center gap-2">
+                        <img 
+                          src={siteFavicon || '/favicon.ico'} 
+                          alt="Favicon" 
+                          className="w-4 h-4 object-contain rounded-xs"
+                        />
+                        <span className="text-[11px] font-medium text-slate-700 truncate">
+                          {storeName || 'Lapiez'} - Official Showroom
+                        </span>
+                        <X className="w-3 h-3 text-slate-400 ml-auto flex-shrink-0" />
+                      </div>
+                      <div className="w-full max-w-xs mx-auto h-2 bg-slate-200/50 rounded-b-lg border-x border-b border-slate-300" />
+                    </div>
+                  </div>
+
+                  {/* Actions & URL Input */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      <label 
+                        htmlFor="site-favicon-file-input"
+                        className={`flex-1 h-9 px-3 rounded-lg bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs ${isUploadingFavicon ? 'opacity-60 pointer-events-none' : ''}`}
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isUploadingFavicon ? 'Uploading Favicon...' : 'Upload New Favicon'}</span>
+                      </label>
+                      <input 
+                        type="file" 
+                        id="site-favicon-file-input" 
+                        accept="image/*,.ico,.svg" 
+                        onChange={handleUploadFaviconFile}
+                        className="hidden" 
+                      />
+
+                      {siteFavicon && siteFavicon !== '/favicon.ico' && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveFavicon}
+                          className="h-9 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-100 text-gray-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Reset favicon to default Lapiez icon"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Reset</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-600 block mb-1">Direct Favicon URL / Path</label>
+                      <input 
+                        type="text" 
+                        value={siteFavicon}
+                        onChange={(e) => setSiteFavicon(e.target.value)}
+                        placeholder="e.g. /favicon.ico or /icon.svg or remote URL"
+                        className="w-full h-8 bg-white border border-gray-200 rounded-lg px-2.5 text-xs text-gray-800 font-mono focus:outline-none focus:border-[#1A56DB]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Save Notice */}
+              <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+                <span>💡 Uploading a file or clicking &ldquo;Remove&rdquo; updates the database live. You can also paste direct image URLs and click &ldquo;Save Store Details to Database&rdquo; below.</span>
+              </div>
+            </div>
+
             {/* 1. Payment & Settlement Section */}
             <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
@@ -7809,9 +8087,37 @@ export default function AdminPage() {
 
         {/* ========================================================= */}
         {/* TAB: HEADER, TICKER & FOOTER CONTROL (Full Control CMS)   */}
-        {/* ========================================================= */}
         {activeTab === 'header_footer' && (
           <form onSubmit={handleSaveHeaderFooter} className="space-y-6 max-w-4xl text-xs">
+            {/* Quick Logo & Branding Shortcut Card */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-white border border-blue-200 flex items-center justify-center p-1.5 shadow-xs flex-shrink-0">
+                  {siteLogo ? (
+                    <img src={siteLogo} alt="Logo" className="w-full h-full object-contain" />
+                  ) : (
+                    <ShoppingCart className="w-6 h-6 text-[#1A56DB]" />
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-gray-900">
+                    Header & Showroom Logo Branding
+                  </h4>
+                  <p className="text-[11px] text-gray-600 mt-0.5">
+                    {siteLogo ? 'Custom logo is active on navigation bar & footer.' : 'Default Lapiez brandmark is active.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('settings')}
+                className="px-4 py-2 rounded-xl bg-[#1A56DB] hover:bg-[#1E40AF] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 w-fit shadow-xs flex-shrink-0"
+              >
+                <span>Manage Logo & Favicon</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               <div>
                 <h3 className="font-extrabold text-base text-gray-900">
