@@ -76,12 +76,43 @@ export interface ThemeSettings {
   borderRadius: string;
 }
 
+export interface BankAccount {
+  id: string;
+  accountHolderName: string;
+  bankName: string;
+  branch: string;
+  accountNumber: string;
+  ifscCode: string;
+  accountType?: 'Current' | 'Savings';
+  upiId?: string;
+  isPrimary: boolean;
+  status: 'active' | 'inactive';
+  createdAt: string;
+}
+
+export const DEFAULT_BANK_ACCOUNTS: BankAccount[] = [
+  {
+    id: 'bank-union-01',
+    accountHolderName: 'lappy solutions',
+    bankName: 'Union Bank of India',
+    branch: 'GARHWA',
+    accountNumber: '638301010050261',
+    ifscCode: 'UBIN0563838',
+    accountType: 'Current',
+    upiId: 'lappy.solution@ybl',
+    isPrimary: true,
+    status: 'active',
+    createdAt: '2026-01-01T00:00:00.000Z'
+  }
+];
+
 export interface PaymentSettings {
   upiId: string;
   upiName: string;
   codEnabled: boolean;
   gstRate: number;
   gstin: string;
+  bankAccountsJson?: string;
 }
 
 export interface CMSBanner {
@@ -148,6 +179,11 @@ interface StoreContextType {
   siteSettings: SiteSettings;
   themeSettings: ThemeSettings;
   paymentSettings: PaymentSettings;
+  bankAccounts: BankAccount[];
+  addBankAccount: (account: Omit<BankAccount, 'id' | 'createdAt'>) => Promise<BankAccount>;
+  updateBankAccount: (id: string, updates: Partial<BankAccount>) => Promise<boolean>;
+  deleteBankAccount: (id: string) => Promise<boolean>;
+  setPrimaryBankAccount: (id: string) => Promise<boolean>;
   banners: CMSBanner[];
   homepageSections: CMSSection[];
   customPages: CMSCustomPage[];
@@ -572,6 +608,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [themeSettings, setThemeSettings] = useState<ThemeSettings>(defaultThemeSettings);
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(defaultPaymentSettings);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(DEFAULT_BANK_ACCOUNTS);
   const [banners, setBanners] = useState<CMSBanner[]>([]);
   const [homepageSections, setHomepageSections] = useState<CMSSection[]>([]);
   const [customPages, setCustomPages] = useState<CMSCustomPage[]>([]);
@@ -699,6 +736,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           try {
             localStorage.setItem('ls_payment_settings', JSON.stringify(payment));
           } catch (e) {}
+
+          if (data.paymentSettings.bankAccountsJson) {
+            try {
+              const parsedBanks = JSON.parse(data.paymentSettings.bankAccountsJson);
+              if (Array.isArray(parsedBanks) && parsedBanks.length > 0) {
+                setBankAccounts(parsedBanks);
+                try {
+                  localStorage.setItem('ls_bank_accounts', JSON.stringify(parsedBanks));
+                } catch (e) {}
+                const primary = parsedBanks.find((b: any) => b.isPrimary) || parsedBanks[0];
+                if (primary) {
+                  setInvoiceSettings((prev) => ({
+                    ...prev,
+                    accountHolderName: primary.accountHolderName || prev.accountHolderName,
+                    bankName: primary.bankName || prev.bankName,
+                    accountNumber: primary.accountNumber || prev.accountNumber,
+                    ifscCode: primary.ifscCode || prev.ifscCode,
+                    branch: primary.branch || prev.branch,
+                  }));
+                }
+              }
+            } catch (e) {}
+          }
         }
       }
 
@@ -731,10 +791,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const cleanProds = data.products
             .filter((p: any) => !isDemoProduct(p))
             .map(normalizeProduct);
-          setProducts(cleanProds);
-          try {
-            localStorage.setItem('ls_products', JSON.stringify(cleanProds));
-          } catch (e) {}
+
+          setProducts((prev) => {
+            const mergedMap = new Map<string, Product>();
+            // 1. Full static catalog base
+            PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct).forEach(p => {
+              mergedMap.set(p.sku || p.id, p);
+            });
+            // 2. Previous in-memory items
+            prev.forEach(p => mergedMap.set(p.sku || p.id, p));
+            // 3. Authoritative DB updates
+            cleanProds.forEach((p: Product) => mergedMap.set(p.sku || p.id, p));
+
+            const nextList = Array.from(mergedMap.values());
+
+            // Avoid unnecessary re-renders if list is unchanged
+            if (
+              prev.length === nextList.length &&
+              prev.every((item, i) => 
+                item.id === nextList[i]?.id && 
+                item.price === nextList[i]?.price && 
+                item.inStock === nextList[i]?.inStock &&
+                item.stockQuantity === nextList[i]?.stockQuantity
+              )
+            ) {
+              return prev;
+            }
+
+            try {
+              localStorage.setItem('ls_products', JSON.stringify(nextList));
+            } catch (e) {}
+
+            return nextList;
+          });
         }
       }
 
@@ -910,11 +999,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const clean = parsed
               .filter((p: any) => !isDemoProduct(p))
               .map(normalizeProduct);
-            if (clean.length > 0) {
-              setProducts(clean);
-            } else {
-              setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
-            }
+
+            // Merge with static catalog to guarantee no products are lost from old partial cache
+            const mergedMap = new Map<string, Product>();
+            PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct).forEach(p => {
+              mergedMap.set(p.sku || p.id, p);
+            });
+            clean.forEach(p => mergedMap.set(p.sku || p.id, p));
+            setProducts(Array.from(mergedMap.values()));
           } else {
             setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
           }
@@ -966,6 +1058,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const parsed = JSON.parse(savedPaymentSettings);
           if (parsed && typeof parsed === 'object') setPaymentSettings(parsed);
         } catch (e) {}
+      }
+
+      const savedBankAccounts = localStorage.getItem('ls_bank_accounts');
+      if (savedBankAccounts) {
+        try {
+          const parsed = JSON.parse(savedBankAccounts);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setBankAccounts(parsed);
+            const primary = parsed.find((b: any) => b.isPrimary) || parsed[0];
+            if (primary) {
+              setInvoiceSettings((prev) => ({
+                ...prev,
+                accountHolderName: primary.accountHolderName || prev.accountHolderName,
+                bankName: primary.bankName || prev.bankName,
+                accountNumber: primary.accountNumber || prev.accountNumber,
+                ifscCode: primary.ifscCode || prev.ifscCode,
+                branch: primary.branch || prev.branch,
+              }));
+            }
+          } else {
+            setBankAccounts(DEFAULT_BANK_ACCOUNTS);
+            localStorage.setItem('ls_bank_accounts', JSON.stringify(DEFAULT_BANK_ACCOUNTS));
+          }
+        } catch {
+          setBankAccounts(DEFAULT_BANK_ACCOUNTS);
+        }
+      } else {
+        setBankAccounts(DEFAULT_BANK_ACCOUNTS);
+        localStorage.setItem('ls_bank_accounts', JSON.stringify(DEFAULT_BANK_ACCOUNTS));
       }
     } catch (e) {
       console.error('LocalStorage load error:', e);
@@ -1239,6 +1360,173 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.error('Failed to update settings in DB:', e);
       showToast(`Settings saved locally! (DB: ${e.message || 'notice'})`);
     }
+  };
+
+  const addBankAccount = async (accountData: Omit<BankAccount, 'id' | 'createdAt'>): Promise<BankAccount> => {
+    const newAccount: BankAccount = {
+      ...accountData,
+      id: `bank-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    let updated = [...bankAccounts];
+    if (newAccount.isPrimary) {
+      updated = updated.map(a => ({ ...a, isPrimary: false }));
+    }
+    updated.push(newAccount);
+    setBankAccounts(updated);
+    try {
+      localStorage.setItem('ls_bank_accounts', JSON.stringify(updated));
+    } catch (e) {}
+
+    if (newAccount.isPrimary || updated.length === 1) {
+      updateInvoiceSettings({
+        accountHolderName: newAccount.accountHolderName,
+        bankName: newAccount.bankName,
+        accountNumber: newAccount.accountNumber,
+        ifscCode: newAccount.ifscCode,
+        branch: newAccount.branch,
+      });
+    }
+
+    try {
+      await fetch('/api/cms/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          paymentSettings: {
+            ...paymentSettings,
+            bankAccountsJson: JSON.stringify(updated),
+          },
+        }),
+      });
+    } catch (e) {}
+
+    showToast(`Bank account "${newAccount.bankName}" added!`);
+    return newAccount;
+  };
+
+  const updateBankAccount = async (id: string, updates: Partial<BankAccount>): Promise<boolean> => {
+    let updated = bankAccounts.map((acc) => {
+      if (acc.id === id) {
+        return { ...acc, ...updates };
+      }
+      if (updates.isPrimary) {
+        return { ...acc, isPrimary: false };
+      }
+      return acc;
+    });
+    setBankAccounts(updated);
+    try {
+      localStorage.setItem('ls_bank_accounts', JSON.stringify(updated));
+    } catch (e) {}
+
+    const primaryAcc = updated.find(a => a.isPrimary) || (updates.isPrimary ? updated.find(a => a.id === id) : null);
+    if (primaryAcc) {
+      updateInvoiceSettings({
+        accountHolderName: primaryAcc.accountHolderName,
+        bankName: primaryAcc.bankName,
+        accountNumber: primaryAcc.accountNumber,
+        ifscCode: primaryAcc.ifscCode,
+        branch: primaryAcc.branch,
+      });
+    }
+
+    try {
+      await fetch('/api/cms/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          paymentSettings: {
+            ...paymentSettings,
+            bankAccountsJson: JSON.stringify(updated),
+          },
+        }),
+      });
+    } catch (e) {}
+
+    showToast('Bank details updated successfully!');
+    return true;
+  };
+
+  const deleteBankAccount = async (id: string): Promise<boolean> => {
+    if (bankAccounts.length <= 1) {
+      showToast('Cannot delete the only bank account. At least 1 bank account is required.');
+      return false;
+    }
+    const target = bankAccounts.find(a => a.id === id);
+    let updated = bankAccounts.filter((a) => a.id !== id);
+    if (target?.isPrimary && updated.length > 0) {
+      updated[0].isPrimary = true;
+      updateInvoiceSettings({
+        accountHolderName: updated[0].accountHolderName,
+        bankName: updated[0].bankName,
+        accountNumber: updated[0].accountNumber,
+        ifscCode: updated[0].ifscCode,
+        branch: updated[0].branch,
+      });
+    }
+    setBankAccounts(updated);
+    try {
+      localStorage.setItem('ls_bank_accounts', JSON.stringify(updated));
+    } catch (e) {}
+
+    try {
+      await fetch('/api/cms/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          paymentSettings: {
+            ...paymentSettings,
+            bankAccountsJson: JSON.stringify(updated),
+          },
+        }),
+      });
+    } catch (e) {}
+
+    showToast('Bank account removed successfully!');
+    return true;
+  };
+
+  const setPrimaryBankAccount = async (id: string): Promise<boolean> => {
+    const updated = bankAccounts.map((a) => ({
+      ...a,
+      isPrimary: a.id === id,
+    }));
+    setBankAccounts(updated);
+    try {
+      localStorage.setItem('ls_bank_accounts', JSON.stringify(updated));
+    } catch (e) {}
+
+    const primary = updated.find(a => a.id === id);
+    if (primary) {
+      updateInvoiceSettings({
+        accountHolderName: primary.accountHolderName,
+        bankName: primary.bankName,
+        accountNumber: primary.accountNumber,
+        ifscCode: primary.ifscCode,
+        branch: primary.branch,
+      });
+    }
+
+    try {
+      await fetch('/api/cms/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          paymentSettings: {
+            ...paymentSettings,
+            bankAccountsJson: JSON.stringify(updated),
+          },
+        }),
+      });
+    } catch (e) {}
+
+    showToast(`"${primary?.bankName}" set as primary bank account!`);
+    return true;
   };
 
   // Dynamically apply Theme CSS Variables to document root
@@ -2120,6 +2408,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         siteSettings,
         themeSettings,
         paymentSettings,
+        bankAccounts,
+        addBankAccount,
+        updateBankAccount,
+        deleteBankAccount,
+        setPrimaryBankAccount,
         banners,
         homepageSections,
         customPages,

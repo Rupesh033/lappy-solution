@@ -45,6 +45,7 @@ export interface InvoiceSettings {
   // Bank & UPI details
   upiId: string;
   upiName: string;
+  accountHolderName: string;
   bankName: string;
   accountNumber: string;
   ifscCode: string;
@@ -150,10 +151,11 @@ export const DEFAULT_INVOICE_SETTINGS: InvoiceSettings = {
 
   upiId: 'lappy.solution@ybl',
   upiName: 'LAPIEZ GARHWA',
-  bankName: 'State Bank of India',
-  accountNumber: '38947291048',
-  ifscCode: 'SBIN0000080',
-  branch: 'Garhwa Main Branch',
+  accountHolderName: 'lappy solutions',
+  bankName: 'Union Bank of India',
+  accountNumber: '638301010050261',
+  ifscCode: 'UBIN0563838',
+  branch: 'GARHWA',
 
   defaultGstRate: 18,
   isInterstate: false,

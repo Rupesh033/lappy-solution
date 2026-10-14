@@ -60,7 +60,7 @@ export async function PUT(request: Request) {
     }
 
     if (paymentSettings && typeof paymentSettings === 'object') {
-      const paymentFields = ['upiId', 'upiName', 'codEnabled', 'gstRate', 'gstin'];
+      const paymentFields = ['upiId', 'upiName', 'codEnabled', 'gstRate', 'gstin', 'bankAccountsJson'];
       const safePaymentSettings = Object.fromEntries(
         Object.entries(paymentSettings).filter(([key, val]) => paymentFields.includes(key) && val !== undefined)
       );

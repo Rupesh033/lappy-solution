@@ -435,10 +435,11 @@ export default function InvoicePage() {
                     <Building2 className="w-3.5 h-3.5 text-[#1A56DB]" />
                     <span>Bank & UPI Settlement Details</span>
                   </div>
-                  <div><strong>UPI VPA:</strong> <span className="font-mono text-blue-700 font-bold">{invoice.upiId}</span></div>
-                  <div><strong>Bank:</strong> {invoiceSettings?.bankName || 'State Bank of India'}</div>
-                  <div><strong>A/C No:</strong> <span className="font-mono">{invoiceSettings?.accountNumber || '38947291048'}</span></div>
-                  <div><strong>IFSC Code:</strong> <span className="font-mono">{invoiceSettings?.ifscCode || 'SBIN0000080'}</span> ({invoiceSettings?.branch || 'Garhwa Main Branch'})</div>
+                  <div><strong>A/C Name:</strong> {invoiceSettings?.accountHolderName || 'lappy solutions'}</div>
+                  <div><strong>Bank:</strong> {invoiceSettings?.bankName || 'Union Bank of India, GARHWA'}</div>
+                  <div><strong>A/C No:</strong> <span className="font-mono font-bold text-gray-900">{invoiceSettings?.accountNumber || '638301010050261'}</span></div>
+                  <div><strong>IFSC Code:</strong> <span className="font-mono font-bold text-gray-900">{invoiceSettings?.ifscCode || 'UBIN0563838'}</span></div>
+                  {invoice.upiId && <div><strong>UPI VPA:</strong> <span className="font-mono text-blue-700 font-bold">{invoice.upiId}</span></div>}
                 </div>
               </div>
 

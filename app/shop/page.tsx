@@ -22,7 +22,7 @@ function ShopContent() {
               {brandParam ? `${brandParam} Products` : searchParam ? `Search: "${searchParam}"` : initialSubcategory !== 'All' ? `${initialSubcategory} Collection` : initialCategory === 'All' ? 'Complete Technology Catalog' : `${initialCategory} Collection`}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              Over 280+ certified genuine products available for same-day delivery in Garhwa or showroom pickup.
+              Over 415+ certified genuine products available for same-day delivery in Garhwa or showroom pickup.
             </p>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-semibold text-[#15803D] bg-green-50 border border-green-200 px-3 py-1 rounded-full w-fit">

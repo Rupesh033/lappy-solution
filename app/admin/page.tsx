@@ -49,6 +49,11 @@ export default function AdminPage() {
     themeSettings,
     updateThemeSettings,
     paymentSettings,
+    bankAccounts,
+    addBankAccount,
+    updateBankAccount,
+    deleteBankAccount,
+    setPrimaryBankAccount,
     updatePaymentSettings,
     updateStoreAndPaymentSettings,
     invoices,
@@ -92,6 +97,7 @@ export default function AdminPage() {
     | 'brands' 
     | 'scraper' 
     | 'billing' 
+    | 'bank' 
     | 'coupons' 
     | 'banners' 
     | 'homepage' 
@@ -105,6 +111,81 @@ export default function AdminPage() {
     | 'leads';
 
   const [activeTab, setActiveTab] = useState<AdminTab>('inventory');
+
+  // Mobile Shell & Drawer State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Bank Details States & Modal
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [editingBankId, setEditingBankId] = useState<string | null>(null);
+  const [bankHolderName, setBankHolderName] = useState('lappy solutions');
+  const [bankName, setBankName] = useState('Union Bank of India');
+  const [bankBranch, setBankBranch] = useState('GARHWA');
+  const [bankAccountNo, setBankAccountNo] = useState('638301010050261');
+  const [bankIfsc, setBankIfsc] = useState('UBIN0563838');
+  const [bankAccountType, setBankAccountType] = useState<'Current' | 'Savings'>('Current');
+  const [bankUpi, setBankUpi] = useState('lappy.solution@ybl');
+  const [bankIsPrimary, setBankIsPrimary] = useState(true);
+
+  const handleOpenAddBank = () => {
+    setEditingBankId(null);
+    setBankHolderName('lappy solutions');
+    setBankName('Union Bank of India');
+    setBankBranch('GARHWA');
+    setBankAccountNo('');
+    setBankIfsc('UBIN0563838');
+    setBankAccountType('Current');
+    setBankUpi('lappy.solution@ybl');
+    setBankIsPrimary(bankAccounts.length === 0);
+    setIsBankModalOpen(true);
+  };
+
+  const handleOpenEditBank = (acc: any) => {
+    setEditingBankId(acc.id);
+    setBankHolderName(acc.accountHolderName || 'lappy solutions');
+    setBankName(acc.bankName || '');
+    setBankBranch(acc.branch || '');
+    setBankAccountNo(acc.accountNumber || '');
+    setBankIfsc(acc.ifscCode || '');
+    setBankAccountType(acc.accountType || 'Current');
+    setBankUpi(acc.upiId || '');
+    setBankIsPrimary(Boolean(acc.isPrimary));
+    setIsBankModalOpen(true);
+  };
+
+  const handleSaveBankAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bankHolderName.trim() || !bankName.trim() || !bankAccountNo.trim() || !bankIfsc.trim()) {
+      showToast('Please fill in Account Name, Bank Name, Account Number, and IFSC Code.');
+      return;
+    }
+
+    if (editingBankId) {
+      await updateBankAccount(editingBankId, {
+        accountHolderName: bankHolderName.trim(),
+        bankName: bankName.trim(),
+        branch: bankBranch.trim(),
+        accountNumber: bankAccountNo.trim(),
+        ifscCode: bankIfsc.trim().toUpperCase(),
+        accountType: bankAccountType,
+        upiId: bankUpi.trim(),
+        isPrimary: bankIsPrimary,
+      });
+    } else {
+      await addBankAccount({
+        accountHolderName: bankHolderName.trim(),
+        bankName: bankName.trim(),
+        branch: bankBranch.trim(),
+        accountNumber: bankAccountNo.trim(),
+        ifscCode: bankIfsc.trim().toUpperCase(),
+        accountType: bankAccountType,
+        upiId: bankUpi.trim(),
+        isPrimary: bankIsPrimary,
+        status: 'active',
+      });
+    }
+    setIsBankModalOpen(false);
+  };
 
   // WordPress Admin Shell States
   const [isWpSidebarCollapsed, setIsWpSidebarCollapsed] = useState(false);
@@ -142,7 +223,7 @@ export default function AdminPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab');
-      if (tabParam && ['dashboard', 'orders', 'inventory', 'categories', 'brands', 'scraper', 'billing', 'coupons', 'banners', 'homepage', 'pages', 'blogs', 'media', 'theme', 'header_footer', 'tools', 'settings', 'leads'].includes(tabParam)) {
+      if (tabParam && ['dashboard', 'orders', 'inventory', 'categories', 'brands', 'scraper', 'billing', 'bank', 'coupons', 'banners', 'homepage', 'pages', 'blogs', 'media', 'theme', 'header_footer', 'tools', 'settings', 'leads'].includes(tabParam)) {
         setActiveTab(tabParam as any);
       }
     }
@@ -2191,10 +2272,21 @@ export default function AdminPage() {
     <div className="bg-[#f0f0f1] min-h-screen text-[#3c434a] font-sans antialiased">
       {/* 1. TOP WORDPRESS ADMIN BAR (Classic #1d2327) */}
       <header className="h-9 bg-[#1d2327] text-[#c3c4c7] fixed top-0 left-0 right-0 z-50 px-2 sm:px-3 flex items-center justify-between text-xs select-none border-b border-[#3c434a]">
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Mobile Navigation Drawer Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-1 rounded text-gray-300 hover:text-white hover:bg-[#2c3338] transition-colors cursor-pointer"
+            title="Toggle Navigation Menu"
+            aria-label="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X className="w-4 h-4 text-rose-400" /> : <Menu className="w-4 h-4" />}
+          </button>
+
           {/* WordPress WP Logo */}
           <div 
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
             className="w-5 h-5 rounded-full bg-[#2271b1] text-white flex items-center justify-center font-serif font-black text-xs cursor-pointer hover:bg-[#135e96] transition-colors" 
             title="WordPress Dashboard"
           >
@@ -2290,6 +2382,13 @@ export default function AdminPage() {
                   <BookOpen className="w-3.5 h-3.5 text-rose-300" />
                   <span>Blog Post</span>
                 </button>
+                <button
+                  onClick={() => { handleOpenAddBank(); setIsNewMenuOpen(false); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-[#2271b1] hover:text-white flex items-center gap-2 cursor-pointer"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Bank Account</span>
+                </button>
               </div>
             )}
           </div>
@@ -2351,11 +2450,235 @@ export default function AdminPage() {
 
       {/* 2. BODY SHELL: LEFT SIDEBAR + MAIN CONTENT */}
       <div className="pt-9 flex min-h-screen">
-        {/* LEFT WORDPRESS NAVIGATION SIDEBAR */}
+        {/* MOBILE RESPONSIVE NAVIGATION DRAWER (Slide-over overlay for smartphones) */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            {/* Dark Backdrop */}
+            <div
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            />
+
+            {/* Slide-over Drawer Panel */}
+            <div className="relative w-72 max-w-[85vw] bg-[#1d2327] text-[#c3c4c7] h-full shadow-2xl flex flex-col justify-between overflow-y-auto z-10 border-r border-[#3c434a]">
+              <div className="p-4 space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#2c3338]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#2271b1] text-white flex items-center justify-center font-serif font-black text-xs">
+                      W
+                    </div>
+                    <div>
+                      <strong className="block text-white text-xs font-bold leading-tight">
+                        {siteSettings?.siteName || 'Lapiez Store'}
+                      </strong>
+                      <span className="text-[10px] text-[#72aee6] font-mono">Mobile Admin Portal</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-1 rounded bg-[#2c3338] text-gray-300 hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Navigation Items */}
+                <div className="space-y-1 text-xs">
+                  <button
+                    onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'dashboard' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    <span>Dashboard</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('orders'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'orders' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Orders & UTR</span>
+                    </div>
+                    {orders.length > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#3c434a] text-white">
+                        {orders.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('bank'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'bank' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-emerald-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Building2 className="w-4 h-4 text-emerald-400" />
+                      <span className="font-bold">Bank Details</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-200 border border-emerald-700/40">
+                      {bankAccounts.length}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('billing'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'billing' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Receipt className="w-4 h-4" />
+                      <span>GST Invoices & Billing</span>
+                    </div>
+                    {invoices.length > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#3c434a] text-white">
+                        {invoices.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('inventory'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'inventory' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Package className="w-4 h-4" />
+                      <span>All Products</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#3c434a] text-white">
+                      {products.length}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('categories'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'categories' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span>Categories</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('brands'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'brands' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <Award className="w-4 h-4" />
+                    <span>Brands</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('coupons'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'coupons' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <Percent className="w-4 h-4" />
+                    <span>Coupons</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('scraper'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'scraper' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-purple-300'
+                    }`}
+                  >
+                    <Globe className="w-4 h-4 text-purple-400" />
+                    <span>Live Scraper</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('banners'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'banners' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    <span>Hero Banners</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('homepage'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'homepage' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-4 h-4" />
+                    <span>Homepage Builder</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'settings' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <Sliders className="w-4 h-4" />
+                    <span>Store Settings</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveTab('leads'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-semibold transition-all ${
+                      activeTab === 'leads' ? 'bg-[#2271b1] text-white' : 'hover:bg-[#2c3338] text-[#c3c4c7]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Quotes & Leads</span>
+                    </div>
+                    {leads.length > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-700 text-white">
+                        {leads.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom Actions */}
+              <div className="p-4 border-t border-[#2c3338] space-y-2 text-xs">
+                <Link
+                  href="/"
+                  target="_blank"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[#2c3338] text-[#72aee6] font-bold hover:bg-[#3c434a] transition-colors"
+                >
+                  <span>Visit Storefront</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+                <button
+                  onClick={async () => {
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    setIsAuthenticated(false);
+                    showToast('Admin Portal locked securely.');
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-rose-950/60 text-rose-300 font-bold border border-rose-800/40 hover:bg-rose-900 transition-colors"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Log Out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* LEFT WORDPRESS NAVIGATION SIDEBAR (Desktop) */}
         <aside
           className={`${
             isWpSidebarCollapsed ? 'w-14' : 'w-56'
-          } bg-[#1d2327] text-[#c3c4c7] flex-shrink-0 transition-all duration-200 sticky top-9 h-[calc(100vh-36px)] overflow-y-auto z-30 select-none flex flex-col justify-between border-r border-[#2c3338]`}
+          } hidden md:flex bg-[#1d2327] text-[#c3c4c7] flex-shrink-0 transition-all duration-200 sticky top-9 h-[calc(100vh-36px)] overflow-y-auto z-30 select-none flex-col justify-between border-r border-[#2c3338]`}
         >
           <div className="py-2 space-y-1">
             {/* CORE */}
@@ -2440,6 +2763,26 @@ export default function AdminPage() {
                 {!isWpSidebarCollapsed && invoices.length > 0 && (
                   <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-[#3c434a] text-white">
                     {invoices.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('bank')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'bank'
+                    ? 'bg-[#2271b1] text-white shadow-xs'
+                    : 'text-[#c3c4c7] hover:bg-[#135e96] hover:text-white'
+                }`}
+                title="Official Bank Accounts & Settlement"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Building2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                  {!isWpSidebarCollapsed && <span>Bank Details</span>}
+                </div>
+                {!isWpSidebarCollapsed && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-900/60 text-emerald-200 border border-emerald-700/40">
+                    {bankAccounts.length}
                   </span>
                 )}
               </button>
@@ -2719,7 +3062,7 @@ export default function AdminPage() {
         </aside>
 
         {/* 3. WORDPRESS MAIN CONTENT CANVAS */}
-        <main className="flex-1 min-w-0 p-4 sm:p-6 bg-[#f0f0f1] overflow-x-hidden">
+        <main className="flex-1 min-w-0 p-3 sm:p-6 pb-24 md:pb-6 bg-[#f0f0f1] overflow-x-hidden">
           <div className="max-w-7xl mx-auto space-y-6">
 
             {/* WORDPRESS PAGE TITLE & ACTION BAR */}
@@ -2733,6 +3076,7 @@ export default function AdminPage() {
                   {activeTab === 'scraper' && 'Live Web Scraper & Crawler Engine'}
                   {activeTab === 'orders' && `Orders & UTR Verification (${orders.length})`}
                   {activeTab === 'billing' && `GST Invoices & Billing (${invoices.length})`}
+                  {activeTab === 'bank' && 'Official Bank Details & Settlement'}
                   {activeTab === 'coupons' && `Coupons & Discounts (${coupons.length})`}
                   {activeTab === 'leads' && `Customer Quotes & Inquiries (${leads.length})`}
                   {activeTab === 'homepage' && 'Homepage Builder & Layout Sections'}
@@ -2747,6 +3091,15 @@ export default function AdminPage() {
                 </h1>
 
                 {/* Contextual Action Button */}
+                {activeTab === 'bank' && (
+                  <button
+                    onClick={handleOpenAddBank}
+                    className="px-3 py-1 rounded bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-bold transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add Bank Account</span>
+                  </button>
+                )}
                 {activeTab === 'categories' && (
                   <button
                     onClick={handleOpenAddCategory}
@@ -6168,11 +6521,341 @@ export default function AdminPage() {
         )}
 
         {/* ========================================================= */}
+        {/* TAB: OFFICIAL BANK DETAILS & SETTLEMENT ACCOUNTS          */}
+        {/* ========================================================= */}
+        {activeTab === 'bank' && (
+          <div className="space-y-6 max-w-5xl">
+            {/* Top Overview & Action Bar */}
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold shadow-xs">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
+                    <span>Official Bank Accounts & Settlement</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      {bankAccounts.length} Active
+                    </span>
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Showroom IMPS / RTGS / NEFT bank transfer coordinates and GST Tax Invoice settlement account.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleOpenAddBank}
+                  className="px-4 py-2 rounded-xl bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Add Bank Account</span>
+                </button>
+              </div>
+            </div>
+
+            {/* FEATURED: PRIMARY SETTLEMENT ACCOUNT CARD (Modeled after user's photo) */}
+            {(() => {
+              const primaryAcc = bankAccounts.find(a => a.isPrimary) || bankAccounts[0];
+              if (!primaryAcc) return null;
+
+              return (
+                <div className="bg-gradient-to-br from-emerald-50/50 via-white to-blue-50/30 border-2 border-emerald-500 rounded-2xl p-5 sm:p-7 shadow-sm space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-emerald-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                            PRIMARY SETTLEMENT ACCOUNT
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-500 hidden sm:inline">
+                            (Live on Checkout & Invoices)
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-black text-gray-900 mt-1">
+                          {primaryAcc.bankName} {primaryAcc.branch ? `– ${primaryAcc.branch}` : ''}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const details = `BANK DETAILS\nName:\t\t${primaryAcc.accountHolderName}\nIFSC Code:\t${primaryAcc.ifscCode}\nAccount No:\t${primaryAcc.accountNumber}\nBank:\t\t${primaryAcc.bankName}${primaryAcc.branch ? `, ${primaryAcc.branch}` : ''}`;
+                          navigator.clipboard?.writeText(details);
+                          showToast('Bank details copied to clipboard!');
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                        title="Copy formatted text to send on WhatsApp"
+                      >
+                        <Copy className="w-3.5 h-3.5 text-gray-500" />
+                        <span>Copy All Details</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditBank(primaryAcc)}
+                        className="px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* VISUAL PASSBOOK / BANK DETAILS CARD (MATCHING USER'S PHOTO FORMAT) */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 shadow-inner space-y-3 font-mono">
+                    <div className="text-xs font-extrabold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center justify-between">
+                      <span>BANK DETAILS</span>
+                      <span className="text-[10px] font-sans font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Verified Current A/C</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs sm:text-sm">
+                      <div className="flex items-baseline justify-between sm:justify-start gap-4 py-1 border-b sm:border-b-0 border-gray-50">
+                        <span className="text-gray-500 font-sans font-semibold min-w-28">Name:</span>
+                        <strong className="text-gray-900 font-sans text-sm sm:text-base font-bold">
+                          {primaryAcc.accountHolderName}
+                        </strong>
+                      </div>
+
+                      <div className="flex items-baseline justify-between sm:justify-start gap-4 py-1 border-b sm:border-b-0 border-gray-50">
+                        <span className="text-gray-500 font-sans font-semibold min-w-28">IFSC Code:</span>
+                        <div className="flex items-center gap-2">
+                          <strong className="text-blue-700 font-mono text-sm sm:text-base font-extrabold tracking-wider">
+                            {primaryAcc.ifscCode}
+                          </strong>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(primaryAcc.ifscCode);
+                              showToast('IFSC Code copied!');
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-700"
+                            title="Copy IFSC"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-baseline justify-between sm:justify-start gap-4 py-1 border-b sm:border-b-0 border-gray-50">
+                        <span className="text-gray-500 font-sans font-semibold min-w-28">Account No:</span>
+                        <div className="flex items-center gap-2">
+                          <strong className="text-gray-900 font-mono text-sm sm:text-base font-black tracking-wider">
+                            {primaryAcc.accountNumber}
+                          </strong>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(primaryAcc.accountNumber);
+                              showToast('Account Number copied!');
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-700"
+                            title="Copy Account Number"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-baseline justify-between sm:justify-start gap-4 py-1">
+                        <span className="text-gray-500 font-sans font-semibold min-w-28">Bank:</span>
+                        <strong className="text-gray-900 font-sans text-sm sm:text-base font-bold">
+                          {primaryAcc.bankName}{primaryAcc.branch ? `, ${primaryAcc.branch}` : ''}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-500 font-sans border-t border-gray-100 mt-2">
+                      <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Account Type: <strong>{primaryAcc.accountType || 'Current Account'}</strong></span>
+                      </div>
+                      {primaryAcc.upiId && (
+                        <div className="flex items-center gap-1.5 text-blue-700 font-semibold">
+                          <QrCode className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Linked UPI: <strong className="font-mono">{primaryAcc.upiId}</strong></span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* LIST OF ALL BANK ACCOUNTS (Cards view with Add/Edit/Delete/Set Primary) */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-extrabold text-sm sm:text-base text-gray-900 flex items-center gap-2">
+                  <span>All Configured Showroom Bank Accounts</span>
+                  <span className="text-xs font-normal text-gray-500">({bankAccounts.length})</span>
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {bankAccounts.map((acc) => (
+                  <div
+                    key={acc.id}
+                    className={`bg-white border rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 transition-all ${
+                      acc.isPrimary
+                        ? 'border-emerald-400 ring-2 ring-emerald-400/20'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
+                          acc.isPrimary ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          <Building2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-gray-900">
+                            {acc.bankName}
+                          </h4>
+                          <span className="text-[11px] text-gray-500 block">
+                            {acc.branch ? `Branch: ${acc.branch}` : 'Main Branch'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {acc.isPrimary ? (
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          Primary
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPrimaryBankAccount(acc.id)}
+                          className="text-[11px] font-bold text-[#1A56DB] hover:underline cursor-pointer"
+                        >
+                          Set as Primary
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 text-xs text-gray-700">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Account Name:</span>
+                        <strong className="text-gray-900 font-semibold">{acc.accountHolderName}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Account Number:</span>
+                        <strong className="text-gray-900 font-mono font-bold tracking-wider">{acc.accountNumber}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">IFSC Code:</span>
+                        <strong className="text-blue-700 font-mono font-bold">{acc.ifscCode}</strong>
+                      </div>
+                      {acc.accountType && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Type:</span>
+                          <span className="text-gray-700 font-medium">{acc.accountType}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t border-gray-100 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const text = `BANK DETAILS\nName:\t\t${acc.accountHolderName}\nIFSC Code:\t${acc.ifscCode}\nAccount No:\t${acc.accountNumber}\nBank:\t\t${acc.bankName}${acc.branch ? `, ${acc.branch}` : ''}`;
+                          navigator.clipboard?.writeText(text);
+                          showToast('Bank details copied!');
+                        }}
+                        className="text-gray-500 hover:text-gray-900 flex items-center gap-1 font-semibold py-1 px-2 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy</span>
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditBank(acc)}
+                          className="text-blue-600 hover:text-blue-800 flex items-center gap-1 font-semibold py-1 px-2 rounded hover:bg-blue-50 transition-colors cursor-pointer"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to remove "${acc.bankName}" account?`)) {
+                              deleteBankAccount(acc.id);
+                            }
+                          }}
+                          disabled={bankAccounts.length <= 1}
+                          className="text-rose-600 hover:text-rose-800 disabled:opacity-40 disabled:hover:text-rose-600 flex items-center gap-1 font-semibold py-1 px-2 rounded hover:bg-rose-50 transition-colors cursor-pointer"
+                          title={bankAccounts.length <= 1 ? 'Cannot remove the only bank account' : 'Delete Account'}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Integration Notice Card */}
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-5 flex items-start gap-3 text-xs text-blue-900">
+              <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <strong className="block font-bold">Automatic Synchronization Everywhere</strong>
+                <p className="text-blue-800 leading-relaxed text-[11px] sm:text-xs">
+                  Whenever you add, edit, or set a Primary Bank Account:
+                </p>
+                <ul className="list-disc list-inside space-y-0.5 text-[11px] text-blue-700 pt-0.5">
+                  <li><strong>Customer Checkout:</strong> Real-time display for shoppers selecting Direct Bank Transfer / IMPS.</li>
+                  <li><strong>GST Tax Invoices:</strong> Automatically printed on customer invoice settlement section.</li>
+                  <li><strong>PostgreSQL Database:</strong> Instantly saved to cloud database and synced on all devices.</li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ========================================================= */}
         {/* TAB: STORE SETTINGS & UPI QR DETAILS (Full CMS Form)     */}
         {/* ========================================================= */}
         {activeTab === 'settings' && (
           <form onSubmit={handleSaveSettings} className="space-y-6 max-w-4xl text-xs">
             
+            {/* Quick Bank Accounts Card in Settings */}
+            <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <strong className="block text-sm text-gray-900 font-bold">
+                    Official Bank Accounts ({bankAccounts.length} Configured)
+                  </strong>
+                  <span className="text-[11px] text-gray-600 block">
+                    Primary: <strong className="text-gray-900">{bankAccounts.find(a => a.isPrimary)?.bankName || 'Union Bank of India'}</strong> (A/C: <span className="font-mono font-bold">{bankAccounts.find(a => a.isPrimary)?.accountNumber || '638301010050261'}</span>, IFSC: <span className="font-mono">{bankAccounts.find(a => a.isPrimary)?.ifscCode || 'UBIN0563838'}</span>)
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('bank')}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 w-fit shadow-xs"
+              >
+                <span>Manage Bank Accounts</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             {/* 1. Payment & Settlement Section */}
             <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
@@ -7526,6 +8209,224 @@ export default function AdminPage() {
           </div>
         </main>
       </div>
+
+      {/* MOBILE BOTTOM NAVIGATION BAR (Fixed at bottom on phones) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#1d2327]/98 backdrop-blur-md border-t border-[#3c434a] z-40 px-2 flex items-center justify-around select-none shadow-2xl">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors cursor-pointer ${
+            activeTab === 'dashboard' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <div className={`p-1 rounded-md ${activeTab === 'dashboard' ? 'bg-[#2271b1] text-white shadow-xs' : ''}`}>
+            <LayoutDashboard className="w-4 h-4" />
+          </div>
+          <span className="text-[9px] font-bold tracking-tight">Home</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors cursor-pointer relative ${
+            activeTab === 'orders' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <div className={`p-1 rounded-md ${activeTab === 'orders' ? 'bg-[#2271b1] text-white shadow-xs' : ''}`}>
+            <ShoppingBag className="w-4 h-4" />
+          </div>
+          {orders.length > 0 && (
+            <span className="absolute top-0 right-1 w-3.5 h-3.5 rounded-full bg-rose-600 text-white text-[8px] font-black flex items-center justify-center">
+              {orders.length}
+            </span>
+          )}
+          <span className="text-[9px] font-bold tracking-tight">Orders</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('inventory')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors cursor-pointer ${
+            activeTab === 'inventory' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <div className={`p-1 rounded-md ${activeTab === 'inventory' ? 'bg-[#2271b1] text-white shadow-xs' : ''}`}>
+            <Package className="w-4 h-4" />
+          </div>
+          <span className="text-[9px] font-bold tracking-tight">Products</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('bank')}
+          className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg transition-colors cursor-pointer ${
+            activeTab === 'bank' ? 'text-emerald-300' : 'text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          <div className={`p-1 rounded-md ${activeTab === 'bank' ? 'bg-emerald-600 text-white shadow-xs' : ''}`}>
+            <Building2 className="w-4 h-4" />
+          </div>
+          <span className="text-[9px] font-bold tracking-tight">Bank</span>
+        </button>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
+        >
+          <div className="p-1 rounded-md">
+            <Menu className="w-4 h-4" />
+          </div>
+          <span className="text-[9px] font-bold tracking-tight">Menu</span>
+        </button>
+      </nav>
+
+      {/* ========================================================= */}
+      {/* MODAL: ADD / EDIT BANK ACCOUNT DETAILS                    */}
+      {/* ========================================================= */}
+      {isBankModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold shadow-xs">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-gray-900">
+                    {editingBankId ? 'Edit Bank Account Details' : 'Add New Bank Account'}
+                  </h3>
+                  <p className="text-[11px] text-gray-500">Showroom bank particulars for customer transfers</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBankModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBankAccount} className="space-y-3.5 text-xs">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Account Holder Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. lappy solutions"
+                  value={bankHolderName}
+                  onChange={(e) => setBankHolderName(e.target.value)}
+                  className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB] focus:bg-white"
+                  required
+                />
+                <span className="text-[10px] text-gray-400 mt-0.5 block">Official name registered on bank account</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Bank Name *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Union Bank of India"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB] focus:bg-white"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Branch Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. GARHWA"
+                    value={bankBranch}
+                    onChange={(e) => setBankBranch(e.target.value)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB] focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Account Number *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 638301010050261"
+                    value={bankAccountNo}
+                    onChange={(e) => setBankAccountNo(e.target.value.replace(/\s+/g, ''))}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 font-mono font-bold text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB] focus:bg-white tracking-wider"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">IFSC Code (11 Chars) *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. UBIN0563838"
+                    value={bankIfsc}
+                    onChange={(e) => setBankIfsc(e.target.value.toUpperCase().trim())}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 font-mono font-bold text-xs text-blue-700 focus:outline-none focus:border-[#1A56DB] focus:bg-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Account Type</label>
+                  <select
+                    value={bankAccountType}
+                    onChange={(e) => setBankAccountType(e.target.value as any)}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB] focus:bg-white"
+                  >
+                    <option value="Current">Current Account</option>
+                    <option value="Savings">Savings Account</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Linked UPI VPA (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. lappy.solution@ybl"
+                    value={bankUpi}
+                    onChange={(e) => setBankUpi(e.target.value.trim())}
+                    className="w-full h-9 bg-gray-50 border border-gray-200 rounded-lg px-3 text-xs text-gray-900 focus:outline-none focus:border-[#1A56DB] focus:bg-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="bankIsPrimary"
+                  checked={bankIsPrimary}
+                  onChange={(e) => setBankIsPrimary(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#1A56DB] cursor-pointer"
+                />
+                <label htmlFor="bankIsPrimary" className="font-bold text-gray-700 cursor-pointer select-none">
+                  Set as Primary Account (Default for Invoices and Checkout)
+                </label>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsBankModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{editingBankId ? 'Update Bank Account' : 'Save Bank Account'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================= */}
       {/* MODAL: ADD PRODUCT TO INVENTORY                          */}

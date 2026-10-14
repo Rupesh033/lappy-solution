@@ -20,6 +20,8 @@ export default function CheckoutPage() {
     placeOrder, 
     showToast, 
     paymentSettings,
+    bankAccounts,
+    invoiceSettings,
     coupons,
     appliedCoupon,
     couponDiscount,
@@ -1178,13 +1180,39 @@ export default function CheckoutPage() {
                       </select>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 text-[11px] text-slate-600">
-                      <strong className="block text-slate-900">Official Current Account Details:</strong>
-                      <p>Account Name: <strong className="text-slate-900">LAPIEZ GARHWA</strong></p>
-                      <p>Bank: <strong className="text-slate-900">Bank of India, Garhwa Branch</strong></p>
-                      <p>Account No: <strong className="text-slate-900 font-mono">482020110001892</strong></p>
-                      <p>IFSC Code: <strong className="text-slate-900 font-mono">BKID0004820</strong></p>
-                    </div>
+                    {(() => {
+                      const activeBank = bankAccounts?.find((b: any) => b.isPrimary) || bankAccounts?.[0] || {
+                        accountHolderName: invoiceSettings?.accountHolderName || 'lappy solutions',
+                        bankName: invoiceSettings?.bankName || 'Union Bank of India',
+                        branch: invoiceSettings?.branch || 'GARHWA',
+                        accountNumber: invoiceSettings?.accountNumber || '638301010050261',
+                        ifscCode: invoiceSettings?.ifscCode || 'UBIN0563838',
+                        accountType: 'Current'
+                      };
+                      return (
+                        <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 text-[11px] text-slate-600">
+                          <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                            <strong className="text-slate-900 text-xs">Official Bank Account Details (IMPS / RTGS / NEFT):</strong>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const details = `BANK DETAILS\nName: ${activeBank.accountHolderName}\nBank: ${activeBank.bankName}${activeBank.branch ? `, ${activeBank.branch}` : ''}\nAccount No: ${activeBank.accountNumber}\nIFSC Code: ${activeBank.ifscCode}`;
+                                navigator.clipboard?.writeText(details);
+                                alert('Bank details copied to clipboard!');
+                              }}
+                              className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition-colors cursor-pointer"
+                            >
+                              Copy Details
+                            </button>
+                          </div>
+                          <p>Account Name: <strong className="text-slate-900 font-semibold">{activeBank.accountHolderName}</strong></p>
+                          <p>Bank: <strong className="text-slate-900 font-semibold">{activeBank.bankName}{activeBank.branch ? `, ${activeBank.branch}` : ''}</strong></p>
+                          <p>Account No: <strong className="text-slate-900 font-mono font-bold tracking-wider">{activeBank.accountNumber}</strong></p>
+                          <p>IFSC Code: <strong className="text-slate-900 font-mono font-bold">{activeBank.ifscCode}</strong></p>
+                          {activeBank.accountType && <p>Account Type: <strong className="text-slate-900 font-semibold">{activeBank.accountType} Account</strong></p>}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 

@@ -59,59 +59,96 @@ async function main() {
   });
   console.log('✅ PaymentSettings seeded.');
 
-  // 4. Products from frontechProducts.json
+  // 4. Products from complete catalog (BASE_PRODUCTS + frontechProducts + scrapedBrandProducts)
+  const productsTsPath = path.join(__dirname, '..', 'data', 'products.ts');
+  const productsTs = fs.readFileSync(productsTsPath, 'utf8');
+  const start = productsTs.indexOf('const BASE_PRODUCTS: Product[] = [');
+  const end = productsTs.indexOf('];\r\n\r\nexport const PRODUCTS', start) !== -1 
+    ? productsTs.indexOf('];\r\n\r\nexport const PRODUCTS', start)
+    : productsTs.indexOf('];\n\nexport const PRODUCTS', start);
+  const baseProducts = (start !== -1 && end !== -1)
+    ? JSON.parse(productsTs.substring(start + 'const BASE_PRODUCTS: Product[] = '.length, end + 1))
+    : [];
+
   const frontechPath = path.join(__dirname, '..', 'data', 'frontechProducts.json');
-  if (fs.existsSync(frontechPath)) {
-    const products = JSON.parse(fs.readFileSync(frontechPath, 'utf8'));
-    console.log(`Seeding ${products.length} products into Supabase...`);
-    let count = 0;
-    for (const p of products) {
-      const slug = (p.name || 'product')
+  const frontechProducts = fs.existsSync(frontechPath) ? JSON.parse(fs.readFileSync(frontechPath, 'utf8')) : [];
+
+  const scrapedPath = path.join(__dirname, '..', 'data', 'scrapedBrandProducts.json');
+  const scrapedProducts = fs.existsSync(scrapedPath) ? JSON.parse(fs.readFileSync(scrapedPath, 'utf8')) : [];
+
+  const allProducts = [...baseProducts, ...frontechProducts, ...scrapedProducts];
+  console.log(`Seeding ${allProducts.length} complete catalog products into Supabase...`);
+  let count = 0;
+  for (const p of allProducts) {
+    const sku = (p.sku || `LS-${p.id}`).trim();
+    const slug = (p.slug || (
+      (p.name || 'product')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '') + '-' + (p.sku || Math.floor(Math.random() * 100000));
+        .replace(/(^-|-$)+/g, '') + '-' + (p.numericId || sku.replace(/[^a-z0-9]/gi, ''))
+    )).trim();
 
+    let imageToStore = p.image || '';
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      const cleanImgs = p.images
+        .flatMap(s => typeof s === 'string' && s.includes('|||') ? s.split('|||') : [s])
+        .map(s => String(s).trim())
+        .filter(Boolean);
+      if (cleanImgs.length > 0) imageToStore = cleanImgs.join('|||');
+    }
+
+    const price = Number(p.price) || 0;
+    const mrp = Number(p.mrp) || price || 0;
+    const discount = Number(p.discount) || (mrp > price && mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0);
+
+    const productPayload = {
+      name: p.name || 'Product',
+      category: p.category || 'Accessories',
+      brand: p.brand || 'Lapiez',
+      price,
+      mrp,
+      discount,
+      specs: p.specs || '',
+      description: p.description || p.specs || '',
+      image: imageToStore || '/images/placeholder.png',
+      inStock: p.inStock ?? true,
+      stockQuantity: Number(p.stockQuantity) || 10,
+      rating: Number(p.rating) || 4.5,
+      featured: p.featured ?? false,
+      status: 'active'
+    };
+
+    try {
       await prisma.product.upsert({
-        where: { sku: p.sku || `LS-${p.id}` },
+        where: { sku },
         update: {
-          name: p.name,
-          category: p.category || 'Accessories',
-          brand: p.brand || 'Frontech',
-          price: Number(p.price) || 999,
-          mrp: Number(p.mrp) || Number(p.price) || 1499,
-          discount: Number(p.discount) || 0,
-          specs: p.specs || '',
-          description: p.description || '',
-          image: p.image || (p.images && p.images[0]) || '/images/placeholder.png',
-          inStock: p.inStock ?? true,
-          stockQuantity: Number(p.stockQuantity) || 10,
-          rating: Number(p.rating) || 4.5,
-          featured: p.featured ?? false,
-          status: 'active'
+          ...productPayload,
+          slug
         },
         create: {
-          name: p.name,
+          id: p.id || `prod-${Date.now()}`,
+          sku,
           slug,
-          category: p.category || 'Accessories',
-          brand: p.brand || 'Frontech',
-          price: Number(p.price) || 999,
-          mrp: Number(p.mrp) || Number(p.price) || 1499,
-          discount: Number(p.discount) || 0,
-          specs: p.specs || '',
-          description: p.description || '',
-          image: p.image || (p.images && p.images[0]) || '/images/placeholder.png',
-          inStock: p.inStock ?? true,
-          stockQuantity: Number(p.stockQuantity) || 10,
-          sku: p.sku || `LS-${p.id}`,
-          rating: Number(p.rating) || 4.5,
-          featured: p.featured ?? false,
-          status: 'active'
+          ...productPayload
         }
       });
       count++;
+    } catch (e) {
+      // Slug collision fallback
+      try {
+        const fallbackSlug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+        await prisma.product.upsert({
+          where: { sku },
+          update: { ...productPayload, slug: fallbackSlug },
+          create: { id: p.id || `prod-${Date.now()}`, sku, slug: fallbackSlug, ...productPayload }
+        });
+        count++;
+      } catch (err2) {
+        console.warn(`Could not seed product ${sku}:`, err2.message);
+      }
     }
-    console.log(`✅ ${count} Products seeded successfully.`);
   }
+  console.log(`✅ ${count} Products seeded successfully into Supabase.`);
 
   // 5. Initial Orders
   const initialOrders = [

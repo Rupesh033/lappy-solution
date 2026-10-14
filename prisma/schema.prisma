@@ -42,13 +42,14 @@ model ThemeSettings {
 }
 
 model PaymentSettings {
-  id              String   @id @default("default")
-  upiId           String   @default("lappy.solution@ybl")
-  upiName         String   @default("LAPIEZ GARHWA")
-  codEnabled      Boolean  @default(true)
-  gstRate         Int      @default(18)
-  gstin           String   @default("20AABCL1234F1Z5")
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default("default")
+  upiId            String   @default("lappy.solution@ybl")
+  upiName          String   @default("LAPIEZ GARHWA")
+  codEnabled       Boolean  @default(true)
+  gstRate          Int      @default(18)
+  gstin            String   @default("20AABCL1234F1Z5")
+  bankAccountsJson String?  @default("[]")
+  updatedAt        DateTime @updatedAt
 }
 
 model Menu {
