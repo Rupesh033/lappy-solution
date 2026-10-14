@@ -995,12 +995,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedProducts) {
         try {
           const parsed = JSON.parse(savedProducts);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          // If cached catalog has < 350 items, it was an old partial/Frontech-only cache; discard it immediately
+          if (Array.isArray(parsed) && parsed.length >= 350) {
             const clean = parsed
               .filter((p: any) => !isDemoProduct(p))
               .map(normalizeProduct);
 
-            // Merge with static catalog to guarantee no products are lost from old partial cache
+            // Merge with static catalog to guarantee no products are lost
             const mergedMap = new Map<string, Product>();
             PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct).forEach(p => {
               mergedMap.set(p.sku || p.id, p);
@@ -1008,6 +1009,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             clean.forEach(p => mergedMap.set(p.sku || p.id, p));
             setProducts(Array.from(mergedMap.values()));
           } else {
+            // Invalidate outdated partial cache
+            try { localStorage.removeItem('ls_products'); } catch (e) {}
             setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
           }
         } catch {
