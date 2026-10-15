@@ -271,9 +271,23 @@ function AccountContent() {
 
   const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id));
 
-  // Filtered Orders
+  // Filtered Orders (Restricted to authenticated customer for privacy)
   const filteredOrders = useMemo(() => {
+    if (!customer) return [];
+    const custId = customer.id;
+    const custEmail = (customer.email || '').toLowerCase().trim();
+    const custPhone = (customer.phone || customer.user_metadata?.phone || '').replace(/\D/g, '').slice(-10);
+
     return orders.filter((o) => {
+      // Privacy & Ownership verification
+      const orderEmail = (o.customerEmail || o.email || '').toLowerCase().trim();
+      const orderPhone = (o.phone || '').replace(/\D/g, '').slice(-10);
+      const isOwner = (o.customerId && o.customerId === custId) ||
+                      (custEmail && orderEmail === custEmail) ||
+                      (custPhone && orderPhone && custPhone === orderPhone);
+
+      if (!isOwner) return false;
+
       if (orderStatusFilter === 'delivered' && o.orderStatus !== 'Delivered') return false;
       if (orderStatusFilter === 'shipped' && o.orderStatus !== 'Shipped') return false;
       if (orderStatusFilter === 'processing' && (o.orderStatus === 'Delivered' || o.orderStatus === 'Cancelled')) return false;
@@ -287,7 +301,7 @@ function AccountContent() {
       }
       return true;
     });
-  }, [orders, orderStatusFilter, orderSearch]);
+  }, [orders, orderStatusFilter, orderSearch, customer]);
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -934,17 +948,31 @@ function AccountContent() {
                 ) : (
                   <div className="bg-white border border-[#E5E7EB] rounded-2xl p-12 text-center max-w-md mx-auto shadow-2xs space-y-3">
                     <Package className="w-12 h-12 text-gray-300 mx-auto" />
-                    <h3 className="font-extrabold text-gray-900 text-base">No Orders Found</h3>
+                    <h3 className="font-extrabold text-gray-900 text-base">
+                      {!customer ? 'Sign In to View Orders' : 'No Orders Found'}
+                    </h3>
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      {orderSearch ? 'No orders match your search keyword.' : 'You have not placed any orders yet on Lapiez Garhwa.'}
+                      {!customer
+                        ? 'Please sign in with Google or your customer account to view and track your orders.'
+                        : (orderSearch ? 'No orders match your search keyword.' : 'You have not placed any orders yet on Lapiez Garhwa.')}
                     </p>
-                    <Link
-                      href="/shop"
-                      className="inline-flex h-9.5 px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs items-center gap-1.5 transition-colors shadow-xs"
-                    >
-                      <span>Explore Catalog ({products.length || 413} Items)</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    {!customer ? (
+                      <button
+                        onClick={() => setIsGuestModalOpen(true)}
+                        className="inline-flex h-9.5 px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer mx-auto"
+                      >
+                        <User className="w-3.5 h-3.5" />
+                        <span>Sign In / Customer Access</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href="/shop"
+                        className="inline-flex h-9.5 px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs items-center gap-1.5 transition-colors shadow-xs mx-auto"
+                      >
+                        <span>Explore Catalog ({products.length || 413} Items)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    )}
                   </div>
                 )}
 

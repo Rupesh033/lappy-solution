@@ -173,8 +173,8 @@ export async function POST(request: Request) {
         specs: body.specs || '',
         description: body.description || body.specs || '',
         image: imageToStore,
-        inStock: body.inStock ?? true,
-        stockQuantity: Number(body.stockQuantity) || 10,
+        inStock: body.inStock === false || (body.stockQuantity !== undefined && Number(body.stockQuantity) <= 0) ? false : (body.inStock ?? true),
+        stockQuantity: body.stockQuantity !== undefined && body.stockQuantity !== null && !isNaN(Number(body.stockQuantity)) ? Number(body.stockQuantity) : 10,
         sku,
         rating: Number(body.rating) || 4.5,
         featured: body.featured ?? false,
@@ -212,7 +212,13 @@ export async function PUT(request: Request) {
 
     if (data.price !== undefined) data.price = Number(data.price);
     if (data.mrp !== undefined) data.mrp = Number(data.mrp);
-    if (data.stockQuantity !== undefined) data.stockQuantity = Number(data.stockQuantity);
+    if (data.inStock !== undefined) data.inStock = Boolean(data.inStock);
+    if (data.stockQuantity !== undefined) {
+      data.stockQuantity = Number(data.stockQuantity);
+      if (data.stockQuantity <= 0 && data.inStock === undefined) {
+        data.inStock = false;
+      }
+    }
     if (data.discount !== undefined) data.discount = Number(data.discount);
     if (data.rating !== undefined) data.rating = Number(data.rating);
     if (data.gstRate !== undefined) data.gstRate = Number(data.gstRate);

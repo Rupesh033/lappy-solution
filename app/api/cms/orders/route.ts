@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hasAdminSession } from '@/lib/adminAuth';
+import { INITIAL_COUPONS, Coupon, calculateCouponDiscount } from '@/data/coupons';
 
 interface RateLimitRecord {
   count: number;
@@ -66,7 +67,31 @@ const toClientOrder = (order: { itemsJson: string } & Record<string, unknown>) =
 };
 
 export async function GET(request: Request) {
-  if (!hasAdminSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { searchParams } = new URL(request.url);
+  const orderId = searchParams.get('orderId');
+
+  // Single order lookup (e.g. order confirmation, public tracking)
+  if (orderId) {
+    const cleanId = orderId.trim();
+    try {
+      const order = await prisma.order.findUnique({
+        where: { orderId: cleanId },
+      });
+      if (!order) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+      return NextResponse.json({ order: toClientOrder(order) });
+    } catch (error) {
+      console.error('Error fetching order by ID:', error);
+      return NextResponse.json({ error: 'Failed to fetch order' }, { status: 500 });
+    }
+  }
+
+  // Bulk order list requires admin session
+  if (!hasAdminSession(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const orders = await prisma.order.findMany({ orderBy: { createdAt: 'desc' } });
     return NextResponse.json({ orders: orders.map(toClientOrder) });
@@ -163,7 +188,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Recalculate trusted total from database product prices
+    // Recalculate trusted gross subtotal from database product prices
     const items = products.map((product) => ({
       id: product.id,
       productId: product.id,
@@ -174,7 +199,54 @@ export async function POST(request: Request) {
       category: product.category,
       sku: product.sku,
     }));
-    const totalAmount = items.reduce((total, item) => total + item.price * item.quantity, 0);
+    const subtotalAmount = items.reduce((total, item) => total + item.price * item.quantity, 0);
+
+    // Validate coupon if provided
+    let finalCouponCode: string | null = null;
+    let finalCouponDiscount = 0;
+    const requestedCoupon = typeof body.couponCode === 'string' ? body.couponCode.trim().toUpperCase() : null;
+
+    if (requestedCoupon) {
+      // Check in database first
+      const dbCoupon = await prisma.coupon.findUnique({
+        where: { code: requestedCoupon },
+      }).catch(() => null);
+
+      if (dbCoupon) {
+        const couponObj: Coupon = {
+          id: dbCoupon.id,
+          code: dbCoupon.code,
+          title: dbCoupon.title,
+          discountType: dbCoupon.discountType === 'fixed' ? 'fixed' : 'percentage',
+          discountValue: dbCoupon.discountValue,
+          minOrder: dbCoupon.minOrder,
+          maxDiscount: dbCoupon.maxDiscount ?? undefined,
+          audience: (dbCoupon.audience === 'premium' ? 'premium' : dbCoupon.audience === 'normal' ? 'normal' : 'all'),
+          description: dbCoupon.description || '',
+          isActive: dbCoupon.isActive,
+          validUntil: dbCoupon.validUntil || undefined,
+          usageLimit: dbCoupon.usageLimit ?? undefined,
+          timesUsed: dbCoupon.timesUsed,
+        };
+        const validation = calculateCouponDiscount(couponObj, subtotalAmount);
+        if (validation.isValid) {
+          finalCouponCode = dbCoupon.code;
+          finalCouponDiscount = validation.discountAmount;
+        }
+      } else {
+        // Fallback to static initial coupons
+        const staticCoupon = INITIAL_COUPONS.find((c) => c.code === requestedCoupon);
+        if (staticCoupon) {
+          const validation = calculateCouponDiscount(staticCoupon, subtotalAmount);
+          if (validation.isValid) {
+            finalCouponCode = staticCoupon.code;
+            finalCouponDiscount = validation.discountAmount;
+          }
+        }
+      }
+    }
+
+    const totalAmount = Math.max(0, subtotalAmount - finalCouponDiscount);
 
     const rawMethod = String(body.paymentMethod || '').toLowerCase();
     const isUpi = rawMethod.includes('upi') || rawMethod === 'upi_qr';
@@ -190,10 +262,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please enter a valid UPI transaction reference (UTR / Reference number).' }, { status: 400 });
     }
 
-    // Generate canonical order ID on server
-    const orderId = typeof body.orderId === 'string' && /^LS-[A-Za-z0-9-]{6,40}$/.test(body.orderId)
-      ? body.orderId
-      : `LS-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    // 4. Duplicate UTR check: Prevent submitting the same UTR for multiple active orders
+    if (isUpi && utrNumber) {
+      const existingUtr = await prisma.order.findFirst({
+        where: {
+          utrNumber: { equals: utrNumber, mode: 'insensitive' },
+          createdAt: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) },
+          NOT: { orderStatus: 'Cancelled' },
+        },
+        select: { id: true, orderId: true },
+      });
+
+      if (existingUtr) {
+        return NextResponse.json({
+          error: `This UPI Reference / UTR number (${utrNumber}) has already been submitted for order #${existingUtr.orderId}. If you believe this is an error, please contact showroom support.`
+        }, { status: 409 });
+      }
+    }
+
+    // Generate or validate canonical order ID on server (accepts LPZ- and LS- prefixes)
+    const rawOrderId = typeof body.orderId === 'string' ? body.orderId.trim() : '';
+    const orderId = /^(LPZ|LS)-[A-Za-z0-9-]{4,40}$/.test(rawOrderId)
+      ? rawOrderId
+      : `LPZ-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
     const order = await prisma.$transaction(async (tx) => {
       // Atomic inventory deduction with concurrency check
@@ -208,19 +299,35 @@ export async function POST(request: Request) {
         }
       }
 
+      // Increment coupon usage count if applied
+      if (finalCouponCode) {
+        await tx.coupon.updateMany({
+          where: { code: finalCouponCode },
+          data: { timesUsed: { increment: 1 } },
+        }).catch(() => null);
+      }
+
       return tx.order.create({
         data: {
           orderId,
+          customerId: typeof body.customerId === 'string' ? body.customerId.trim() : null,
+          customerEmail: typeof body.customerEmail === 'string' && body.customerEmail.includes('@')
+            ? body.customerEmail.trim()
+            : (typeof body.email === 'string' && body.email.includes('@') ? body.email.trim() : null),
           customerName,
           phone,
           email: typeof body.email === 'string' && body.email.includes('@') ? body.email.trim() : null,
           address,
           itemsJson: JSON.stringify(items),
+          subtotalAmount,
+          couponCode: finalCouponCode,
+          couponDiscount: finalCouponDiscount,
           totalAmount,
-          paymentMethod: isUpi ? 'UPI' : 'Cash on Delivery / Pickup',
-          paymentStatus: isUpi ? 'Verification Pending' : 'Pending Payment',
+          paymentMethod: isUpi ? 'UPI Dynamic QR (GPay/PhonePe)' : (isCod ? 'Cash on Delivery / Pickup' : 'NetBanking'),
+          paymentStatus: isUpi ? 'Verification Pending' : (isCod ? 'Pending Payment' : 'Verification Pending'),
           utrNumber: isUpi ? utrNumber : null,
           orderStatus: 'Confirmed',
+          inventoryStatus: 'allocated',
           date: new Date().toISOString().slice(0, 10),
         },
       });
@@ -265,15 +372,15 @@ export async function PUT(request: Request) {
         throw new Error('ORDER_NOT_FOUND');
       }
 
-      // Check if order was previously active (stock decremented, not yet restored)
-      const wasActive = currentOrder.orderStatus !== 'Cancelled' && currentOrder.paymentStatus !== 'Rejected';
-
       const nextOrderStatus = orderStatuses.has(orderStatus) ? orderStatus : currentOrder.orderStatus;
       const nextPaymentStatus = paymentStatuses.has(paymentStatus) ? paymentStatus : currentOrder.paymentStatus;
       const willBeCancelledOrRejected = nextOrderStatus === 'Cancelled' || nextPaymentStatus === 'Rejected';
+      const isCurrentlyActive = currentOrder.inventoryStatus === 'allocated' && currentOrder.orderStatus !== 'Cancelled' && currentOrder.paymentStatus !== 'Rejected';
+
+      let newInventoryStatus = currentOrder.inventoryStatus;
 
       // Restore stock exactly once when transitioning from active -> Cancelled or Rejected
-      if (wasActive && willBeCancelledOrRejected) {
+      if (isCurrentlyActive && willBeCancelledOrRejected) {
         let items: Array<{ id?: string; productId?: string; quantity?: number }> = [];
         try {
           const parsed = JSON.parse(currentOrder.itemsJson);
@@ -295,6 +402,28 @@ export async function PUT(request: Request) {
             });
           }
         }
+        newInventoryStatus = 'restored';
+      } else if (currentOrder.inventoryStatus === 'restored' && !willBeCancelledOrRejected) {
+        // Re-activating a previously cancelled order: re-decrement stock if available
+        let items: Array<{ id?: string; productId?: string; quantity?: number }> = [];
+        try {
+          const parsed = JSON.parse(currentOrder.itemsJson);
+          if (Array.isArray(parsed)) items = parsed;
+        } catch {}
+
+        for (const item of items) {
+          const prodId = item.productId || item.id;
+          const qty = Number(item.quantity) || 1;
+          if (typeof prodId === 'string' && qty > 0) {
+            await tx.product.updateMany({
+              where: { id: prodId, stockQuantity: { gte: qty } },
+              data: {
+                stockQuantity: { decrement: qty },
+              },
+            });
+          }
+        }
+        newInventoryStatus = 'allocated';
       }
 
       return tx.order.update({
@@ -302,6 +431,7 @@ export async function PUT(request: Request) {
         data: {
           ...(paymentStatuses.has(paymentStatus) ? { paymentStatus } : {}),
           ...(orderStatuses.has(orderStatus) ? { orderStatus } : {}),
+          inventoryStatus: newInventoryStatus,
         },
       });
     });

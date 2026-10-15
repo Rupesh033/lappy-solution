@@ -402,7 +402,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     18% GST Invoicing & ITC
                   </Link>
                   <Link 
-                    href="/pages/terms-conditions" 
+                    href="/pages/terms-and-conditions" 
                     className="block px-4 py-2 hover:bg-blue-50 text-gray-700 hover:text-[#1A56DB] font-medium"
                   >
                     Terms & Conditions

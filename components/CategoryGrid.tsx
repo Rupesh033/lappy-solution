@@ -5,6 +5,38 @@ import Link from 'next/link';
 import { ArrowRight, Layers } from 'lucide-react';
 import { useStore, DEFAULT_SHOP_BY_CATEGORIES } from '../context/StoreContext';
 
+function formatCategoryStartingPrice(raw?: string | null): string {
+  if (!raw || !raw.trim()) return 'From Showroom';
+  const val = raw.trim();
+
+  // If already properly formatted like "Starting ₹499" or "From ₹650"
+  if (/^(Starting|From)\s*₹/i.test(val)) {
+    return val;
+  }
+
+  // If pure number like "9999" or "100"
+  if (/^\d+$/.test(val)) {
+    return `Starting ₹${Number(val).toLocaleString('en-IN')}`;
+  }
+
+  // If just "₹9,999" or "₹650"
+  if (/^₹\s*[\d,]+$/.test(val)) {
+    return `Starting ${val.replace(/\s+/g, '')}`;
+  }
+
+  // If "Starting 499" or "From 650" missing currency symbol
+  if (/^(Starting|From)\s*\d+/i.test(val)) {
+    return val.replace(/^(Starting|From)\s*(\d[\d,]*)/i, '$1 ₹$2');
+  }
+
+  // If starts with number followed by anything
+  if (/^\d/.test(val)) {
+    return `Starting ₹${val}`;
+  }
+
+  return val;
+}
+
 export const CategoryGrid: React.FC = () => {
   const { categories } = useStore();
 
@@ -49,7 +81,7 @@ export const CategoryGrid: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
           {displayCategories.map((cat) => {
             const title = cat.name || cat.title || 'Category';
-            const price = cat.startingPrice || 'From Showroom';
+            const price = formatCategoryStartingPrice(cat.startingPrice);
             const img = cat.image || cat.imageUrl || '/images/categories/laptop-adapters.png';
             const cleanSearchQuery = (cat.name || '').replace(/^Laptop\s*/i, '').trim();
             const href = cat.href || `/shop?search=${encodeURIComponent(cleanSearchQuery || cat.slug)}`;

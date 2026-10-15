@@ -19,8 +19,9 @@ export default function OrderSuccessPage() {
 
   const { orders, siteSettings, paymentSettings, products } = useStore();
   const [localOrder, setLocalOrder] = useState<any>(null);
+  const [loadingOrder, setLoadingOrder] = useState<boolean>(true);
 
-  // Read order from localStorage if state has not hydrated
+  // Read order from localStorage or fetch from server API
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -28,6 +29,7 @@ export default function OrderSuccessPage() {
       const lastOrd = JSON.parse(localStorage.getItem('ls_last_order') || 'null');
       if (lastOrd && (lastOrd.orderId === orderId || !orderId)) {
         setLocalOrder(lastOrd);
+        setLoadingOrder(false);
         return;
       }
 
@@ -36,13 +38,38 @@ export default function OrderSuccessPage() {
       const match = savedOrders.find((o: any) => o.orderId === orderId);
       if (match) {
         setLocalOrder(match);
+        setLoadingOrder(false);
         return;
       }
     } catch (e) {}
+
+    // 3. Fetch from server by orderId
+    if (orderId) {
+      fetch(`/api/cms/orders?orderId=${encodeURIComponent(orderId)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.order) {
+            setLocalOrder(data.order);
+          }
+        })
+        .catch(() => null)
+        .finally(() => setLoadingOrder(false));
+    } else {
+      setLoadingOrder(false);
+    }
   }, [orderId]);
 
   // Priority order resolution
   const order = orders.find(o => o.orderId === orderId) || localOrder;
+
+  if (loadingOrder && !order) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm font-semibold text-gray-600">Retrieving order details...</p>
+      </div>
+    );
+  }
 
   if (!order) {
     return (

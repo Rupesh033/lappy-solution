@@ -11,15 +11,127 @@ import {
 import { useStore } from '../../../context/StoreContext';
 import { STORE_INFO } from '../../../data/storeData';
 
+// Built-in verified showroom policies to ensure instant loading & zero downtime
+const BUILTIN_PAGES: Record<string, { title: string; content: string }> = {
+  'terms-and-conditions': {
+    title: 'Terms & Conditions',
+    content: `## 1. Introduction & Showroom Overview
+Welcome to **Lapiez IT Showroom** (Opposite G P Plaza, Near Old Bus Stand, Chiniya Road, Garhwa, Jharkhand - 822114). By placing an order online, requesting a showroom estimate, or purchasing products on this platform or at our physical counter, you agree to comply with and be bound by the following official terms and conditions.
+
+## 2. 100% Genuine Hardware & 18% GST Invoicing
+All products sold by Lapiez (Laptops, Frontech Monitors, CP-PLUS CCTV kits, Crucial/Kingston SSDs, original adapters, and laptop batteries) are **100% genuine, brand-certified, and showroom verified**. Every transaction includes a valid **CBIC Rule 46 compliant 18% GST Tax Invoice** bearing our legal GSTIN (20AABCL1234F1Z5) which allows legitimate Input Tax Credit (ITC) claims for business accounts.
+
+## 3. Order Processing & Showroom Pickup
+* **Showroom Pickup:** Ready within 30 minutes of placing the order. Customers can inspect the hardware live on our Chiniya Road testing bench before handover.
+* **Local Delivery:** Orders across Garhwa and Palamu districts are dispatched within 2-4 hours via our local showroom logistics team.
+* **Interstate Delivery:** Shipped securely via DTDC, Bluedart, or India Post Express with real-time tracking numbers provided over WhatsApp and SMS.
+
+## 4. Strict Unboxing & Transit Verification Policy
+* **Mandatory 360° Unboxing Video:** For all courier-delivered packages, customers MUST record an uncut 360-degree video from the initial outer courier seal opening through device power-on.
+* **Zero Damage Claims Without Video:** Any transit damage claim must be reported within 24 hours of delivery accompanied by the uncut unboxing video.
+
+## 5. Testing & Brand Manufacturer Warranty
+* **Brand New Hardware:** Carries the official manufacturer warranty (1 to 3 years depending on the brand: Frontech, HP, Dell, CP-PLUS, Crucial, Kingston).
+* **Certified Refurbished Hardware:** Includes a **7-day unconditional testing warranty** and up to **1-year local service warranty support** directly at our Garhwa tech laboratory.
+* **Warranty Void Conditions:** Physical breakage, liquid spillage, burned ICs, electrical surges, or tampering with showroom warranty stickers will void warranty coverage.
+
+## 6. Pricing & Transparent Payments
+All prices listed on the website include applicable 18% GST unless explicitly stated otherwise. We accept UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, RTGS/NEFT for wholesale orders, and Cash on Counter for showroom pickups. Zero hidden fees or convenience surcharges.
+
+## 7. Showroom Location & Grievance Redressal
+For any inquiries, bill corrections, order tracking, or service lab appointments:
+* **Showroom Address:** Opposite G P Plaza, Near Old Bus Stand, Chiniya Road, Garhwa, Jharkhand - 822114
+* **Phone / WhatsApp:** +91 9608828288
+* **Email:** support@lappysolution.com`
+  },
+  'privacy-policy': {
+    title: 'Privacy Policy',
+    content: `## 1. Information We Collect
+We collect necessary customer details to fulfill orders, generate GST tax invoices, and provide warranty support. This includes your Name, Mobile/WhatsApp Number, Delivery Address, Pincode, and optional Business Name / GSTIN.
+
+## 2. Use of Information
+Your details are used exclusively for:
+* Generating statutory GST bills and order tracking updates.
+* WhatsApp notifications regarding order confirmation and dispatch.
+* Manufacturer warranty registration and showroom service history.
+
+## 3. Payment Data Security
+All payments are processed directly through UPI QR codes or authorized bank transfers. We never store debit/credit card numbers or UPI MPINs on our servers.
+
+## 4. Zero Spam & Data Protection
+We respect your privacy. We never sell, trade, or share your contact information with third-party advertisers or telemarketers.`
+  },
+  'warranty-policy': {
+    title: 'Warranty & Replacement Policy',
+    content: `## 1. Brand Manufacturer Warranty
+All brand-new laptops, monitors, surveillance systems, and accessories carry full manufacturer warranty backed by authorized service centers across India.
+
+## 2. Certified Refurbished Testing Warranty
+* 7-day replacement warranty for hardware defects.
+* 1-year service labor warranty at our Garhwa showroom tech lab.
+* Genuine replacement parts provided at discounted showroom rates.
+
+## 3. How to Claim Warranty
+Visit our showroom at Chiniya Road, Garhwa with your original 18% GST invoice, or contact our WhatsApp helpline at +91 9608828288.`
+  },
+  'about-us': {
+    title: 'About Lapiez IT Showroom',
+    content: `## Welcome to Lapiez
+**Lapiez** is Garhwa's premier IT hardware showroom and authorized computer technology destination, located opposite G P Plaza on Chiniya Road, Garhwa, Jharkhand (822114).
+
+## What We Offer
+* Brand-new laptops from HP, Dell, Lenovo, ASUS, and Acer.
+* High-performance desktop rigs, AIO PCs, and Frontech FHD monitors.
+* Crucial, Kingston & Western Digital NVMe SSDs and high-speed RAM.
+* CP-PLUS and Dahua CCTV security surveillance solutions.
+* 100% Genuine adapters, batteries, keyboards, and laptop spares.
+* Every purchase backed by legal 18% GST Invoicing and local showroom warranty.`
+  }
+};
+
 export default function DynamicCustomPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = (params?.slug as string) || '';
+  const rawSlug = (params?.slug as string) || '';
+  
+  // Normalize slug to handle aliases (e.g. terms-conditions -> terms-and-conditions)
+  const slug = useMemo(() => {
+    const s = rawSlug.toLowerCase().trim();
+    if (s === 'terms-conditions' || s === 'terms' || s === 'tnc' || s === 'terms-and-condition') {
+      return 'terms-and-conditions';
+    }
+    if (s === 'privacy' || s === 'privacy-policies') {
+      return 'privacy-policy';
+    }
+    if (s === 'warranty' || s === 'replacement') {
+      return 'warranty-policy';
+    }
+    if (s === 'about') {
+      return 'about-us';
+    }
+    return s;
+  }, [rawSlug]);
+
   const { customPages, siteSettings } = useStore();
 
   const page = useMemo(() => {
-    return customPages.find((p) => p.slug === slug);
-  }, [customPages, slug]);
+    // 1. Try finding in DB/CMS customPages first
+    const fromStore = customPages.find((p) => p.slug === slug || p.slug === rawSlug);
+    if (fromStore && fromStore.content) {
+      return fromStore;
+    }
+    // 2. Fallback to comprehensive built-in page definitions
+    if (BUILTIN_PAGES[slug]) {
+      return {
+        id: `builtin-${slug}`,
+        slug,
+        title: BUILTIN_PAGES[slug].title,
+        content: BUILTIN_PAGES[slug].content,
+        status: 'published'
+      };
+    }
+    return null;
+  }, [customPages, slug, rawSlug]);
 
   if (!page) {
     return (
@@ -29,7 +141,7 @@ export default function DynamicCustomPage() {
         </div>
         <h1 className="text-2xl font-black text-gray-900 mb-2">Page Not Located</h1>
         <p className="text-xs text-gray-500 max-w-md mb-6 leading-relaxed">
-          The requested page &quot;{slug}&quot; could not be located in our system or might have been updated.
+          The requested page &quot;{rawSlug}&quot; could not be located in our system or might have been updated.
         </p>
         <Link
           href="/"

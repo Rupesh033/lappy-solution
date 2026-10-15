@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminSessionCookie, createAdminSession, isAdminConfigured, verifyAdminPassword } from '@/lib/adminAuth';
+import { adminSessionCookie, createAdminSession, isAdminConfigured, verifyAndCheckAdminPassword, migrateAdminPassword } from '@/lib/adminAuth';
 
 interface RateLimitRecord {
   attempts: number;
@@ -77,8 +77,10 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  const isValidPass = body && typeof body.password === 'string' && (await verifyAdminPassword(body.password));
-  if (!isValidPass) {
+  const password = body && typeof body.password === 'string' ? body.password : '';
+  const verification = await verifyAndCheckAdminPassword(password);
+
+  if (!verification.isValid) {
     recordFailedAttempt(clientIp);
     const updated = checkRateLimit(clientIp);
     return NextResponse.json(
@@ -89,6 +91,13 @@ export async function POST(request: NextRequest) {
       },
       { status: 401 }
     );
+  }
+
+  // Auto-migration on first login: if password was verified from plaintext legacy, upgrade to Bcrypt hash
+  if (verification.needsMigration) {
+    await migrateAdminPassword(password).catch((err) => {
+      console.warn('Auto-migration note:', err);
+    });
   }
 
   clearRateLimit(clientIp);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hasAdminSession, verifyAdminPassword, validatePasswordPolicy, adminSessionCookie, createAdminSession } from '@/lib/adminAuth';
+import { hasAdminSession, verifyAdminPassword, validatePasswordPolicy, adminSessionCookie, createAdminSession, hashPassword } from '@/lib/adminAuth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,12 +32,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: policy.error }, { status: 400 });
     }
 
-    // Save new password in database
+    // Hash new password with Bcrypt (work factor 12)
+    const hashedPassword = await hashPassword(newPassword.trim());
+
+    // Save hashed password in database
     try {
       await prisma.siteSettings.upsert({
         where: { id: 'default' },
-        update: { adminPassword: newPassword.trim() },
-        create: { id: 'default', adminPassword: newPassword.trim() }
+        update: { adminPassword: hashedPassword },
+        create: { id: 'default', adminPassword: hashedPassword }
       });
     } catch (dbErr) {
       console.warn('DB note when saving admin password in SiteSettings:', dbErr);
@@ -45,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // Also update in-memory active cache
     const { setRuntimeAdminPassword } = await import('@/lib/adminAuth');
-    setRuntimeAdminPassword(newPassword.trim());
+    setRuntimeAdminPassword(hashedPassword);
 
     const response = NextResponse.json({
       success: true,

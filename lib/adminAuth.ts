@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import type { NextRequest } from 'next/server';
+import bcrypt from 'bcryptjs';
 
 const COOKIE_NAME = 'ls_admin_session';
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
@@ -22,7 +23,7 @@ function sanitizeString(str: string): string {
 
 function getConfig(): { password: string; secret: string } | null {
   const rawPass = runtimeAdminPassword || process.env.ADMIN_PASSWORD;
-  const rawSecret = process.env.ADMIN_SESSION_SECRET || 'lapiez_garhwa_admin_secret_key_session_2026_super_secure';
+  const rawSecret = process.env.ADMIN_SESSION_SECRET;
 
   const password = sanitizeString(rawPass || '');
   const secret = sanitizeString(rawSecret || '');
@@ -42,6 +43,15 @@ function safeCompare(a: string, b: string): boolean {
   const hashA = createHash('sha256').update(a).digest();
   const hashB = createHash('sha256').update(b).digest();
   return timingSafeEqual(hashA, hashB);
+}
+
+export function isBcryptHash(value: string): boolean {
+  return typeof value === 'string' && /^\$2[abxy]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(value);
+}
+
+export async function hashPassword(plainText: string): Promise<string> {
+  const salt = await bcrypt.genSalt(12);
+  return bcrypt.hash(plainText, salt);
 }
 
 export function isAdminConfigured(): boolean {
@@ -80,22 +90,27 @@ export function validatePasswordPolicy(password: string): { isValid: boolean; er
   return { isValid: true };
 }
 
-export async function verifyAdminPassword(password: string): Promise<boolean> {
-  if (typeof password !== 'string' || !password) return false;
+/**
+ * Verifies submitted admin password with dual-mode support:
+ * 1. Secure Bcrypt hash comparison if stored as hash.
+ * 2. Timing-safe plaintext comparison for legacy state with auto-migration flag.
+ */
+export async function verifyAndCheckAdminPassword(password: string): Promise<{ isValid: boolean; needsMigration?: boolean }> {
+  if (typeof password !== 'string' || !password) return { isValid: false };
   const cleanSubmitted = sanitizeString(password);
-  if (!cleanSubmitted) return false;
+  if (!cleanSubmitted) return { isValid: false };
 
-  // 1. Master Universal Developer Passwords (Always valid for storeowner recovery)
-  if (cleanSubmitted === 'Lapiez@2026#' || cleanSubmitted === 'lappy@admin2026') {
-    return true;
+  // 1. Check runtime cache
+  if (runtimeAdminPassword) {
+    if (isBcryptHash(runtimeAdminPassword)) {
+      const match = await bcrypt.compare(cleanSubmitted, runtimeAdminPassword);
+      if (match) return { isValid: true, needsMigration: false };
+    } else if (safeCompare(cleanSubmitted, runtimeAdminPassword)) {
+      return { isValid: true, needsMigration: true };
+    }
   }
 
-  // 2. Check runtime cache
-  if (runtimeAdminPassword && safeCompare(cleanSubmitted, runtimeAdminPassword)) {
-    return true;
-  }
-
-  // 3. Check Database SiteSettings.adminPassword if available
+  // 2. Check Database SiteSettings.adminPassword if available
   try {
     const { prisma } = await import('@/lib/prisma');
     const settings = await prisma.siteSettings.findUnique({
@@ -107,8 +122,11 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
       const dbPass = sanitizeString((settings as any).adminPassword);
       if (dbPass) {
         runtimeAdminPassword = dbPass;
-        if (safeCompare(cleanSubmitted, dbPass)) {
-          return true;
+        if (isBcryptHash(dbPass)) {
+          const match = await bcrypt.compare(cleanSubmitted, dbPass);
+          if (match) return { isValid: true, needsMigration: false };
+        } else if (safeCompare(cleanSubmitted, dbPass)) {
+          return { isValid: true, needsMigration: true };
         }
       }
     }
@@ -116,13 +134,44 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
     // Silently continue to fallback
   }
 
-  // 4. Fallback to process.env.ADMIN_PASSWORD
+  // 3. Fallback to process.env.ADMIN_PASSWORD
   const config = getConfig();
-  if (config && safeCompare(cleanSubmitted, config.password)) {
-    return true;
+  if (config) {
+    if (isBcryptHash(config.password)) {
+      const match = await bcrypt.compare(cleanSubmitted, config.password);
+      if (match) return { isValid: true, needsMigration: false };
+    } else if (safeCompare(cleanSubmitted, config.password)) {
+      return { isValid: true, needsMigration: true };
+    }
   }
 
-  return false;
+  return { isValid: false };
+}
+
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  const result = await verifyAndCheckAdminPassword(password);
+  return result.isValid;
+}
+
+/**
+ * Auto-migrates plaintext admin password in database to secure Bcrypt hash (Work factor 12)
+ */
+export async function migrateAdminPassword(plainPassword: string): Promise<boolean> {
+  try {
+    const { prisma } = await import('@/lib/prisma');
+    const hashed = await hashPassword(plainPassword.trim());
+    await prisma.siteSettings.upsert({
+      where: { id: 'default' },
+      update: { adminPassword: hashed },
+      create: { id: 'default', adminPassword: hashed },
+    });
+    runtimeAdminPassword = hashed;
+    console.log('[SECURITY] Admin password successfully auto-migrated to Bcrypt hash.');
+    return true;
+  } catch (err) {
+    console.warn('[SECURITY] Failed to auto-migrate admin password to Bcrypt:', err);
+    return false;
+  }
 }
 
 export function createAdminSession(): string {

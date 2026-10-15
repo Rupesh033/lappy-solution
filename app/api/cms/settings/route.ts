@@ -12,14 +12,34 @@ export async function GET() {
     });
 
     const cleanSiteSettings = siteSettings ? {
-      ...siteSettings,
+      id: siteSettings.id,
       siteName: siteSettings.siteName || 'Lapiez',
+      tagline: siteSettings.tagline || '',
+      logo: siteSettings.logo || '/images/logo.png',
+      favicon: siteSettings.favicon || '/favicon.ico',
+      phone: siteSettings.phone || '',
+      whatsapp: siteSettings.whatsapp || '',
+      email: siteSettings.email || '',
+      address: siteSettings.address || '',
+      timings: siteSettings.timings || '',
+      announcementText: siteSettings.announcementText || '',
+      maintenanceMode: Boolean(siteSettings.maintenanceMode),
+      facebookUrl: siteSettings.facebookUrl || '',
+      instagramUrl: siteSettings.instagramUrl || '',
+      youtubeUrl: siteSettings.youtubeUrl || '',
+      twitterUrl: siteSettings.twitterUrl || '',
+      updatedAt: siteSettings.updatedAt,
     } : null;
 
     const cleanPaymentSettings = paymentSettings ? {
-      ...paymentSettings,
+      id: paymentSettings.id,
       upiId: paymentSettings.upiId || 'lappy.solution@ybl',
       upiName: paymentSettings.upiName || 'LAPIEZ GARHWA',
+      codEnabled: Boolean(paymentSettings.codEnabled),
+      gstRate: paymentSettings.gstRate ?? 18,
+      gstin: paymentSettings.gstin || '',
+      bankAccountsJson: paymentSettings.bankAccountsJson || '[]',
+      updatedAt: paymentSettings.updatedAt,
     } : null;
 
     return NextResponse.json({
@@ -45,7 +65,7 @@ export async function PUT(request: Request) {
       const siteFields = [
         'siteName', 'tagline', 'logo', 'favicon', 'phone', 'whatsapp', 'email', 
         'address', 'timings', 'announcementText', 'maintenanceMode',
-        'facebookUrl', 'instagramUrl', 'youtubeUrl', 'twitterUrl', 'adminPassword'
+        'facebookUrl', 'instagramUrl', 'youtubeUrl', 'twitterUrl'
       ];
       const safeSiteSettings = Object.fromEntries(
         Object.entries(siteSettings).filter(([key, val]) => siteFields.includes(key) && val !== undefined)
@@ -73,9 +93,29 @@ export async function PUT(request: Request) {
       }
     }
 
+    const safeSiteResponse = updatedSite ? {
+      id: updatedSite.id,
+      siteName: updatedSite.siteName,
+      tagline: updatedSite.tagline,
+      logo: updatedSite.logo,
+      favicon: updatedSite.favicon,
+      phone: updatedSite.phone,
+      whatsapp: updatedSite.whatsapp,
+      email: updatedSite.email,
+      address: updatedSite.address,
+      timings: updatedSite.timings,
+      announcementText: updatedSite.announcementText,
+      maintenanceMode: updatedSite.maintenanceMode,
+      facebookUrl: updatedSite.facebookUrl,
+      instagramUrl: updatedSite.instagramUrl,
+      youtubeUrl: updatedSite.youtubeUrl,
+      twitterUrl: updatedSite.twitterUrl,
+      updatedAt: updatedSite.updatedAt,
+    } : null;
+
     return NextResponse.json({
       success: true,
-      siteSettings: updatedSite,
+      siteSettings: safeSiteResponse,
       paymentSettings: updatedPayment,
     });
   } catch (error) {

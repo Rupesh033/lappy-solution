@@ -31,6 +31,9 @@ export default function InvoicePage() {
 
   const printAreaRef = useRef<HTMLDivElement>(null);
 
+  const [remoteOrder, setRemoteOrder] = useState<any>(null);
+  const [isLoadingRemote, setIsLoadingRemote] = useState<boolean>(true);
+
   // Auto-trigger print if ?print=true in query
   useEffect(() => {
     if (typeof window !== 'undefined' && searchParams?.get('print') === 'true') {
@@ -41,7 +44,31 @@ export default function InvoicePage() {
     }
   }, [searchParams]);
 
-  // Find invoice by ID, Invoice Number, or Order ID (with instant localStorage sync)
+  // Fetch order from server if not found in local memory or storage
+  useEffect(() => {
+    if (typeof window === 'undefined' || !invoiceId) return;
+    const decodedId = decodeURIComponent(invoiceId || '');
+
+    const foundInLocal = invoices.some(i => i.id === decodedId || i.orderId === decodedId || i.invoiceNumber === decodedId) ||
+                         orders.some(o => o.orderId === decodedId || o.id === decodedId);
+
+    if (foundInLocal) {
+      setIsLoadingRemote(false);
+      return;
+    }
+
+    fetch(`/api/cms/orders?orderId=${encodeURIComponent(decodedId)}`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (data?.order) {
+          setRemoteOrder(data.order);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setIsLoadingRemote(false));
+  }, [invoiceId, invoices, orders]);
+
+  // Find invoice by ID, Invoice Number, or Order ID (with instant localStorage sync & server fallback)
   const invoice: Invoice | null = useMemo(() => {
     const decodedId = decodeURIComponent(invoiceId || '');
 
@@ -108,15 +135,32 @@ export default function InvoicePage() {
       } catch (e) {}
     }
 
+    // 5. Build from fetched remote database order
+    if (remoteOrder) {
+      return buildInvoiceFromOrder({
+        order: remoteOrder,
+        settings: invoiceSettings || DEFAULT_INVOICE_SETTINGS
+      });
+    }
+
     return null;
-  }, [invoiceId, invoices, orders, invoiceSettings]);
+  }, [invoiceId, invoices, orders, invoiceSettings, remoteOrder]);
+
+  if (isLoadingRemote && !invoice) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm font-semibold text-gray-600">Generating tax invoice...</p>
+      </div>
+    );
+  }
 
   if (!invoice) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 p-6 text-center">
         <h1 className="text-2xl font-black text-gray-900">Invoice not found</h1>
-        <p className="text-sm text-gray-600">Open the invoice from the order placed in this browser.</p>
-        <Link href="/account" className="rounded-lg bg-[#1A56DB] px-5 py-3 text-sm font-bold text-white">View account</Link>
+        <p className="text-sm text-gray-600">The invoice reference could not be found or has expired.</p>
+        <Link href="/shop" className="rounded-lg bg-[#1A56DB] px-5 py-3 text-sm font-bold text-white">Continue Shopping</Link>
       </div>
     );
   }

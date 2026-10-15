@@ -1,12 +1,18 @@
 import { v2 as cloudinary } from 'cloudinary';
 
-// Configure Cloudinary with environment variables
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'ydugu2xq',
-  api_key: process.env.CLOUDINARY_API_KEY || '825948682878493',
-  api_secret: process.env.CLOUDINARY_API_SECRET || '5TWFbLWdkLS_rD8lMGTSM7KdOGM',
-  secure: true,
-});
+// Configure Cloudinary strictly from environment variables
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+if (cloudName && apiKey && apiSecret) {
+  cloudinary.config({
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret,
+    secure: true,
+  });
+}
 
 export interface CloudinaryUploadResult {
   url: string;
@@ -24,6 +30,21 @@ export async function uploadToCloudinary(
   fileData: string,
   folder: string = 'lapiez-products'
 ): Promise<CloudinaryUploadResult> {
+  const currentCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const currentApiKey = process.env.CLOUDINARY_API_KEY;
+  const currentApiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!currentCloudName || !currentApiKey || !currentApiSecret) {
+    throw new Error('Cloudinary storage is not configured on the server.');
+  }
+
+  cloudinary.config({
+    cloud_name: currentCloudName,
+    api_key: currentApiKey,
+    api_secret: currentApiSecret,
+    secure: true,
+  });
+
   try {
     const result = await cloudinary.uploader.upload(fileData, {
       folder: `lapiez/${folder}`,
@@ -43,7 +64,7 @@ export async function uploadToCloudinary(
       bytes: result.bytes,
     };
   } catch (error: any) {
-    console.error('Cloudinary Upload Error:', error);
+    console.error('Cloudinary upload failure');
     throw new Error(error?.message || 'Failed to upload image to Cloudinary');
   }
 }

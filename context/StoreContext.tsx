@@ -274,255 +274,172 @@ interface StoreContextType {
 
 export const DEFAULT_SHOP_BY_CATEGORIES: CMSCategory[] = [
   {
-    id: 'cat-laptop-adapters',
-    name: 'Laptop Adapters',
-    slug: 'laptop-adapters',
-    image: '/images/categories/laptop-adapters.png',
-    imageUrl: '/images/categories/laptop-adapters.png',
-    startingPrice: 'From ₹899',
-    position: 0,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Adapter',
-  },
-  {
-    id: 'cat-laptop-keyboard',
-    name: 'Laptop Keyboard',
-    slug: 'laptop-keyboard',
-    image: '/images/categories/laptop-keyboard.png',
-    imageUrl: '/images/categories/laptop-keyboard.png',
-    startingPrice: 'From ₹650',
-    position: 1,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Keyboard',
-  },
-  {
-    id: 'cat-headsets',
-    name: 'Headsets & Audio',
-    slug: 'headsets',
-    image: '/images/categories/headsets.png',
-    imageUrl: '/images/categories/headsets.png',
-    startingPrice: 'From ₹499',
-    position: 2,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Headset',
-  },
-  {
-    id: 'cat-laptop-bags',
-    name: 'Laptop Bags',
-    title: 'Backpacks and Carry Case',
-    slug: 'backpacks-and-carry-case',
-    image: '/images/categories/backpacks.png',
-    imageUrl: '/images/categories/backpacks.png',
-    startingPrice: 'From ₹799',
-    position: 3,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Bag',
-  },
-  {
-    id: 'cat-cables-hdmi',
-    name: 'Cables & HDMI',
-    slug: 'cables-and-connectors',
-    image: '/images/categories/cables-and-connectors.png',
-    imageUrl: '/images/categories/cables-and-connectors.png',
-    startingPrice: 'From ₹199',
-    position: 4,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Cable',
-  },
-  {
-    id: 'cat-laptop-batteries',
-    name: 'Laptop Batteries',
-    slug: 'laptop-batteries',
-    image: '/images/categories/laptop-batteries.png',
-    imageUrl: '/images/categories/laptop-batteries.png',
-    startingPrice: 'From ₹1,499',
-    position: 5,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Battery',
-  },
-  {
-    id: 'cat-laptop-screens',
-    name: 'Laptop Screens',
-    slug: 'laptop-screen',
-    image: '/images/categories/laptop-screen.png',
-    imageUrl: '/images/categories/laptop-screen.png',
-    startingPrice: 'From ₹2,800',
-    position: 6,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Screen',
-  },
-  {
-    id: 'cat-wireless-mouse',
-    name: 'Wireless Mouse',
-    slug: 'mouse',
-    image: '/images/categories/mouse.png',
-    imageUrl: '/images/categories/mouse.png',
-    startingPrice: 'From ₹299',
-    position: 7,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Mouse',
-  },
-  {
-    id: 'cat-fhd-webcams',
-    name: 'FHD Webcams',
-    slug: 'web-cams',
-    image: '/images/categories/web-cams.png',
-    imageUrl: '/images/categories/web-cams.png',
-    startingPrice: 'From ₹999',
-    position: 8,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=Webcam',
-  },
-  {
-    id: 'cat-nvme-ssds-ram',
-    name: 'NVMe SSDs & RAM',
-    slug: 'laptop-ssd',
-    image: '/images/categories/laptop-ssd.png',
-    imageUrl: '/images/categories/laptop-ssd.png',
-    startingPrice: 'From ₹1,299',
-    position: 9,
-    status: 'active',
-    subcategories: [],
-    href: '/shop?search=SSD',
-  },
-];
-
-export const CORE_STORE_DEPARTMENTS: CMSCategory[] = [
-  {
     id: 'cat-laptops',
-    name: 'Laptops',
+    name: 'Computer & Laptops',
     slug: 'laptops',
     image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp',
     imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp',
-    startingPrice: 'From ₹14,999',
+    startingPrice: 'Starting ₹9,999',
     position: 0,
     status: 'active',
     subcategories: [
-      { id: 'sub-lap-refurb', name: 'Refurbished Business Laptops', slug: 'refurbished-business-laptops', startingPrice: 'From ₹14,999' },
-      { id: 'sub-lap-new', name: 'Brand New Laptops', slug: 'brand-new-laptops', startingPrice: 'From ₹24,999' },
-      { id: 'sub-lap-gaming', name: 'Gaming Laptops', slug: 'gaming-laptops', startingPrice: 'From ₹48,999' },
-      { id: 'sub-lap-macbook', name: 'Apple MacBook Pro & Air', slug: 'apple-macbook', startingPrice: 'From ₹35,000' },
+      { id: '6282348', name: 'Desktop & Laptops', slug: 'desktop-laptops', startingPrice: '', position: 0, status: 'active', parentId: 'cat-laptops' },
+      { id: '6282546', name: 'Refurbished Laptops', slug: 'refurbished', startingPrice: '', position: 1, status: 'active', parentId: 'cat-laptops' },
+      { id: 'sub-gaming-pc', name: 'Custom Desktop PC Rigs', slug: 'custom-pcs', startingPrice: '', position: 2, status: 'active', parentId: 'cat-laptops' },
     ],
     href: '/shop?cat=Laptops',
   },
   {
-    id: 'cat-computers',
-    name: 'Computers',
-    slug: 'computers',
-    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp',
-    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/242BcPaL.webp',
-    startingPrice: 'From ₹8,500',
+    id: 'cat-laptop-parts',
+    name: 'Laptop Parts & Spares',
+    slug: 'laptop-parts',
+    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/cJZR0B6A.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/cJZR0B6A.webp',
+    startingPrice: 'Starting ₹650',
     position: 1,
     status: 'active',
     subcategories: [
-      { id: 'sub-comp-desktop', name: 'Desktop PC Rigs', slug: 'desktop-pc-rigs', startingPrice: 'From ₹9,999' },
-      { id: 'sub-comp-aio', name: 'All-in-One Desktops', slug: 'all-in-one-desktops', startingPrice: 'From ₹18,999' },
-      { id: 'sub-comp-monitors', name: 'Monitors & Displays', slug: 'monitors-displays', startingPrice: 'From ₹3,499' },
+      { id: '6282354', name: 'Laptop Battery', slug: 'laptop-battery', startingPrice: '', position: 0, status: 'active', parentId: 'cat-laptop-parts' },
+      { id: '6282357', name: 'Laptop Adaptor', slug: 'laptop-adaptor', startingPrice: '', position: 1, status: 'active', parentId: 'cat-laptop-parts' },
+      { id: '6282356', name: 'Laptop Body', slug: 'laptop-body', startingPrice: '', position: 2, status: 'active', parentId: 'cat-laptop-parts' },
+      { id: '6282347', name: 'Laptop Parts', slug: 'laptop-parts-4', startingPrice: '', position: 3, status: 'active', parentId: 'cat-laptop-parts' },
+      { id: '6282355', name: 'Laptop Keyboards', slug: 'laptop-keyboards', startingPrice: '', position: 4, status: 'active', parentId: 'cat-laptop-parts' },
+      { id: 'cmv8x80uh0000jp06usrkmxwk', name: 'Laptop Screen', slug: 'laptop--screen', startingPrice: '', position: 5, status: 'active', parentId: 'cat-laptop-parts' },
     ],
-    href: '/shop?cat=Computers',
+    href: '/shop?cat=Laptop%20Parts',
+  },
+  {
+    id: 'cat-peripherals',
+    name: 'Computer Peripherals',
+    slug: 'peripherals',
+    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/q1ZdCuDa.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/q1ZdCuDa.webp',
+    startingPrice: 'Starting ₹199',
+    position: 2,
+    status: 'active',
+    subcategories: [
+      { id: '6282351', name: 'Mouse & Keyboard', slug: 'mouse-keyboard', startingPrice: '', position: 0, status: 'active', parentId: 'cat-peripherals' },
+      { id: '6283522', name: 'Speakers & Soundbars', slug: 'speakers', startingPrice: '', position: 1, status: 'active', parentId: 'cat-peripherals' },
+      { id: '6282349', name: 'Computer Peripherals', slug: 'pc-peripherals', startingPrice: '', position: 2, status: 'active', parentId: 'cat-peripherals' },
+      { id: '6282352', name: 'Cable & Connector (HDMI/VGA/Power)', slug: 'cables-connectors', startingPrice: '', position: 3, status: 'active', parentId: 'cat-peripherals' },
+    ],
+    href: '/shop?cat=Peripherals',
   },
   {
     id: 'cat-printers',
     name: 'Printers',
     slug: 'printers',
-    image: 'https://cdn.dotpe.in/longtail/item_category/8473996/mdA1IsmY.webp',
-    imageUrl: 'https://cdn.dotpe.in/longtail/item_category/8473996/mdA1IsmY.webp',
-    startingPrice: 'From ₹150',
-    position: 2,
+    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/ZIB6owYD.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/ZIB6owYD.webp',
+    startingPrice: 'Starting ₹9,999',
+    position: 3,
     status: 'active',
     subcategories: [
-      { id: 'sub-pr-toner', name: 'Laser Toner Cartridges', slug: 'laser-toner-cartridges', startingPrice: 'From ₹450' },
-      { id: 'sub-pr-parts', name: 'Printer Spare Rollers & Gears', slug: 'printer-spare-parts', startingPrice: 'From ₹150' },
-      { id: 'sub-pr-ink', name: 'Printer Ink Refills & Powder', slug: 'printer-ink-powder', startingPrice: 'From ₹199' },
-      { id: 'sub-pr-box', name: 'Maintenance Box & Waste Pads', slug: 'maintenance-box', startingPrice: 'From ₹340' },
+      { id: '6282340', name: 'Printers (InkTank & Laser)', slug: 'printers-list', startingPrice: '', position: 0, status: 'active', parentId: 'cat-printers' },
+      { id: '6282341', name: 'Toner & Ink Bottles', slug: 'toner-ink', startingPrice: '', position: 1, status: 'active', parentId: 'cat-printers' },
+      { id: '6287242', name: 'Paper & Sticker Sheets', slug: 'paper-sticker', startingPrice: '', position: 2, status: 'active', parentId: 'cat-printers' },
+      { id: '5998950', name: 'Printer Spare Parts & Rollers', slug: 'printer-parts', startingPrice: '', position: 3, status: 'active', parentId: 'cat-printers' },
     ],
     href: '/shop?cat=Printers',
   },
   {
     id: 'cat-cctv',
     name: 'CCTV & Security',
-    slug: 'cctv-and-security',
-    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/cJZR0B6A.webp',
-    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/cJZR0B6A.webp',
-    startingPrice: 'From ₹850',
-    position: 3,
+    slug: 'cctv-security',
+    image: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792034738/lapiez/categories/tmqqbyejjsmmmogqlwlh.jpg',
+    imageUrl: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792034738/lapiez/categories/tmqqbyejjsmmmogqlwlh.jpg',
+    startingPrice: 'Starting ₹1,250',
+    position: 4,
     status: 'active',
     subcategories: [
-      { id: 'sub-cctv-cameras', name: 'HD CCTV Cameras (CP Plus/Dahua)', slug: 'hd-cctv-cameras', startingPrice: 'From ₹850' },
-      { id: 'sub-cctv-dvr', name: '4CH & 8CH DVR Surveillance Kits', slug: 'dvr-kits', startingPrice: 'From ₹2,499' },
-      { id: 'sub-cctv-smps', name: 'CCTV Power Supply SMPS & Wire', slug: 'cctv-power-wire', startingPrice: 'From ₹450' },
+      { id: '6282350', name: 'CCTV Cameras (Dome/Bullet/Wi-Fi)', slug: 'cctv-cameras', startingPrice: '', position: 0, status: 'active', parentId: 'cat-cctv' },
+      { id: '6282353', name: 'Biometric Attendance & Scanners', slug: 'biometric-scanners', startingPrice: '', position: 1, status: 'active', parentId: 'cat-cctv' },
     ],
     href: '/shop?cat=CCTV%20%26%20Security',
   },
   {
-    id: 'cat-storage-parts',
-    name: 'Storage & Parts',
-    slug: 'storage-and-parts',
-    image: '/images/categories/laptop-ssd.png',
-    imageUrl: '/images/categories/laptop-ssd.png',
-    startingPrice: 'From ₹650',
-    position: 4,
-    status: 'active',
-    subcategories: [
-      { id: 'sub-sp-ssd', name: 'NVMe M.2 & SATA SSDs', slug: 'ssd-storage', startingPrice: 'From ₹1,299' },
-      { id: 'sub-sp-ram', name: 'Laptop & Desktop RAM (DDR4/DDR5)', slug: 'ram-modules', startingPrice: 'From ₹899' },
-      { id: 'sub-sp-screens', name: 'Laptop Screens & Hinges', slug: 'laptop-screens-hinges', startingPrice: 'From ₹2,800' },
-      { id: 'sub-sp-batteries', name: 'Laptop Batteries & Power', slug: 'laptop-batteries-spares', startingPrice: 'From ₹1,499' },
-    ],
-    href: '/shop?cat=Storage%20%26%20Parts',
-  },
-  {
-    id: 'cat-accessories',
-    name: 'Accessories',
-    slug: 'accessories',
-    image: '/images/categories/laptop-keyboard.png',
-    imageUrl: '/images/categories/laptop-keyboard.png',
-    startingPrice: 'From ₹199',
+    id: 'cat-storage',
+    name: 'Storage & Memory',
+    slug: 'storage',
+    image: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792034503/lapiez/categories/eqqtzkb1o6r7ctxzz3a3.jpg',
+    imageUrl: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792034503/lapiez/categories/eqqtzkb1o6r7ctxzz3a3.jpg',
+    startingPrice: 'Starting ₹399',
     position: 5,
     status: 'active',
     subcategories: [
-      { id: 'sub-acc-adapters', name: 'Laptop Chargers & Adapters', slug: 'laptop-adapters', startingPrice: 'From ₹899' },
-      { id: 'sub-acc-keyboard', name: 'Keyboards & Combos', slug: 'keyboards-combos', startingPrice: 'From ₹350' },
-      { id: 'sub-acc-mouse', name: 'Wireless & Optical Mouse', slug: 'mouse-accessories', startingPrice: 'From ₹199' },
-      { id: 'sub-acc-bags', name: 'Laptop Backpacks & Sleeves', slug: 'laptop-backpacks', startingPrice: 'From ₹699' },
-      { id: 'sub-acc-cables', name: 'HDMI & High-Speed Cables', slug: 'hdmi-data-cables', startingPrice: 'From ₹149' },
-      { id: 'sub-acc-headsets', name: 'Headsets & HD Webcams', slug: 'headsets-webcams', startingPrice: 'From ₹499' },
+      { id: '6282406', name: 'SSD & Hard Disk', slug: 'ssd-hard-disk', startingPrice: '', position: 0, status: 'active', parentId: 'cat-storage' },
+      { id: '6282407', name: 'Pendrive & SD Card', slug: 'pendrive-sd-card', startingPrice: '', position: 1, status: 'active', parentId: 'cat-storage' },
     ],
-    href: '/shop?cat=Accessories',
+    href: '/shop?cat=Storage%20%26%20Memory',
   },
   {
-    id: 'cat-networking',
-    name: 'Networking',
-    slug: 'networking',
-    image: '/images/categories/cables-and-connectors.png',
-    imageUrl: '/images/categories/cables-and-connectors.png',
-    startingPrice: 'From ₹399',
+    id: 'cat-software',
+    name: 'Antivirus & Software',
+    slug: 'antivirus',
+    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/M0Si0HDm.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/M0Si0HDm.webp',
+    startingPrice: 'Starting ₹350',
     position: 6,
     status: 'active',
     subcategories: [
-      { id: 'sub-net-routers', name: 'Wi-Fi Routers & Extenders', slug: 'wifi-routers', startingPrice: 'From ₹999' },
-      { id: 'sub-net-cables', name: 'CAT6 Ethernet Patch Cables', slug: 'cat6-cables', startingPrice: 'From ₹150' },
+      { id: '6282549', name: 'Antivirus (Quick Heal / Total Security)', slug: 'antivirus-keys', startingPrice: '', position: 0, status: 'active', parentId: 'cat-software' },
     ],
-    href: '/shop?cat=Networking',
+    href: '/shop?search=Antivirus',
+  },
+  {
+    id: 'cat-electronics',
+    name: 'Electronics & Audio',
+    slug: 'electronics',
+    image: 'https://cdn.dotpe.in/longtail/item_collection/8473996/bYcAegxA.webp',
+    imageUrl: 'https://cdn.dotpe.in/longtail/item_collection/8473996/bYcAegxA.webp',
+    startingPrice: 'Starting ₹299',
+    position: 7,
+    status: 'active',
+    subcategories: [
+      { id: '6282405', name: 'Electronics & Gadgets', slug: 'gadgets', startingPrice: '', position: 0, status: 'active', parentId: 'cat-electronics' },
+    ],
+    href: '/shop?search=Speaker',
+  },
+  {
+    id: 'cmv8xmqla0000ld06okzims12',
+    name: 'Toner & ink',
+    slug: 'toner---ink',
+    image: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792032072/lapiez/categories/nk41zet4lmioaljhedb8.jpg',
+    imageUrl: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792032072/lapiez/categories/nk41zet4lmioaljhedb8.jpg',
+    startingPrice: 'Starting ₹499',
+    position: 8,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Toner',
+  },
+  {
+    id: 'cmv8xxzob0001ky0633l9qsg0',
+    name: 'Printer Parts',
+    slug: 'printer-parts-1',
+    image: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792032587/lapiez/categories/juhkokvaxtgsjtzehzch.jpg',
+    imageUrl: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792032587/lapiez/categories/juhkokvaxtgsjtzehzch.jpg',
+    startingPrice: 'Starting ₹100',
+    position: 9,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?search=Printer%20Parts',
+  },
+  {
+    id: 'cmv8y3vbf0002ky06z8rhpygf',
+    name: 'Refurbished',
+    slug: 'refurbished-1',
+    image: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792032874/lapiez/categories/soygmudbo94aeuoxchrb.jpg',
+    imageUrl: 'https://res.cloudinary.com/ydugu2xq/image/upload/v1792032874/lapiez/categories/soygmudbo94aeuoxchrb.jpg',
+    startingPrice: 'Starting ₹100',
+    position: 10,
+    status: 'active',
+    subcategories: [],
+    href: '/shop?condition=refurbished',
   },
 ];
 
-export const DEFAULT_CMS_CATEGORIES: CMSCategory[] = [
-  ...CORE_STORE_DEPARTMENTS,
-  ...DEFAULT_SHOP_BY_CATEGORIES.map((cat, idx) => ({
-    ...cat,
-    position: CORE_STORE_DEPARTMENTS.length + idx,
-  })),
-];
+export const DEFAULT_CMS_CATEGORIES: CMSCategory[] = DEFAULT_SHOP_BY_CATEGORIES;
+export const CORE_STORE_DEPARTMENTS: CMSCategory[] = DEFAULT_SHOP_BY_CATEGORIES;
 
 
 const defaultSiteSettings: SiteSettings = {
@@ -699,7 +616,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCustomer(null);
     try {
       localStorage.removeItem('ls_customer_session');
+      localStorage.removeItem('ls_orders');
+      localStorage.removeItem('ls_customer_profile');
+      localStorage.removeItem('ls_customer_addresses');
+      localStorage.removeItem('ls_customer_gst');
+      localStorage.removeItem('ls_last_order');
+      localStorage.removeItem('ls_last_invoice');
     } catch (e) {}
+    setOrders([]);
     showToast('Signed out of customer account');
   };
 
@@ -709,37 +633,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
 
-  // Synchronize state with Database via CMS API routes
+  // Synchronize state with Database via unified /api/cms/init endpoint
   const syncWithDatabase = useCallback(async () => {
     try {
-      // 1. Settings
-      const resSettings = await fetch('/api/cms/settings');
-      if (resSettings.ok) {
-        const data = await resSettings.json();
-        if (data.siteSettings) {
+      // 1. Unified Fast Batch Fetch (Edge CDN Cached)
+      const resInit = await fetch('/api/cms/init');
+      if (resInit.ok) {
+        const initData = await resInit.json();
+
+        // 1. Settings
+        if (initData.siteSettings) {
           const site = {
-            ...data.siteSettings,
-            siteName: data.siteSettings.siteName || 'Lapiez',
+            ...initData.siteSettings,
+            siteName: initData.siteSettings.siteName || 'Lapiez',
           };
           setSiteSettings(site);
           try {
             localStorage.setItem('ls_site_settings', JSON.stringify(site));
           } catch (e) {}
         }
-        if (data.paymentSettings) {
+        if (initData.paymentSettings) {
           const payment = {
-            ...data.paymentSettings,
-            upiId: data.paymentSettings.upiId || 'lappy.solution@ybl',
-            upiName: data.paymentSettings.upiName || 'LAPIEZ GARHWA',
+            ...initData.paymentSettings,
+            upiId: initData.paymentSettings.upiId || 'lappy.solution@ybl',
+            upiName: initData.paymentSettings.upiName || 'LAPIEZ GARHWA',
           };
           setPaymentSettings(payment);
           try {
             localStorage.setItem('ls_payment_settings', JSON.stringify(payment));
           } catch (e) {}
 
-          if (data.paymentSettings.bankAccountsJson) {
+          if (initData.paymentSettings.bankAccountsJson) {
             try {
-              const parsedBanks = JSON.parse(data.paymentSettings.bankAccountsJson);
+              const parsedBanks = JSON.parse(initData.paymentSettings.bankAccountsJson);
               if (Array.isArray(parsedBanks) && parsedBanks.length > 0) {
                 setBankAccounts(parsedBanks);
                 try {
@@ -760,52 +686,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             } catch (e) {}
           }
         }
-      }
 
-      // 2. Theme
-      const resTheme = await fetch('/api/cms/theme');
-      if (resTheme.ok) {
-        const data = await resTheme.json();
-        if (data.themeSettings) setThemeSettings(data.themeSettings);
-      }
+        // 2. Theme
+        if (initData.themeSettings) {
+          setThemeSettings(initData.themeSettings);
+        }
 
-      // 3. Banners
-      const resBanners = await fetch('/api/cms/banners');
-      if (resBanners.ok) {
-        const data = await resBanners.json();
-        if (data.banners && data.banners.length > 0) setBanners(data.banners);
-      }
+        // 3. Banners
+        if (initData.banners && Array.isArray(initData.banners) && initData.banners.length > 0) {
+          setBanners(initData.banners);
+        }
 
-      // 4. Homepage Sections
-      const resSections = await fetch('/api/cms/homepage-sections');
-      if (resSections.ok) {
-        const data = await resSections.json();
-        if (data.sections && data.sections.length > 0) setHomepageSections(data.sections);
-      }
+        // 4. Homepage Sections
+        if (initData.homepageSections && Array.isArray(initData.homepageSections) && initData.homepageSections.length > 0) {
+          setHomepageSections(initData.homepageSections);
+        }
 
-      // 5. Products
-      const resProducts = await fetch('/api/cms/products');
-      if (resProducts.ok) {
-        const data = await resProducts.json();
-        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
-          const cleanProds = data.products
+        // 5. Categories
+        if (initData.categories && Array.isArray(initData.categories) && initData.categories.length > 0) {
+          setCategories(initData.categories);
+          try {
+            localStorage.setItem('ls_categories', JSON.stringify(initData.categories));
+          } catch (e) {}
+        }
+
+        // 6. Products
+        if (initData.products && Array.isArray(initData.products) && initData.products.length > 0) {
+          const cleanProds = initData.products
             .filter((p: any) => !isDemoProduct(p))
             .map(normalizeProduct);
 
           setProducts((prev) => {
             const mergedMap = new Map<string, Product>();
-            // 1. Full static catalog base
+            const getProdKey = (p: Product) => (p.sku?.trim().toLowerCase() || p.id?.trim().toLowerCase());
+
             PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct).forEach(p => {
-              mergedMap.set(p.sku || p.id, p);
+              const k = getProdKey(p);
+              if (k) mergedMap.set(k, p);
             });
-            // 2. Previous in-memory items
-            prev.forEach(p => mergedMap.set(p.sku || p.id, p));
-            // 3. Authoritative DB updates
-            cleanProds.forEach((p: Product) => mergedMap.set(p.sku || p.id, p));
+            prev.forEach(p => {
+              const k = getProdKey(p);
+              if (k) mergedMap.set(k, p);
+            });
+            cleanProds.forEach((p: Product) => {
+              const k = getProdKey(p);
+              if (k) mergedMap.set(k, p);
+            });
 
             const nextList = Array.from(mergedMap.values());
 
-            // Avoid unnecessary re-renders if list is unchanged
             if (
               prev.length === nextList.length &&
               prev.every((item, i) => 
@@ -825,56 +754,46 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             return nextList;
           });
         }
-      }
 
-      // 6. Orders
-      const resOrders = await fetch('/api/cms/orders');
-      if (resOrders.ok) {
-        const data = await resOrders.json();
-        if (data.orders && data.orders.length > 0) {
-          setOrders(data.orders);
+        // 7. Custom Pages
+        if (initData.customPages && Array.isArray(initData.customPages) && initData.customPages.length > 0) {
+          setCustomPages(initData.customPages);
           try {
-            localStorage.setItem('ls_orders', JSON.stringify(data.orders));
+            localStorage.setItem('ls_custom_pages', JSON.stringify(initData.customPages));
           } catch (e) {}
+        }
+
+        // 8. Blog Posts
+        if (initData.blogPosts && Array.isArray(initData.blogPosts) && initData.blogPosts.length > 0) {
+          setBlogPosts(initData.blogPosts);
+          try {
+            localStorage.setItem('ls_blog_posts', JSON.stringify(initData.blogPosts));
+          } catch (e) {}
+        }
+
+        // 9. Coupons
+        if (initData.coupons && Array.isArray(initData.coupons) && initData.coupons.length > 0) {
+          setCoupons(initData.coupons);
         }
       }
 
-      // 7. Custom Pages
-      const resPages = await fetch('/api/cms/pages');
-      if (resPages.ok) {
-        const data = await resPages.json();
-        if (data.pages) {
-          setCustomPages(data.pages);
-          try {
-            localStorage.setItem('ls_custom_pages', JSON.stringify(data.pages));
-          } catch (e) {}
-        }
-      }
-
-      // 8. Blog Posts
-      const resBlogs = await fetch('/api/cms/blogs');
-      if (resBlogs.ok) {
-        const data = await resBlogs.json();
-        if (data.blogs) {
-          setBlogPosts(data.blogs);
-          try {
-            localStorage.setItem('ls_blog_posts', JSON.stringify(data.blogs));
-          } catch (e) {}
-        }
-      }
-
-      // 9. Coupons
-      try {
-        const resCoupons = await fetch('/api/cms/coupons');
-        if (resCoupons.ok) {
-          const data = await resCoupons.json();
-          if (Array.isArray(data.coupons) && data.coupons.length > 0) {
-            setCoupons(data.coupons);
+      // Check admin orders strictly if admin session cookie is present (eliminates 401s for guests)
+      if (typeof document !== 'undefined' && document.cookie.includes('ls_admin_session=')) {
+        try {
+          const resOrders = await fetch('/api/cms/orders');
+          if (resOrders.ok) {
+            const data = await resOrders.json();
+            if (data.orders && data.orders.length > 0) {
+              setOrders(data.orders);
+              try {
+                localStorage.setItem('ls_orders', JSON.stringify(data.orders));
+              } catch (e) {}
+            }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
 
-      // 10. Brands
+      // Brands (cached)
       try {
         const resBrands = await fetch('/api/cms/brands');
         if (resBrands.ok) {
@@ -888,19 +807,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       } catch (e) {}
 
-      // 11. Categories & Subcategories
-      try {
-        const resCats = await fetch('/api/cms/categories');
-        if (resCats.ok) {
-          const data = await resCats.json();
-          if (Array.isArray(data.categories) && data.categories.length > 0) {
-            setCategories(data.categories);
-            try {
-              localStorage.setItem('ls_categories', JSON.stringify(data.categories));
-            } catch (e) {}
-          }
-        }
-      } catch (e) {}
     } catch (e) {
       console.warn('CMS DB sync fallback to local cache:', e);
     }
@@ -939,18 +845,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         try {
           const parsed = JSON.parse(savedCats);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            // Filter out old phantom dummy categories that had 0 products
-            const cleaned = parsed.filter((c: any) => 
-              c.name !== 'Computer & Laptops' && 
-              c.name !== 'Laptop Parts & Spares' && 
-              c.name !== 'Computer Peripherals' && 
-              c.name !== 'Printers & Parts' && 
-              c.name !== 'Storage & Memory' && 
-              c.name !== 'Antivirus & Software' && 
-              c.name !== 'Electronics & Audio'
-            );
-            if (cleaned.length >= CORE_STORE_DEPARTMENTS.length) {
-              setCategories(cleaned);
+            const isStale = parsed.some((c: any) => c.id === 'cat-accessories' || c.id === 'cat-networking' || c.id === 'cat-computers') || parsed.length > 15;
+            if (!isStale) {
+              setCategories(parsed);
             } else {
               setCategories(DEFAULT_CMS_CATEGORIES);
               try { localStorage.setItem('ls_categories', JSON.stringify(DEFAULT_CMS_CATEGORIES)); } catch (e) {}
@@ -995,22 +892,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (savedProducts) {
         try {
           const parsed = JSON.parse(savedProducts);
-          // If cached catalog has < 350 items, it was an old partial/Frontech-only cache; discard it immediately
-          if (Array.isArray(parsed) && parsed.length >= 350) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             const clean = parsed
               .filter((p: any) => !isDemoProduct(p))
               .map(normalizeProduct);
 
-            // Merge with static catalog to guarantee no products are lost
+            // Merge with static catalog using normalized case-insensitive keys
             const mergedMap = new Map<string, Product>();
+            const getProdKey = (p: Product) => (p.sku?.trim().toLowerCase() || p.id?.trim().toLowerCase());
+
             PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct).forEach(p => {
-              mergedMap.set(p.sku || p.id, p);
+              const k = getProdKey(p);
+              if (k) mergedMap.set(k, p);
             });
-            clean.forEach(p => mergedMap.set(p.sku || p.id, p));
+            clean.forEach(p => {
+              const k = getProdKey(p);
+              if (k) mergedMap.set(k, p);
+            });
             setProducts(Array.from(mergedMap.values()));
           } else {
-            // Invalidate outdated partial cache
-            try { localStorage.removeItem('ls_products'); } catch (e) {}
             setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
           }
         } catch {

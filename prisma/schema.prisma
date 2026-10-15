@@ -92,6 +92,10 @@ model Category {
   position      Int      @default(0)
   status        String   @default("active")
   createdAt     DateTime @default(now())
+
+  @@index([parentId])
+  @@index([position])
+  @@index([status])
 }
 
 model Product {
@@ -116,6 +120,11 @@ model Product {
   hsnCode       String?  @default("8471")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([category])
+  @@index([brand])
+  @@index([status])
+  @@index([featured])
 }
 
 model HomepageSection {
@@ -159,21 +168,55 @@ model BlogPost {
 }
 
 model Order {
-  id            String   @id @default(cuid())
-  orderId       String   @unique
-  customerName  String
-  phone         String
-  email         String?
-  address       String
-  itemsJson     String
-  totalAmount   Float
-  paymentMethod String
-  paymentStatus String   @default("Pending") // Pending | Verification Pending | Paid
-  utrNumber     String?
-  orderStatus   String   @default("Confirmed") // Confirmed | Packed | Shipped | Delivered | Cancelled
-  date          String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(cuid())
+  orderId         String   @unique
+  customerId      String?
+  customerEmail   String?
+  customerName    String
+  phone           String
+  email           String?
+  address         String
+  itemsJson       String
+  subtotalAmount  Float    @default(0)
+  couponCode      String?
+  couponDiscount  Float    @default(0)
+  totalAmount     Float
+  paymentMethod   String
+  paymentStatus   String   @default("Pending") // Pending | Verification Pending | Paid | Rejected
+  utrNumber       String?
+  orderStatus     String   @default("Confirmed") // Confirmed | Packed | Shipped | Delivered | Cancelled
+  inventoryStatus String   @default("allocated") // allocated | restored
+  date            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([phone])
+  @@index([createdAt])
+  @@index([customerId])
+  @@index([utrNumber])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+}
+
+model Coupon {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  title         String
+  discountType  String    @default("percentage") // percentage | fixed
+  discountValue Float
+  minOrder      Float     @default(0)
+  maxDiscount   Float?
+  audience      String    @default("all") // all | normal | premium
+  description   String?
+  isActive      Boolean   @default(true)
+  validUntil    String?
+  usageLimit    Int?
+  timesUsed     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
 }
 
 model AdminUser {

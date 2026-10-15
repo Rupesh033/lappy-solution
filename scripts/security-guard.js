@@ -13,7 +13,7 @@ const SECURITY_CONFIG_FILE = path.join(PROJECT_ROOT, '.security-config.json');
 const SESSION_FILE = path.join(PROJECT_ROOT, '.dev-session.key');
 
 const DEFAULT_SALT = 'lapiez_garhwa_salt_9608828288_ultra_secure_2026';
-const DEFAULT_PASS_HASH = '987ce7199210d843d0cb55470dd820b5132a3132735ca98030ed0e7f4e263b06'; // Lapiez@2026#
+const DEFAULT_PASS_HASH = '987ce7199210d843d0cb55470dd820b5132a3132735ca98030ed0e7f4e263b06';
 
 function hashPassword(password, salt = DEFAULT_SALT) {
   return crypto.createHash('sha256').update(password + salt).digest('hex');

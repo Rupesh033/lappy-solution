@@ -142,13 +142,23 @@ export default function ProductDetailPage() {
     p => (p.category === product.category || p.brand === product.brand) && p.id !== product.id
   ).slice(0, 4);
 
+  const isOutOfStock = product.inStock === false || (product.stockQuantity !== undefined && product.stockQuantity !== null && Number(product.stockQuantity) <= 0);
+
   const handleAddToCart = () => {
+    if (isOutOfStock) {
+      showToast('This product is currently out of stock.');
+      return;
+    }
     for (let i = 0; i < quantity; i++) {
       addToCart(product);
     }
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) {
+      showToast('This product is currently out of stock.');
+      return;
+    }
     for (let i = 0; i < quantity; i++) {
       addToCart(product);
     }
@@ -157,7 +167,9 @@ export default function ProductDetailPage() {
 
   const handleWhatsApp = () => {
     const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
-    const text = `Hello ${storeTitle}! I am interested in purchasing:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nIs this in stock for same-day pickup at your showroom?`;
+    const text = isOutOfStock
+      ? `Hello ${storeTitle}! I am interested in:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nThis item is currently marked Out of Stock on your website. When is it expected back in stock at your Chiniya Road showroom?`
+      : `Hello ${storeTitle}! I am interested in purchasing:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nIs this in stock for same-day pickup at your showroom?`;
     window.open(`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -299,10 +311,17 @@ export default function ProductDetailPage() {
                   {product.brand}
                 </span>
 
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#15803D] bg-green-50 border border-green-200 px-2.5 py-0.5 rounded">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#15803D]" />
-                  <span>In Stock at Garhwa ({product.stockQuantity || 8} units)</span>
-                </div>
+                {isOutOfStock ? (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
+                    <span>Out of Stock at Garhwa Showroom</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[#15803D] bg-green-50 border border-green-200 px-2.5 py-0.5 rounded">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#15803D]" />
+                    <span>In Stock at Garhwa ({product.stockQuantity ?? 1} units)</span>
+                  </div>
+                )}
               </div>
 
               {/* Title & SKU */}
@@ -335,13 +354,18 @@ export default function ProductDetailPage() {
                       ₹{product.mrp.toLocaleString('en-IN')}
                     </span>
                   )}
-                  {product.discount > 0 && (
+                  {product.discount > 0 && !isOutOfStock && (
                     <span className="text-xs font-bold text-[#15803D]">
                       {product.discount}% OFF
                     </span>
                   )}
+                  {isOutOfStock && (
+                    <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                      Currently Unavailable
+                    </span>
+                  )}
                 </div>
-                {savings > 0 && (
+                {savings > 0 && !isOutOfStock && (
                   <p className="text-xs font-bold text-[#15803D]">
                     Special Price: You Save ₹{savings.toLocaleString('en-IN')}
                   </p>
@@ -369,15 +393,16 @@ export default function ProductDetailPage() {
                 <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 p-0.5">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
+                    disabled={isOutOfStock || quantity <= 1}
                     className="w-7 h-7 rounded bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs hover:bg-gray-100 disabled:opacity-40 transition-colors"
                   >
                     -
                   </button>
-                  <span className="w-8 text-center text-xs font-bold text-gray-900">{quantity}</span>
+                  <span className="w-8 text-center text-xs font-bold text-gray-900">{isOutOfStock ? 0 : quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-7 h-7 rounded bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs hover:bg-gray-100 transition-colors"
+                    disabled={isOutOfStock}
+                    className="w-7 h-7 rounded bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs hover:bg-gray-100 disabled:opacity-40 transition-colors"
                   >
                     +
                   </button>
@@ -386,30 +411,48 @@ export default function ProductDetailPage() {
 
               {/* Primary Call-to-Actions (Flipkart / Amazon Style) */}
               <div className="space-y-2.5 pt-1">
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    onClick={handleAddToCart}
-                    className="h-11 px-4 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98]"
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    <span>ADD TO CART</span>
-                  </button>
+                {isOutOfStock ? (
+                  <div className="space-y-2">
+                    <button
+                      disabled
+                      className="w-full h-11 px-4 rounded-lg bg-gray-100 border border-gray-300 text-gray-400 font-bold text-xs sm:text-[13px] flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                    >
+                      <span>OUT OF STOCK</span>
+                    </button>
+                    <p className="text-[11.5px] text-gray-500 text-center">
+                      This item is temporarily out of stock. Contact us below to inquire about restock date or pre-order.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      onClick={handleAddToCart}
+                      className="h-11 px-4 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98]"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>ADD TO CART</span>
+                    </button>
 
-                  <button
-                    onClick={handleBuyNow}
-                    className="h-11 px-4 rounded-lg bg-[#FB641B] hover:bg-[#E0530F] text-white font-bold text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98]"
-                  >
-                    <Zap className="w-4 h-4" />
-                    <span>BUY NOW</span>
-                  </button>
-                </div>
+                    <button
+                      onClick={handleBuyNow}
+                      className="h-11 px-4 rounded-lg bg-[#FB641B] hover:bg-[#E0530F] text-white font-bold text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98]"
+                    >
+                      <Zap className="w-4 h-4" />
+                      <span>BUY NOW</span>
+                    </button>
+                  </div>
+                )}
 
                 <button
                   onClick={handleWhatsApp}
-                  className="w-full h-10 px-4 rounded-lg bg-[#25D366] hover:bg-[#1EBE5B] text-white font-bold text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98]"
+                  className={`w-full h-10 px-4 rounded-lg font-bold text-xs sm:text-[13px] flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98] ${
+                    isOutOfStock
+                      ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                      : 'bg-[#25D366] hover:bg-[#1EBE5B] text-white'
+                  }`}
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Chat with Garhwa Counter on WhatsApp</span>
+                  <span>{isOutOfStock ? 'Inquire Restock Date on WhatsApp' : 'Chat with Garhwa Counter on WhatsApp'}</span>
                 </button>
               </div>
 
