@@ -1103,6 +1103,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem('ls_last_invoice', JSON.stringify(newInvoice));
       localStorage.setItem('ls_cart', JSON.stringify([]));
       showToast(`Order #${savedOrder.orderId} placed. Payment verification is pending.`);
+      syncWithDatabase({ forceFresh: true }).catch(() => {});
       return newInvoice;
     } catch (e) {
       console.error('Order save error:', e);

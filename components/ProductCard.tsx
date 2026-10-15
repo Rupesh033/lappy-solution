@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Heart, ShoppingCart, MessageSquare, Star, Truck, Check } from 'lucide-react';
 import { Product } from '../data/products';
-import { STORE_INFO } from '../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 import { useStore } from '../context/StoreContext';
 
 interface ProductCardProps {
@@ -32,7 +32,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const text = isOutOfStock
       ? `Hello ${storeTitle}, I am interested in:\n*${product.name}*\nPrice: ₹${product.price.toLocaleString('en-IN')}\nSKU: ${product.sku}\nThis product is currently marked as Out of Stock on your website. When will it be available for purchase at your showroom?`
       : `Hello ${storeTitle}, I want to purchase:\n*${product.name}*\nPrice: ₹${product.price.toLocaleString('en-IN')}\nSKU: ${product.sku}\nIs this in stock at your Chiniya Road showroom?`;
-    window.open(`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+    const waNumber = getCleanWhatsAppNumber(siteSettings?.whatsapp);
+    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (

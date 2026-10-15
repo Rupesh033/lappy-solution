@@ -9,7 +9,7 @@ import {
   MapPin, Store, BadgePercent, Receipt, Truck, Flame, Clock
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
-import { STORE_INFO } from '../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 
 export const Hero: React.FC = () => {
   const router = useRouter();
@@ -123,7 +123,7 @@ export const Hero: React.FC = () => {
               </Link>
 
               <a
-                href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I want to order / inquire about laptop and CCTV prices.`)}`}
+                href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I want to order / inquire about laptop and CCTV prices.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-11 px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-[14px] flex items-center gap-2 transition-all shadow-sm active:scale-[0.98]"

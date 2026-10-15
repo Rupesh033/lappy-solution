@@ -9,7 +9,7 @@ import {
   AlertTriangle, Video, Banknote, Store, Phone, CheckCircle2, Lock
 } from 'lucide-react';
 import { useStore } from '../../../context/StoreContext';
-import { STORE_INFO } from '../../../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../../../data/storeData';
 
 // Built-in verified showroom policies to ensure instant loading & zero downtime
 const BUILTIN_PAGES: Record<string, { title: string; content: string }> = {
@@ -92,33 +92,55 @@ Visit our showroom at Chiniya Road, Garhwa with your original 18% GST invoice, o
 export default function DynamicCustomPage() {
   const params = useParams();
   const router = useRouter();
-  const rawSlug = (params?.slug as string) || '';
+  const rawParam = params?.slug;
+  const rawSlug = Array.isArray(rawParam) ? (rawParam[0] || '') : (typeof rawParam === 'string' ? rawParam : '');
   
   // Normalize slug to handle aliases (e.g. terms-conditions -> terms-and-conditions)
   const slug = useMemo(() => {
-    const s = rawSlug.toLowerCase().trim();
-    if (s === 'terms-conditions' || s === 'terms' || s === 'tnc' || s === 'terms-and-condition') {
+    const s = decodeURIComponent(rawSlug).toLowerCase().trim();
+    if (s === 'terms-conditions' || s === 'terms' || s === 'tnc' || s === 'terms-and-condition' || s === 'terms-and-conditions' || s.includes('term')) {
       return 'terms-and-conditions';
     }
-    if (s === 'privacy' || s === 'privacy-policies') {
+    if (s === 'privacy' || s === 'privacy-policies' || s === 'privacy-policy' || s.includes('privacy')) {
       return 'privacy-policy';
     }
-    if (s === 'warranty' || s === 'replacement') {
+    if (s === 'warranty' || s === 'replacement' || s === 'warranty-policy' || s.includes('warranty')) {
       return 'warranty-policy';
     }
-    if (s === 'about') {
+    if (s === 'about' || s === 'about-us' || s.includes('about')) {
       return 'about-us';
     }
     return s;
   }, [rawSlug]);
 
   const { customPages, siteSettings } = useStore();
+  const [remotePage, setRemotePage] = React.useState<any>(null);
+  const [isFetchingRemote, setIsFetchingRemote] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (!slug) return;
+    if (BUILTIN_PAGES[slug]) return; // Builtin already exists, no need to fetch
+    setIsFetchingRemote(true);
+    fetch(`/api/cms/pages`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (Array.isArray(d?.pages)) {
+          const match = d.pages.find((p: any) => p.slug === slug || p.slug === rawSlug);
+          if (match) setRemotePage(match);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setIsFetchingRemote(false));
+  }, [slug, rawSlug]);
 
   const page = useMemo(() => {
     // 1. Try finding in DB/CMS customPages first
     const fromStore = customPages.find((p) => p.slug === slug || p.slug === rawSlug);
     if (fromStore && fromStore.content) {
       return fromStore;
+    }
+    if (remotePage && remotePage.content) {
+      return remotePage;
     }
     // 2. Fallback to comprehensive built-in page definitions
     if (BUILTIN_PAGES[slug]) {
@@ -131,7 +153,16 @@ export default function DynamicCustomPage() {
       };
     }
     return null;
-  }, [customPages, slug, rawSlug]);
+  }, [customPages, remotePage, slug, rawSlug]);
+
+  if (!rawSlug || (isFetchingRemote && !page)) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 p-6 text-center bg-[#F8FAFC]">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-semibold text-gray-500">Loading showroom policy...</p>
+      </div>
+    );
+  }
 
   if (!page) {
     return (
@@ -340,7 +371,7 @@ export default function DynamicCustomPage() {
             
             <div className="flex items-center gap-2.5 flex-wrap">
               <a
-                href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello Lapiez Garhwa, I have an inquiry regarding: ${page.title}`)}`}
+                href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(`Hello Lapiez Garhwa, I have an inquiry regarding: ${page.title}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-10 px-4 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition-all shadow-sm whitespace-nowrap cursor-pointer active:scale-98"

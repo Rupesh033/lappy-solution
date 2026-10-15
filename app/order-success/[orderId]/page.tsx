@@ -9,7 +9,7 @@ import {
   FileText, ExternalLink, Download, QrCode, Building2
 } from 'lucide-react';
 import { useStore } from '../../../context/StoreContext';
-import { STORE_INFO } from '../../../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../../../data/storeData';
 import { getHsnCodeForCategory, convertAmountToWords } from '../../../lib/invoiceUtils';
 
 export default function OrderSuccessPage() {
@@ -91,7 +91,8 @@ export default function OrderSuccessPage() {
     if (!order) return;
     const itemsList = order.items?.map((it: any) => `• ${it.name} (Qty: ${it.quantity}) - ₹${((it.price || 0) * (it.quantity || 1)).toLocaleString('en-IN')}`).join('\n') || '';
     const waText = `Hello Lapiez Garhwa!\n\nI have placed order *#${order.orderId}* on your website.\n\n*Customer:* ${order.customerName} (${order.phone})\n*Delivery:* ${order.address}\n*Total Amount:* ₹${Number(order.totalAmount || 0).toLocaleString('en-IN')}\n*Payment Mode:* ${order.paymentMethod}${order.utrNumber ? `\n*UTR / Ref No:* ${order.utrNumber}` : ''}\n\n*Items Ordered:*\n${itemsList}\n\nPlease confirm availability and delivery dispatch schedule.`;
-    window.open(`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waText)}`, '_blank');
+    const waNum = getCleanWhatsAppNumber(siteSettings?.whatsapp);
+    window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(waText)}`, '_blank');
   };
 
   // Calculate taxes for display preview

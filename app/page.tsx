@@ -15,7 +15,7 @@ import { ProductCard } from '../components/ProductCard';
 import { BrandShowcase } from '../components/BrandShowcase';
 import { FaqSection } from '../components/FaqSection';
 import { useStore, CMSSection, isDemoProduct } from '../context/StoreContext';
-import { STORE_INFO } from '../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 import { Product } from '../data/products';
 
 export default function Home() {
@@ -636,7 +636,7 @@ export default function Home() {
                   </a>
 
                   <a
-                    href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello Lapiez Garhwa, I want to inquire about in-stock products.')}`}
+                    href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent('Hello Lapiez Garhwa, I want to inquire about in-stock products.')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 sm:flex-none h-9 sm:h-10 px-3.5 sm:px-4 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-colors"

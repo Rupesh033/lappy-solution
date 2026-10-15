@@ -7,7 +7,7 @@ import {
   Truck, Receipt, MessageSquare, Flame, Sparkles, 
   Camera, Laptop, Cpu, Zap, Star
 } from 'lucide-react';
-import { STORE_INFO } from '../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 import { useStore } from '../context/StoreContext';
 
 interface BannerSlide {
@@ -435,7 +435,7 @@ export const TopBannerSlider: React.FC = () => {
                       </Link>
 
                       <a
-                        href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(slide.whatsappMessage)}`}
+                        href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(slide.whatsappMessage)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="h-8.5 sm:h-11 px-3 sm:px-5 rounded-lg bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold text-[12px] sm:text-[13.5px] flex items-center gap-1.5 sm:gap-2 transition-all shadow-md active:scale-[0.98]"

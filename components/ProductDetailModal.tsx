@@ -7,7 +7,7 @@ import {
   X, Heart, ShoppingCart, MessageSquare, Star, 
   ShieldCheck, Truck, Store, ExternalLink
 } from 'lucide-react';
-import { STORE_INFO } from '../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 import { useStore } from '../context/StoreContext';
 
 export const ProductDetailModal: React.FC = () => {
@@ -58,7 +58,8 @@ export const ProductDetailModal: React.FC = () => {
     const text = isOutOfStock
       ? `Hello ${storeTitle}, I am interested in:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nThis product is currently marked as Out of Stock on your website. When will it be available for purchase at your showroom?`
       : `Hello ${storeTitle}, I want to inquire about:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nCan I inspect or pick this up at your Chiniya Road showroom?`;
-    window.open(`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+    const waNumber = getCleanWhatsAppNumber(siteSettings?.whatsapp);
+    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleBuyNow = () => {

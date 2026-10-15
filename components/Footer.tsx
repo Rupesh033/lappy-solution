@@ -7,7 +7,7 @@ import {
   X, ChevronRight, FileText, ShieldCheck, 
   Truck, Receipt, Store, ExternalLink, Check
 } from 'lucide-react';
-import { STORE_INFO } from '../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 import { useStore } from '../context/StoreContext';
 
 export const Footer: React.FC = () => {
@@ -73,7 +73,7 @@ export const Footer: React.FC = () => {
                 </a>
 
                 <a
-                  href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I need quick support / inquiry about hardware.`)}`}
+                  href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I need quick support / inquiry about hardware.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="h-[40px] px-4 rounded-[8px] bg-[#16A34A] hover:bg-[#15803D] text-white text-[13px] font-semibold inline-flex items-center gap-2 transition-colors shadow-2xs"
@@ -172,7 +172,7 @@ export const Footer: React.FC = () => {
               <div className="pt-2 flex items-center gap-2">
                 {/* WhatsApp */}
                 <a
-                  href={`https://wa.me/${(siteSettings?.whatsapp || STORE_INFO.whatsapp).replace(/[^0-9]/g, '')}`}
+                  href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"

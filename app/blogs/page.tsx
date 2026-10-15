@@ -7,7 +7,7 @@ import {
   Calendar, Tag, Sparkles, ChevronRight, MessageSquare 
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
-import { STORE_INFO } from '../../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../../data/storeData';
 
 export default function BlogListingPage() {
   const { blogPosts, siteSettings } = useStore();
@@ -158,7 +158,7 @@ export default function BlogListingPage() {
                     </Link>
 
                     <a
-                      href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello Lapiez, I read your article "${blog.title}" and have a query.`)}`}
+                      href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(`Hello Lapiez, I read your article "${blog.title}" and have a query.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-400 hover:text-[#25D366] transition-colors p-1"

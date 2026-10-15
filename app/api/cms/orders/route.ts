@@ -290,9 +290,13 @@ export async function POST(request: Request) {
       // Atomic inventory deduction with concurrency check
       for (const product of products) {
         const quantity = quantities.get(product.id) ?? 0;
+        const willBeOutOfStock = product.stockQuantity === quantity;
         const updated = await tx.product.updateMany({
           where: { id: product.id, stockQuantity: { gte: quantity }, inStock: true },
-          data: { stockQuantity: { decrement: quantity } },
+          data: { 
+            stockQuantity: { decrement: quantity },
+            ...(willBeOutOfStock ? { inStock: false } : {}),
+          },
         });
         if (updated.count !== 1) {
           throw new Error(`STOCK_UNAVAILABLE:${product.name}`);

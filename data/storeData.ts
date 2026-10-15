@@ -40,6 +40,19 @@ export const STORE_INFO: StoreInfo = {
   lng: 83.7987063
 };
 
+/**
+ * Standardize and clean WhatsApp number into strict international digits (91XXXXXXXXXX)
+ * Prevents broken wa.me links caused by spaces, pluses, dashes or missing country codes.
+ */
+export function getCleanWhatsAppNumber(rawPhone?: string | null): string {
+  if (!rawPhone) return STORE_INFO.whatsapp;
+  const digits = String(rawPhone).replace(/\D/g, '');
+  if (digits.length === 10) return `91${digits}`;
+  if (digits.length === 12 && digits.startsWith('91')) return digits;
+  if (digits.length > 10) return digits;
+  return STORE_INFO.whatsapp;
+}
+
 export interface ServiceItem {
   id: string;
   title: string;

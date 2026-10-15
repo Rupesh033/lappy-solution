@@ -7,7 +7,7 @@ import {
   Home, ShoppingBag, Flame, MessageSquare, ShoppingCart, User
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
-import { STORE_INFO } from '../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 
 export const MobileBottomNav: React.FC = () => {
   const pathname = usePathname();
@@ -38,7 +38,7 @@ export const MobileBottomNav: React.FC = () => {
     {
       label: 'WhatsApp',
       icon: MessageSquare,
-      href: `https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I want to inquire about products.`)}`,
+      href: `https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I want to inquire about products.`)}`,
       isExternal: true,
       isGreen: true
     }

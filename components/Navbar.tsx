@@ -10,7 +10,7 @@ import {
   ShoppingBag, ExternalLink, Laptop, Printer,
   HelpCircle, Layers, CheckCircle2, Award
 } from 'lucide-react';
-import { STORE_INFO } from '../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 import { useStore, DEFAULT_SHOP_BY_CATEGORIES, CMSCategory } from '../context/StoreContext';
 
 interface NavbarProps {
@@ -492,7 +492,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
             {/* WhatsApp Support Button */}
             <a
-              href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I want to inquire about products.`)}`}
+              href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I want to inquire about products.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-full text-[#16A34A] hover:bg-emerald-50 transition-colors"
@@ -950,7 +950,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
           <div className="pt-4 border-t border-gray-100 flex flex-col gap-2.5">
             <a
-              href={`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I need quick support.`)}`}
+              href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I need quick support.`)}`}
               className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366] text-white font-bold text-xs shadow-xs"
             >
               <MessageSquare className="w-4 h-4" />

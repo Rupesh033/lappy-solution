@@ -9,7 +9,7 @@ import {
   Check, RefreshCw, Phone, Share2, Award, Zap
 } from 'lucide-react';
 import { PRODUCTS, Product } from '../../../data/products';
-import { STORE_INFO } from '../../../data/storeData';
+import { STORE_INFO, getCleanWhatsAppNumber } from '../../../data/storeData';
 import { useStore } from '../../../context/StoreContext';
 import { ProductCard } from '../../../components/ProductCard';
 
@@ -166,7 +166,8 @@ export default function ProductDetailPage() {
     const text = isOutOfStock
       ? `Hello ${storeTitle}! I am interested in:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nThis item is currently marked Out of Stock on your website. When is it expected back in stock at your Chiniya Road showroom?`
       : `Hello ${storeTitle}! I am interested in purchasing:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nIs this in stock for same-day pickup at your showroom?`;
-    window.open(`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+    const waNumber = getCleanWhatsAppNumber(siteSettings?.whatsapp);
+    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleShare = () => {
