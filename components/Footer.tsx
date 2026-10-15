@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { 
   Phone, Mail, MapPin, Clock, MessageSquare, ArrowUp, 
   X, ChevronRight, FileText, ShieldCheck, 
-  Truck, Receipt, Store, ExternalLink, Check
+  Truck, Receipt, Store, ExternalLink, Check,
+  Smartphone, Download
 } from 'lucide-react';
 import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 import { useStore } from '../context/StoreContext';
 
 export const Footer: React.FC = () => {
-  const { setIsAccountOpen, setAccountTab, customPages, siteSettings } = useStore();
+  const { setIsAccountOpen, setAccountTab, customPages, siteSettings, setIsAppModalOpen } = useStore();
 
   // Policy Modal state
   const [activePolicy, setActivePolicy] = useState<'privacy' | 'refund' | 'shipping' | 'terms' | 'gst' | null>(null);
@@ -223,6 +224,21 @@ export const Footer: React.FC = () => {
                 </a>
               </div>
 
+              {/* Download Our App Button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAppModalOpen(true)}
+                  className="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-[#1A56DB] text-white transition-all shadow-xs group cursor-pointer text-left"
+                >
+                  <Smartphone className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <div>
+                    <span className="text-[10px] text-slate-300 block leading-tight font-medium">Get Official Android APK</span>
+                    <span className="text-[12px] font-bold text-white block leading-tight">Download Our App</span>
+                  </div>
+                </button>
+              </div>
+
             </div>
 
             {/* ----------------------------------------------------- */}
@@ -314,6 +330,15 @@ export const Footer: React.FC = () => {
                 Customer Support
               </h4>
               <ul className="space-y-2 text-[13px]">
+                <li>
+                  <button 
+                    onClick={() => setIsAppModalOpen(true)}
+                    className="flex items-center gap-1.5 text-[#1A56DB] font-bold hover:underline transition-colors text-left cursor-pointer"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Download Our App</span>
+                  </button>
+                </li>
                 <li>
                   <Link href="/cart" className="hover:text-[#2563EB] transition-colors block">
                     Shopping Cart
@@ -441,6 +466,13 @@ export const Footer: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setIsAppModalOpen(true)}
+                className="hover:text-[#1A56DB] text-[#1A56DB] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Download Our App</span>
+              </button>
               <button
                 onClick={() => setActivePolicy('privacy')}
                 className="hover:text-[#0F172A] transition-colors"

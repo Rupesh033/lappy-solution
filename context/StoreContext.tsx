@@ -198,6 +198,8 @@ interface StoreContextType {
   setIsCheckoutOpen: (open: boolean) => void;
   isAccountOpen: boolean;
   setIsAccountOpen: (open: boolean) => void;
+  isAppModalOpen: boolean;
+  setIsAppModalOpen: (open: boolean) => void;
   accountTab: 'orders' | 'cart' | 'wishlist';
   setAccountTab: (tab: 'orders' | 'cart' | 'wishlist') => void;
   toast: string | null;
@@ -541,6 +543,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isAppModalOpen, setIsAppModalOpen] = useState(false);
   const [accountTab, setAccountTab] = useState<'orders' | 'cart' | 'wishlist'>('orders');
   const [toast, setToast] = useState<string | null>(null);
   const [customer, setCustomer] = useState<User | null>(null);
@@ -2366,6 +2369,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsCheckoutOpen,
         isAccountOpen,
         setIsAccountOpen,
+        isAppModalOpen,
+        setIsAppModalOpen,
         accountTab,
         setAccountTab,
         toast,

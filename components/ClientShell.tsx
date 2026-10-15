@@ -9,6 +9,7 @@ import { CheckoutModal } from './CheckoutModal';
 import { ProductDetailModal } from './ProductDetailModal';
 import { CustomerAccountModal } from './CustomerAccountModal';
 import { MobileBottomNav } from './MobileBottomNav';
+import { AppDownloadModal } from './AppDownloadModal';
 import { CheckCircle2 } from 'lucide-react';
 
 import { usePathname } from 'next/navigation';
@@ -23,6 +24,11 @@ const ToastNotification: React.FC = () => {
       <span>{toast}</span>
     </div>
   );
+};
+
+const AppDownloadModalContainer: React.FC = () => {
+  const { isAppModalOpen, setIsAppModalOpen } = useStore();
+  return <AppDownloadModal isOpen={isAppModalOpen} onClose={() => setIsAppModalOpen(false)} />;
 };
 
 const DynamicHeadSync: React.FC = () => {
@@ -92,6 +98,7 @@ export const ClientShell: React.FC<{ children: React.ReactNode }> = ({ children 
         <CheckoutModal />
         <ProductDetailModal />
         <CustomerAccountModal />
+        <AppDownloadModalContainer />
         <ToastNotification />
       </div>
     </StoreProvider>

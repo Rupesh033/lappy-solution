@@ -8,7 +8,8 @@ import {
   Phone, Menu, X, ArrowRight, MapPin, 
   ShieldCheck, MessageSquare, ChevronDown, ChevronUp, ChevronRight,
   ShoppingBag, ExternalLink, Laptop, Printer,
-  HelpCircle, Layers, CheckCircle2, Award
+  HelpCircle, Layers, CheckCircle2, Award,
+  Bell, Smartphone, Download
 } from 'lucide-react';
 import { STORE_INFO, getCleanWhatsAppNumber } from '../data/storeData';
 import { useStore, DEFAULT_SHOP_BY_CATEGORIES, CMSCategory } from '../context/StoreContext';
@@ -109,7 +110,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
     setSelectedProduct,
     siteSettings,
     customer,
-    categories
+    categories,
+    setIsAppModalOpen
   } = useStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -215,6 +217,16 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80]" />
               {siteSettings?.announcementText || '100% Asli Samaan • 18% GST Bill • Lapiez Garhwa'}
             </span>
+            <span className="hidden sm:inline text-blue-300">|</span>
+            <button 
+              type="button"
+              onClick={() => setIsAppModalOpen(true)}
+              className="flex items-center gap-1 text-white hover:text-yellow-200 font-semibold transition-colors cursor-pointer"
+              title="Download Android App"
+            >
+              <Smartphone className="w-3 h-3 text-emerald-300" />
+              <span>Download App</span>
+            </button>
             <span className="hidden sm:inline text-blue-300">|</span>
             <a 
               href={`tel:${siteSettings?.phone || STORE_INFO.phone}`} 
@@ -500,6 +512,23 @@ export const Navbar: React.FC<NavbarProps> = () => {
             >
               <MessageSquare className="w-5 h-5" />
             </a>
+
+            {/* App Download Notification-Style Icon Button */}
+            <button
+              type="button"
+              onClick={() => setIsAppModalOpen(true)}
+              className="relative p-2 rounded-full text-gray-700 hover:text-[#1A56DB] hover:bg-blue-50 transition-colors cursor-pointer group"
+              title="Download Lapiez Android App"
+              aria-label="Download Android App"
+            >
+              <Bell className="w-5 h-5 text-gray-700 group-hover:text-[#1A56DB] transition-colors" />
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-600 text-white text-[8px] font-extrabold items-center justify-center shadow-xs">
+                  ↓
+                </span>
+              </span>
+            </button>
 
             {/* Wishlist Button */}
             <Link
@@ -949,6 +978,18 @@ export const Navbar: React.FC<NavbarProps> = () => {
           </div>
 
           <div className="pt-4 border-t border-gray-100 flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsAppModalOpen(true);
+              }}
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#1A56DB] hover:bg-[#1545B0] text-white font-bold text-xs shadow-xs cursor-pointer transition-colors"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>Download Our App (APK)</span>
+            </button>
+
             <a
               href={`https://wa.me/${getCleanWhatsAppNumber(siteSettings?.whatsapp)}?text=${encodeURIComponent(`Hello ${siteSettings?.siteName || 'Lapiez'}, I need quick support.`)}`}
               className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366] text-white font-bold text-xs shadow-xs"
