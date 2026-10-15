@@ -14,6 +14,10 @@ interface CachedInitData {
 let inMemoryCache: CachedInitData | null = null;
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds in-memory TTL
 
+export function invalidateInitCache() {
+  inMemoryCache = null;
+}
+
 // Format product payload with rich data
 function formatProduct(p: any, rich?: any) {
   const images = (p.image && typeof p.image === 'string' && p.image.includes('|||'))
@@ -21,6 +25,8 @@ function formatProduct(p: any, rich?: any) {
     : (rich?.images && rich.images.length > 0)
     ? rich.images
     : (p.image ? [p.image] : (rich?.image ? [rich.image] : []));
+
+  const isOutOfStock = p.inStock === false || (p.stockQuantity !== undefined && p.stockQuantity !== null && Number(p.stockQuantity) <= 0);
 
   return {
     id: p.id,
@@ -37,8 +43,8 @@ function formatProduct(p: any, rich?: any) {
     description: p.description || p.specs,
     image: images[0] || p.image || rich?.image || '',
     images,
-    inStock: p.inStock === false || (p.stockQuantity !== undefined && p.stockQuantity !== null && Number(p.stockQuantity) <= 0) ? false : Boolean(p.inStock ?? true),
-    stockQuantity: p.stockQuantity !== undefined && p.stockQuantity !== null && !isNaN(Number(p.stockQuantity)) ? Number(p.stockQuantity) : 10,
+    inStock: !isOutOfStock,
+    stockQuantity: isOutOfStock ? 0 : (p.stockQuantity !== undefined && p.stockQuantity !== null && !isNaN(Number(p.stockQuantity)) ? Number(p.stockQuantity) : 10),
     sku: p.sku,
     rating: Number(p.rating) || 4.5,
     reviewsCount: p.reviewsCount || rich?.reviewsCount || 12,
@@ -64,7 +70,7 @@ export async function GET(request: Request) {
     }
     return NextResponse.json(inMemoryCache.payload, {
       headers: {
-        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=86400',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         'ETag': inMemoryCache.etag,
         'X-Cache': 'HIT-MEMORY',
       },
@@ -194,7 +200,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(payload, {
       headers: {
-        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=86400',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         'ETag': etag,
         'X-Cache': 'MISS-DATABASE',
       },

@@ -29,23 +29,25 @@ export default function ProductDetailPage() {
     if (!productId) return undefined;
     const searchTarget = productId.toLowerCase();
 
+    // Map legacy static ID (e.g. frontech-...) to static SKU/name for direct match
+    const staticItem = PRODUCTS.find(p => p.id === productId || String(p.numericId) === productId);
+    const targetSku = staticItem?.sku?.toLowerCase();
+    const targetName = staticItem?.name?.trim().toLowerCase();
+
     // Check dynamic products list first (has DB + added products)
     const foundInStore = products.find(
       p => p.id === productId || 
+           (p as any).dbId === productId ||
            p.slug?.toLowerCase() === searchTarget || 
            p.sku?.toLowerCase() === searchTarget || 
+           (targetSku && p.sku?.toLowerCase() === targetSku) ||
+           (targetName && p.name?.trim().toLowerCase() === targetName) ||
            String(p.numericId) === productId
     );
     if (foundInStore) return foundInStore;
 
     // Check static catalog fallback
-    const foundInStatic = PRODUCTS.find(
-      p => p.id === productId || 
-           p.slug?.toLowerCase() === searchTarget || 
-           p.sku?.toLowerCase() === searchTarget || 
-           String(p.numericId) === productId
-    );
-    if (foundInStatic) return foundInStatic;
+    if (staticItem) return staticItem;
 
     return dbProduct || undefined;
   }, [productId, products, dbProduct]);

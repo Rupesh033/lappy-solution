@@ -517,9 +517,20 @@ export function normalizeProduct(p: any): Product {
 }
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(() =>
-    PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct)
-  );
+  const [products, setProducts] = useState<Product[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('ls_products');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.filter((p: any) => !isDemoProduct(p)).map(normalizeProduct);
+          }
+        }
+      } catch (e) {}
+    }
+    return PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct);
+  });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -720,31 +731,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           } catch (e) {}
         }
 
-        // 6. Products
+        // 6. Products: Database is the authoritative source of truth
         if (initData.products && Array.isArray(initData.products) && initData.products.length > 0) {
           const cleanProds = initData.products
             .filter((p: any) => !isDemoProduct(p))
             .map(normalizeProduct);
 
-          setProducts((prev) => {
-            const mergedMap = new Map<string, Product>();
-            const getProdKey = (p: Product) => (p.sku?.trim().toLowerCase() || p.id?.trim().toLowerCase());
+          // Fast DB index maps for exact SKU, Name, and ID matching
+          const dbBySku = new Map<string, Product>();
+          const dbByName = new Map<string, Product>();
+          const dbById = new Map<string, Product>();
+          cleanProds.forEach((p: Product) => {
+            if (p.sku) dbBySku.set(p.sku.trim().toLowerCase(), p);
+            if (p.name) dbByName.set(p.name.trim().toLowerCase(), p);
+            if (p.id) dbById.set(p.id.trim().toLowerCase(), p);
+          });
 
+          setProducts((prev) => {
+            const canonicalKey = (p: Product) => (p.sku?.trim().toLowerCase() || p.name?.trim().toLowerCase() || p.id?.trim().toLowerCase());
+            const mergedMap = new Map<string, Product>();
+
+            // 1. Populate static catalog with authoritative DB overrides applied immediately
             PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct).forEach(p => {
-              const k = getProdKey(p);
-              if (k) mergedMap.set(k, p);
+              const matchedDb = (p.sku && dbBySku.get(p.sku.trim().toLowerCase())) || 
+                (p.name && dbByName.get(p.name.trim().toLowerCase())) || 
+                (p.id && dbById.get(p.id.trim().toLowerCase()));
+              const authoritative = matchedDb || p;
+              const k = canonicalKey(authoritative);
+              if (k) mergedMap.set(k, authoritative);
             });
+
+            // 2. Overlay previous client state with DB overrides applied
             prev.forEach(p => {
-              const k = getProdKey(p);
-              if (k) mergedMap.set(k, p);
+              const matchedDb = (p.sku && dbBySku.get(p.sku.trim().toLowerCase())) || 
+                (p.name && dbByName.get(p.name.trim().toLowerCase())) || 
+                (p.id && dbById.get(p.id.trim().toLowerCase()));
+              const authoritative = matchedDb || p;
+              const k = canonicalKey(authoritative);
+              if (k) mergedMap.set(k, authoritative);
             });
+
+            // 3. Ensure all DB products are present
             cleanProds.forEach((p: Product) => {
-              const k = getProdKey(p);
+              const k = canonicalKey(p);
               if (k) mergedMap.set(k, p);
             });
 
             const nextList = Array.from(mergedMap.values());
 
+            // Deep check to prevent re-rendering when state is already identical
             if (
               prev.length === nextList.length &&
               prev.every((item, i) => 
@@ -803,19 +838,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } catch (e) {}
       }
 
-      // Brands (cached)
-      try {
-        const resBrands = await fetch('/api/cms/brands');
-        if (resBrands.ok) {
-          const data = await resBrands.json();
-          if (Array.isArray(data.brands) && data.brands.length > 0) {
-            setBrands(data.brands);
-            try {
-              localStorage.setItem('ls_brands', JSON.stringify(data.brands));
-            } catch (e) {}
+      // Brands (cached, only re-fetch if forceFresh is requested)
+      if (options?.forceFresh) {
+        try {
+          const resBrands = await fetch('/api/cms/brands');
+          if (resBrands.ok) {
+            const data = await resBrands.json();
+            if (Array.isArray(data.brands) && data.brands.length > 0) {
+              setBrands(data.brands);
+              try {
+                localStorage.setItem('ls_brands', JSON.stringify(data.brands));
+              } catch (e) {}
+            }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
 
     } catch (e) {
       console.warn('CMS DB sync fallback to local cache:', e);
@@ -915,36 +952,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setLeads([]);
       }
 
+      // If products state is empty for any reason, restore from localStorage or fallback
       const savedProducts = localStorage.getItem('ls_products');
       if (savedProducts) {
         try {
           const parsed = JSON.parse(savedProducts);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const clean = parsed
-              .filter((p: any) => !isDemoProduct(p))
-              .map(normalizeProduct);
-
-            // Merge with static catalog using normalized case-insensitive keys
-            const mergedMap = new Map<string, Product>();
-            const getProdKey = (p: Product) => (p.sku?.trim().toLowerCase() || p.id?.trim().toLowerCase());
-
-            PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct).forEach(p => {
-              const k = getProdKey(p);
-              if (k) mergedMap.set(k, p);
-            });
-            clean.forEach(p => {
-              const k = getProdKey(p);
-              if (k) mergedMap.set(k, p);
-            });
-            setProducts(Array.from(mergedMap.values()));
-          } else {
-            setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
+            setProducts((prev) => (prev.length > 0 ? prev : parsed.filter((p: any) => !isDemoProduct(p)).map(normalizeProduct)));
           }
-        } catch {
-          setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
-        }
-      } else {
-        setProducts(PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct));
+        } catch (e) {}
       }
 
       const savedInvoices = localStorage.getItem('ls_invoices');
@@ -1166,13 +1182,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       localStorage.setItem('ls_products', JSON.stringify(prods));
       const changes = prods.filter((product) => {
-        const previous = products.find((current) => current.id === product.id);
+        const previous = products.find((current) => current.id === product.id || (product.sku && current.sku === product.sku));
         return previous && (previous.inStock !== product.inStock || previous.stockQuantity !== product.stockQuantity);
       });
       await Promise.all(changes.map((product) => fetch('/api/cms/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: product.id, inStock: product.inStock, stockQuantity: product.stockQuantity }),
+        body: JSON.stringify({ 
+          id: product.id, 
+          sku: product.sku,
+          name: product.name,
+          inStock: product.inStock, 
+          stockQuantity: product.inStock === false ? 0 : (product.stockQuantity || 10) 
+        }),
       })));
     } catch (e) {}
   };
@@ -1618,9 +1640,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateProductInDb = async (id: string, updatedFields: Partial<Product>): Promise<boolean> => {
     try {
-      // 1. Instant local state update
+      const currentProd = products.find((p) => p.id === id || p.sku === id || (p as any).dbId === id);
+      const sku = currentProd?.sku;
+      const name = currentProd?.name;
+      const finalFields: Partial<Product> = { ...updatedFields };
+
+      if (finalFields.inStock === false) {
+        finalFields.stockQuantity = 0;
+      } else if (finalFields.inStock === true && (finalFields.stockQuantity === undefined || finalFields.stockQuantity <= 0)) {
+        finalFields.stockQuantity = (currentProd?.stockQuantity && currentProd.stockQuantity > 0) ? currentProd.stockQuantity : 10;
+      }
+
+      // 1. Instant local state update across all instances
       setProducts((prev) => {
-        const next = prev.map((p) => (p.id === id || p.sku === id ? { ...p, ...updatedFields } : p));
+        const next = prev.map((p) => {
+          const isMatch = p.id === id || 
+            (p as any).dbId === id ||
+            (sku && p.sku && p.sku.toLowerCase() === sku.toLowerCase()) || 
+            (name && p.name && p.name.trim().toLowerCase() === name.trim().toLowerCase());
+          return isMatch ? { ...p, ...finalFields } : p;
+        });
         try {
           localStorage.setItem('ls_products', JSON.stringify(next));
         } catch (e) {}
@@ -1631,7 +1670,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const res = await fetch('/api/cms/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...updatedFields }),
+        body: JSON.stringify({ 
+          id, 
+          sku: sku || (id.startsWith('LS-') || id.startsWith('MON-') || id.startsWith('FT-') || id.startsWith('KB-') ? id : undefined),
+          name, 
+          ...finalFields 
+        }),
       });
 
       if (res.ok) {
@@ -1639,7 +1683,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (data.product) {
           const updatedProd = normalizeProduct(data.product);
           setProducts((prev) => {
-            const next = prev.map((p) => (p.id === updatedProd.id || p.sku === updatedProd.sku ? updatedProd : p));
+            const next = prev.map((p) => {
+              const isMatch = p.id === updatedProd.id || 
+                (p as any).dbId === updatedProd.id ||
+                (updatedProd.sku && p.sku && p.sku.toLowerCase() === updatedProd.sku.toLowerCase()) ||
+                (updatedProd.name && p.name && p.name.trim().toLowerCase() === updatedProd.name.trim().toLowerCase());
+              return isMatch ? updatedProd : p;
+            });
             try { localStorage.setItem('ls_products', JSON.stringify(next)); } catch (e) {}
             return next;
           });

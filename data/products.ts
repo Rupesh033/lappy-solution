@@ -58,7 +58,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/AwgxkLPf.webp"
     ],
     "description": "Epson Ink 003 Black Color - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33095033",
     "rating": 4.6,
@@ -81,7 +81,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/ZPu89Rnb.webp"
     ],
     "description": "Comfortable 337 Toner Cartridge| G&G, Frontech/Lapcare - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33140178",
     "rating": 4.3,
@@ -104,7 +104,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/Opkm4E4p.webp"
     ],
     "description": "Epson Ink T673 Cyan Color - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33105048",
     "rating": 4.8,
@@ -127,7 +127,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/t1qOjfqj.webp"
     ],
     "description": "Epson Ink 003 Yellow Color - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33095034",
     "rating": 4.5,
@@ -150,7 +150,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/RGXkPW7M.webp"
     ],
     "description": "Print Page 158X Toner Cartridge (Print 5000 Pages) for HP 158X Toner Reload Kit for HP Laserjet Tank 1005w, 1020w, MFP 2606sdw, 1020, 1005, 2605sdw, 1604w, 1602, 2602, 2603, 2604, 2606 Series (158X - 1 pc)",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30711001",
     "rating": 4.6,
@@ -173,7 +173,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/u7eiZUSt.webp"
     ],
     "description": "For L3110 /L3101/ L3150 / L4150 / L4160 / L6160 / L6170 / L6190 Printer",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30828938",
     "rating": 4.8,
@@ -196,7 +196,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/1wctA5kj.webp"
     ],
     "description": "BROTHER BT-5000C Ink Bottle (Cyan) - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33095037",
     "rating": 4.1,
@@ -219,7 +219,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/ohYfp2Eb.webp"
     ],
     "description": " For L3110 /L3101/ L3150 / L4150 / L4160 / L6160 / L6170 / L6190 Printer Models",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30828975",
     "rating": 4.7,
@@ -242,7 +242,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/pIWsksev.webp"
     ],
     "description": "<h1>Use for Epson M3140, M3170, M1120, M1140, M1180, M2140 Model Printer</h1>",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30828721",
     "rating": 4,
@@ -265,7 +265,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/uzJ9nWtM.webp"
     ],
     "description": "BROTHER BT-D60BK Ink Bottle (Black) - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30721796",
     "rating": 4.7,
@@ -288,7 +288,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/ZcDMvrg0.webp"
     ],
     "description": "BROTHER BT5000M Ink Bottle (Magenta) - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30721800",
     "rating": 4,
@@ -311,7 +311,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/fy97PaVR.webp"
     ],
     "description": "BROTHER BT-5000C Ink Bottle (yellow) - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30778836",
     "rating": 4.4,
@@ -336,7 +336,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/UIZt7BJi.webp"
     ],
     "description": "HP GT53XL Black Ink Bottle - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30719264",
     "rating": 4.4,
@@ -359,7 +359,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/5Ces5V5e.webp"
     ],
     "description": "Canon PIXMA Gl790 Black colour Bottle - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33105033",
     "rating": 4.9,
@@ -382,7 +382,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/A42vwPTS.webp"
     ],
     "description": "HP GT52 Magenta Original Ink - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33096595",
     "rating": 4.7,
@@ -405,7 +405,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/LI8MyeND.webp"
     ],
     "description": "HP GT52 Yellow Color Ink - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33096592",
     "rating": 4.4,
@@ -428,7 +428,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/xPgsndHM.webp"
     ],
     "description": "HP GT52 Cyan Colour Ink - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33096591",
     "rating": 4,
@@ -451,7 +451,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/iBbPv5fI.webp"
     ],
     "description": "Canon PIXMA GI790 Magenta Ink Bottle - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33105035",
     "rating": 4.8,
@@ -474,7 +474,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/ENmYhSTs.webp"
     ],
     "description": "Canon PIXMA GI790 Cyan Ink Bottle - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33105034",
     "rating": 4.7,
@@ -497,7 +497,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/ZmE0hHcR.webp"
     ],
     "description": "Canon PIXMA GI790 Yellow Ink Bottle - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33105037",
     "rating": 4.8,
@@ -520,7 +520,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/03gEijdP.webp"
     ],
     "description": "Epson 005 120 ml Black Ink Bottle - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33105044",
     "rating": 4.2,
@@ -543,7 +543,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/gOcPBNW5.webp"
     ],
     "description": "Epson Ink T673 Black Color - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33105046",
     "rating": 4.8,
@@ -566,7 +566,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/gGswwjf2.webp"
     ],
     "description": "Epson Ink T673 yellow Color - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33105049",
     "rating": 4.2,
@@ -1243,7 +1243,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/BfL17VDi.webp"
     ],
     "description": "Fingers SuperHit USB Wired Mouse - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30719127",
     "rating": 4.8,
@@ -1339,7 +1339,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/njMVcgDp.webp"
     ],
     "description": "Dell WM118 Wireless Mouse, 2.4 Ghz with USB Nano Receiver, Optical Tracking, 12-Months Battery Life, Ambidextrous 3 Years Warranty",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30719703",
     "rating": 4.1,
@@ -1385,7 +1385,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/CG5dIzvE.webp"
     ],
     "description": "FRONTECH Wired Gaming Keyboard and Mouse Combo with RGB Backlight Effects(KB-0035, Black) - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30721364",
     "rating": 4.5,
@@ -1581,7 +1581,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/2Afzx8mL.webp"
     ],
     "description": "HP M10  Wired Mouse - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33103562",
     "rating": 4.3,
@@ -1699,7 +1699,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/W8K4VdqY.webp"
     ],
     "description": "Lapcare Mini Wireless Keyboard|D-LITE+SILVER - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33143841",
     "rating": 4.1,
@@ -2007,7 +2007,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/AYXTvsFT.webp"
     ],
     "description": "CP PLUS 2MP Full HD IP Indoor Dome Camera Built in Mic | CP-UNC-DA21L3C-Q - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33139340",
     "rating": 4.3,
@@ -2333,7 +2333,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/DeV2dMMp.webp"
     ],
     "description": "HP LaserJet Pro MFP M126nw Multi-function WiFi Monochrome Laser Printer  (Black, Toner Cartridge) - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30719168",
     "rating": 4.5,
@@ -2473,7 +2473,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/M7SqkEEU.webp"
     ],
     "description": "HP Laserjet P1108 Single Function Laser Printer - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30782011",
     "rating": 4.4,
@@ -2567,7 +2567,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/adUxtK8L.webp"
     ],
     "description": "FRONTECH 2.0 USB Multimedia Speakers | SPK-0001 - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33131391",
     "rating": 4.2,
@@ -2590,7 +2590,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/9TXiAGhM.webp"
     ],
     "description": "K7 Total Security, 1 User, 1 Year. - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30736563",
     "rating": 4.8,
@@ -2659,7 +2659,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/q4U37e0g.webp"
     ],
     "description": "Quick Heal Total Security 1 User 1 Year - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30736578",
     "rating": 4.5,
@@ -2682,7 +2682,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/1Npk5X79.webp"
     ],
     "description": "Excess USB Speaker|Trang-XS242 - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33138703",
     "rating": 4.6,
@@ -3636,7 +3636,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/wyybIsFG.webp"
     ],
     "description": "Frontech 12V 4.5 Ah battery - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33104951",
     "rating": 4.4,
@@ -3659,7 +3659,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/aHhnfjwD.webp"
     ],
     "description": "FRONTECH A3 Laminator | LAM-0003 - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-33140120",
     "rating": 4.8,
@@ -3966,7 +3966,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/EOyYYXnL.webp"
     ],
     "description": "15mtr\nUltra HD Super Deluxe HDMI Cable - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30717556",
     "rating": 4.8,
@@ -4477,7 +4477,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/apu25Ioe.webp"
     ],
     "description": "Mantra Mfs 110 - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30779332",
     "rating": 4.9,
@@ -5104,7 +5104,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/ivec93H7.webp"
     ],
     "description": "Laptop Screen Panel Compatible with Hp 15BS 15 BS 15 BS000 15 BS000NF 15 BS000NL - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30715736",
     "rating": 4.5,
@@ -5127,7 +5127,7 @@ const BASE_PRODUCTS: Product[] = [
       "https://cdn.dotpe.in/longtail/store-items/8473996/ntk10feQ.webp"
     ],
     "description": "Compatible Bottom Case Base Cover for Dell Inspiron 15 3521 | 3537 | 5521 | 5537 - 100% Genuine product available with official manufacturer warranty and expert local installation support from Lapiez, Garhwa.",
-    "inStock": true,
+    "inStock": false,
     "stockQuantity": 15,
     "sku": "LS-30715739",
     "rating": 4.9,

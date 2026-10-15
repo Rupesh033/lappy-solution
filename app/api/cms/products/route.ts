@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { hasAdminSession } from '@/lib/adminAuth';
+import { invalidateInitCache } from '@/app/api/cms/init/route';
 
 export async function GET(request: Request) {
   try {
@@ -184,6 +185,7 @@ export async function POST(request: Request) {
       },
     });
 
+    invalidateInitCache();
     return NextResponse.json({ success: true, product: formatProductPayload(product) });
   } catch (error) {
     console.error('Error creating product:', error);
@@ -212,13 +214,27 @@ export async function PUT(request: Request) {
 
     if (data.price !== undefined) data.price = Number(data.price);
     if (data.mrp !== undefined) data.mrp = Number(data.mrp);
-    if (data.inStock !== undefined) data.inStock = Boolean(data.inStock);
-    if (data.stockQuantity !== undefined) {
-      data.stockQuantity = Number(data.stockQuantity);
-      if (data.stockQuantity <= 0 && data.inStock === undefined) {
-        data.inStock = false;
+    
+    // Explicit and consistent out-of-stock handling
+    if (data.inStock !== undefined) {
+      data.inStock = Boolean(data.inStock);
+      if (data.inStock === false) {
+        data.stockQuantity = 0;
       }
     }
+    if (data.stockQuantity !== undefined) {
+      data.stockQuantity = Number(data.stockQuantity);
+      if (data.stockQuantity <= 0) {
+        data.inStock = false;
+        data.stockQuantity = 0;
+      } else if (data.inStock === undefined) {
+        data.inStock = true;
+      }
+    }
+    if (data.inStock === true && (data.stockQuantity === undefined || data.stockQuantity <= 0)) {
+      data.stockQuantity = 10;
+    }
+
     if (data.discount !== undefined) data.discount = Number(data.discount);
     if (data.rating !== undefined) data.rating = Number(data.rating);
     if (data.gstRate !== undefined) data.gstRate = Number(data.gstRate);
@@ -230,14 +246,15 @@ export async function PUT(request: Request) {
         data,
       });
     } catch {
-      // Fallback: search by SKU or slug
+      // Fallback: search by SKU, slug, or matching name (handles legacy ID mismatches)
       const found = await prisma.product.findFirst({
         where: {
           OR: [
             { id },
             { sku: id },
             { slug: id },
-            ...(body.sku ? [{ sku: body.sku }] : [])
+            ...(body.sku ? [{ sku: body.sku }] : []),
+            ...(body.name && typeof body.name === 'string' ? [{ name: { equals: body.name.trim(), mode: 'insensitive' as const } }] : [])
           ]
         }
       });
@@ -251,6 +268,7 @@ export async function PUT(request: Request) {
       }
     }
 
+    invalidateInitCache();
     return NextResponse.json({ success: true, product: formatProductPayload(product) });
   } catch (error) {
     console.error('Error updating product:', error);
@@ -275,6 +293,7 @@ export async function DELETE(request: Request) {
         await prisma.product.delete({ where: { id: found.id } });
       }
     }
+    invalidateInitCache();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting product:', error);
