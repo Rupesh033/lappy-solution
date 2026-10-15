@@ -234,12 +234,12 @@ export const Footer: React.FC = () => {
               </h4>
               <ul className="space-y-2 text-[13px]">
                 <li>
-                  <Link href="/shop?cat=Laptops" className="hover:text-[#2563EB] transition-colors block">
+                  <Link href="/shop?cat=Computer%20%26%20Laptops" className="hover:text-[#2563EB] transition-colors block">
                     Business Laptops
                   </Link>
                 </li>
                 <li>
-                  <Link href="/shop?cat=Computers" className="hover:text-[#2563EB] transition-colors block">
+                  <Link href="/shop?cat=Computer%20%26%20Laptops" className="hover:text-[#2563EB] transition-colors block">
                     Desktop Workstations
                   </Link>
                 </li>
@@ -264,7 +264,7 @@ export const Footer: React.FC = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/shop?cat=Printers" className="hover:text-[#2563EB] transition-colors block">
+                  <Link href="/shop?cat=Printers%20%26%20Accessories" className="hover:text-[#2563EB] transition-colors block">
                     Printers & Toners
                   </Link>
                 </li>

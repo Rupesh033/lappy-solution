@@ -149,9 +149,7 @@ export default function ProductDetailPage() {
       showToast('This product is currently out of stock.');
       return;
     }
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
-    }
+    addToCart(product, quantity);
   };
 
   const handleBuyNow = () => {
@@ -159,9 +157,7 @@ export default function ProductDetailPage() {
       showToast('This product is currently out of stock.');
       return;
     }
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
-    }
+    addToCart(product, quantity);
     router.push('/checkout');
   };
 

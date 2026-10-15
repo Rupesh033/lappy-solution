@@ -288,7 +288,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   <div className="space-y-1">
                     {/* Item 1: Laptops */}
                     <Link
-                      href="/shop?cat=Laptops&condition=refurbished"
+                      href="/shop?cat=Computer%20%26%20Laptops"
                       onClick={() => setActiveNavMenu(null)}
                       className="group flex items-start gap-3 p-2.5 rounded-xl hover:bg-blue-50/80 transition-colors border border-transparent hover:border-blue-200"
                     >
@@ -307,7 +307,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
                     {/* Item 2: Others */}
                     <Link
-                      href="/shop?cat=Refurbished%20Others&condition=refurbished"
+                      href="/shop?cat=Printers%20%26%20Accessories"
                       onClick={() => setActiveNavMenu(null)}
                       className="group flex items-start gap-3 p-2.5 rounded-xl hover:bg-amber-50/80 transition-colors border border-transparent hover:border-amber-200"
                     >
@@ -888,14 +888,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
               {mobileRefurbishedOpen && (
                 <div className="pl-3 py-2 space-y-2 border-l-2 border-amber-300 mt-1 text-xs font-semibold">
                   <Link
-                    href="/shop?cat=Laptops&condition=refurbished"
+                    href="/shop?cat=Computer%20%26%20Laptops"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block py-1 text-gray-800 hover:text-[#1A56DB]"
                   >
                     Refurbished Laptops (HP, Dell, ThinkPad)
                   </Link>
                   <Link
-                    href="/shop?cat=Refurbished%20Others&condition=refurbished"
+                    href="/shop?cat=Printers%20%26%20Accessories"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block py-1 text-gray-800 hover:text-amber-800"
                   >

@@ -97,7 +97,7 @@ export default function CartPage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/shop?cat=Accessories"
+                href="/shop?cat=Laptop%20Parts%20%26%20Spares"
                 className="h-10 px-4 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 font-bold text-xs flex items-center gap-2 transition-colors"
               >
                 <span>Laptop Spares & Parts</span>

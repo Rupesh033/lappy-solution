@@ -53,8 +53,12 @@ export async function GET(request: Request) {
   const now = Date.now();
   const ifNoneMatch = request.headers.get('if-none-match');
 
-  // 1. Serve from in-memory cache if warm
-  if (inMemoryCache && (now - inMemoryCache.cachedAt) < CACHE_TTL_MS) {
+  // 1. Check if client explicitly requests fresh data (e.g., after CMS edit or manual refresh)
+  const url = new URL(request.url);
+  const isFreshRequested = url.searchParams.get('fresh') === 'true' || request.headers.get('cache-control')?.includes('no-cache');
+
+  // Serve from in-memory cache if warm and fresh data is not requested
+  if (!isFreshRequested && inMemoryCache && (now - inMemoryCache.cachedAt) < CACHE_TTL_MS) {
     if (ifNoneMatch && ifNoneMatch === inMemoryCache.etag) {
       return new NextResponse(null, { status: 304 });
     }

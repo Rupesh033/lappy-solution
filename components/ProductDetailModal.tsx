@@ -51,14 +51,18 @@ export const ProductDetailModal: React.FC = () => {
 
   const currentImg = activeImage || imagesList[0] || selectedProduct.image;
   const isWishlisted = wishlistIds.includes(selectedProduct.id);
+  const isOutOfStock = selectedProduct.inStock === false || (selectedProduct.stockQuantity !== undefined && selectedProduct.stockQuantity !== null && Number(selectedProduct.stockQuantity) <= 0);
 
   const handleWhatsApp = () => {
     const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
-    const text = `Hello ${storeTitle}, I want to inquire about:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nCan I inspect or pick this up at your Chiniya Road showroom?`;
+    const text = isOutOfStock
+      ? `Hello ${storeTitle}, I am interested in:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nThis product is currently marked as Out of Stock on your website. When will it be available for purchase at your showroom?`
+      : `Hello ${storeTitle}, I want to inquire about:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nCan I inspect or pick this up at your Chiniya Road showroom?`;
     window.open(`https://wa.me/${siteSettings?.whatsapp || STORE_INFO.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) return;
     addToCart(selectedProduct);
     setSelectedProduct(null);
     router.push('/checkout');
@@ -87,6 +91,11 @@ export const ProductDetailModal: React.FC = () => {
           {/* Gallery (5 cols) */}
           <div className="md:col-span-5 space-y-3">
             <div className="relative aspect-square rounded-xl bg-slate-50 p-4 border border-slate-200 flex items-center justify-center overflow-hidden">
+              {isOutOfStock && (
+                <span className="absolute top-3 left-3 z-10 text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white px-2.5 py-1 rounded shadow-xs">
+                  Out of Stock
+                </span>
+              )}
               <img 
                 src={currentImg} 
                 alt={selectedProduct.name}
@@ -114,13 +123,20 @@ export const ProductDetailModal: React.FC = () => {
           {/* Details (7 cols) */}
           <div className="md:col-span-7 space-y-4">
             <div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
                   {selectedProduct.brand} • {selectedProduct.category}
                 </span>
-                <span className="text-[11px] font-mono text-slate-400">
-                  SKU: {selectedProduct.sku}
-                </span>
+                <div className="flex items-center gap-2">
+                  {isOutOfStock && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                      OUT OF STOCK
+                    </span>
+                  )}
+                  <span className="text-[11px] font-mono text-slate-400">
+                    SKU: {selectedProduct.sku}
+                  </span>
+                </div>
               </div>
 
               <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-2 leading-snug">
@@ -148,7 +164,7 @@ export const ProductDetailModal: React.FC = () => {
                     ₹{selectedProduct.mrp.toLocaleString('en-IN')}
                   </span>
                 )}
-                {selectedProduct.discount > 0 && (
+                {selectedProduct.discount > 0 && !isOutOfStock && (
                   <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
                     {selectedProduct.discount}% OFF
                   </span>
@@ -192,41 +208,68 @@ export const ProductDetailModal: React.FC = () => {
 
             {/* Buttons */}
             <div className="space-y-2 pt-2">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => addToCart(selectedProduct)}
-                  className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-xs"
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  <span>Add to Cart</span>
-                </button>
+              {isOutOfStock ? (
+                <div className="space-y-2">
+                  <div className="h-10 rounded-xl bg-gray-100 border border-gray-200 text-gray-400 font-bold text-xs flex items-center justify-center gap-2 cursor-not-allowed select-none">
+                    <span>Currently Out of Stock at Garhwa Showroom</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleWhatsApp}
+                      className="flex-1 h-9 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Inquire Availability on WhatsApp</span>
+                    </button>
+                    <Link
+                      href={`/product/${selectedProduct.id}`}
+                      onClick={() => setSelectedProduct(null)}
+                      className="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-colors"
+                    >
+                      <span>Full Page</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => addToCart(selectedProduct)}
+                      className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-xs"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>Add to Cart</span>
+                    </button>
 
-                <button
-                  onClick={handleBuyNow}
-                  className="h-10 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
-                >
-                  <span>Buy Now</span>
-                </button>
-              </div>
+                    <button
+                      onClick={handleBuyNow}
+                      className="h-10 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <span>Buy Now</span>
+                    </button>
+                  </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleWhatsApp}
-                  className="flex-1 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Inquire on WhatsApp</span>
-                </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleWhatsApp}
+                      className="flex-1 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Inquire on WhatsApp</span>
+                    </button>
 
-                <Link
-                  href={`/product/${selectedProduct.id}`}
-                  onClick={() => setSelectedProduct(null)}
-                  className="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-colors"
-                >
-                  <span>Full Page</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+                    <Link
+                      href={`/product/${selectedProduct.id}`}
+                      onClick={() => setSelectedProduct(null)}
+                      className="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-colors"
+                    >
+                      <span>Full Page</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Guarantees */}

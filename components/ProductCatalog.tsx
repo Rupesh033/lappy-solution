@@ -19,6 +19,64 @@ interface ProductCatalogProps {
   initialBrand?: string;
 }
 
+// Helper to map legacy / abbreviated category slugs to canonical showroom category names
+function normalizeToCanonicalCategory(query: string, availableCategories: string[]): string | null {
+  if (!query || query === 'All' || query === 'All Products') return null;
+  const q = query.trim().toLowerCase();
+  
+  // 1. Direct exact match (case-insensitive)
+  const direct = availableCategories.find(c => c.toLowerCase() === q);
+  if (direct) return direct;
+
+  // 2. Direct containment match
+  const contains = availableCategories.find(c => c.toLowerCase().includes(q) || q.includes(c.toLowerCase()));
+  if (contains) return contains;
+
+  // 3. Known taxonomy aliases
+  if (['laptops', 'laptop', 'computers', 'computer', 'desktops', 'desktop', 'pc'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('computer'));
+    if (found) return found;
+  }
+  if (['storage', 'ssd', 'hdd', 'ram', 'storage & memory', 'storage & parts'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('storage'));
+    if (found) return found;
+  }
+  if (['printers', 'printer', 'printers & parts', 'printers & accessories'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('printer'));
+    if (found) return found;
+  }
+  if (['cctv', 'cctv & security', 'cctv & security surveillance', 'surveillance', 'security'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('cctv') || c.toLowerCase().includes('surveillance'));
+    if (found) return found;
+  }
+  if (['peripherals', 'computer peripherals', 'input devices', 'keyboards', 'mouse'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('keyboard') || c.toLowerCase().includes('input'));
+    if (found) return found;
+  }
+  if (['antivirus & software', 'antivirus', 'software'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('software') || c.toLowerCase().includes('antivirus'));
+    if (found) return found;
+  }
+  if (['laptop parts', 'laptop spares', 'laptop parts & spares', 'accessories'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('laptop parts') || c.toLowerCase().includes('spares'));
+    if (found) return found;
+  }
+  if (['displays', 'monitors', 'monitor'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('monitor') || c.toLowerCase().includes('display'));
+    if (found) return found;
+  }
+  if (['networking', 'network', 'wifi', 'wi-fi', 'routers', 'router'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('network') || c.toLowerCase().includes('wifi'));
+    if (found) return found;
+  }
+  if (['power', 'batteries', 'battery', 'adapters', 'adapter', 'chargers', 'smps', 'ups'].includes(q)) {
+    const found = availableCategories.find(c => c.toLowerCase().includes('power') || c.toLowerCase().includes('batteries') || c.toLowerCase().includes('adapter'));
+    if (found) return found;
+  }
+
+  return null;
+}
+
 export const ProductCatalog: React.FC<ProductCatalogProps> = ({ 
   initialCategory = 'All',
   initialSubcategory = 'All',
@@ -51,10 +109,14 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
   const currentSortLabel = sortOptions.find(o => o.id === sortBy)?.label || 'Featured Deals';
 
   useEffect(() => {
-    if (initialCategory) {
+    if (initialCategory && initialCategory !== 'All' && initialCategory !== 'All Products') {
+      const allCatNames = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+      const canonical = normalizeToCanonicalCategory(initialCategory, allCatNames);
+      setSelectedCategory(canonical || initialCategory);
+    } else if (initialCategory) {
       setSelectedCategory(initialCategory);
     }
-  }, [initialCategory]);
+  }, [initialCategory, products]);
 
   useEffect(() => {
     if (initialSubcategory) {
@@ -223,7 +285,8 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
       // Category Match
       if (selectedCategory !== 'All' && selectedCategory !== 'All Products') {
         const catLower = selectedCategory.toLowerCase();
-        const matchesDirect = (p.category || '').toLowerCase() === catLower;
+        const pCatLower = (p.category || '').toLowerCase();
+        const matchesDirect = pCatLower === catLower || pCatLower.includes(catLower) || catLower.includes(pCatLower);
         const matchesSub = (p.subcategory || '').toLowerCase().includes(catLower);
         const matchesName = p.name.toLowerCase().includes(catLower);
         if (!matchesDirect && !matchesSub && !matchesName) {
@@ -248,8 +311,11 @@ export const ProductCatalog: React.FC<ProductCatalogProps> = ({
           return false;
         }
       }
-      if (onlyInStock && !p.inStock) {
-        return false;
+      if (onlyInStock) {
+        const isAvailable = p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity === null || Number(p.stockQuantity) > 0);
+        if (!isAvailable) {
+          return false;
+        }
       }
       if (p.price > maxPrice) {
         return false;

@@ -202,7 +202,7 @@ interface StoreContextType {
   setAccountTab: (tab: 'orders' | 'cart' | 'wishlist') => void;
   toast: string | null;
   showToast: (msg: string) => void;
-  addToCart: (p: Product) => void;
+  addToCart: (p: Product, qty?: number) => void;
   updateQuantity: (id: string, qty: number) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
@@ -239,7 +239,7 @@ interface StoreContextType {
   addBlogPost: (post: Partial<CMSBlogPost>) => Promise<CMSBlogPost>;
   editBlogPost: (post: CMSBlogPost) => Promise<void>;
   deleteBlogPost: (id: string) => Promise<void>;
-  syncWithDatabase: () => Promise<void>;
+  syncWithDatabase: (options?: { forceFresh?: boolean }) => Promise<void>;
   customer: User | null;
   isCustomerLoading: boolean;
   signInWithGoogle: (redirectTo?: string) => Promise<void>;
@@ -634,10 +634,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 
   // Synchronize state with Database via unified /api/cms/init endpoint
-  const syncWithDatabase = useCallback(async () => {
+  const syncWithDatabase = useCallback(async (options?: { forceFresh?: boolean }) => {
     try {
-      // 1. Unified Fast Batch Fetch (Edge CDN Cached)
-      const resInit = await fetch('/api/cms/init');
+      // 1. Unified Fast Batch Fetch (Edge CDN Cached / Force Fresh on Admin updates)
+      const url = options?.forceFresh ? '/api/cms/init?fresh=true' : '/api/cms/init';
+      const resInit = await fetch(url);
       if (resInit.ok) {
         const initData = await resInit.json();
 
@@ -998,25 +999,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     syncWithDatabase();
   }, [syncWithDatabase]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, qty: number = 1) => {
+    const isOutOfStock = product.inStock === false || (product.stockQuantity !== undefined && product.stockQuantity !== null && Number(product.stockQuantity) <= 0);
+    if (isOutOfStock) {
+      showToast(`Sorry, "${product.name}" is currently Out of Stock!`);
+      return;
+    }
+
+    const addCount = Math.max(1, qty);
     setCart((prev) => {
       const idx = prev.findIndex((item) => item.product.id === product.id);
       let updated: CartItem[];
       if (idx >= 0) {
         updated = [...prev];
-        updated[idx].quantity += 1;
+        updated[idx].quantity += addCount;
       } else {
-        updated = [{ product, quantity: 1 }, ...prev];
+        updated = [{ product, quantity: addCount }, ...prev];
       }
       try {
         localStorage.setItem('ls_cart', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
-    showToast(`Added "${product.name}" to cart!`);
+    showToast(addCount > 1 ? `Added ${addCount}x "${product.name}" to cart!` : `Added "${product.name}" to cart!`);
   };
 
   const updateQuantity = (id: string, qty: number) => {
+    if (qty <= 0) {
+      removeFromCart(id);
+      return;
+    }
     const updated = cart.map((item) => {
       if (item.product.id === id) {
         return { ...item, quantity: qty };

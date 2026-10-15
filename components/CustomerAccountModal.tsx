@@ -36,6 +36,18 @@ export const CustomerAccountModal: React.FC = () => {
   const totalCartCount = cart.reduce((s, i) => s + i.quantity, 0);
   const totalCartAmount = cart.reduce((s, i) => s + (i.product.price * i.quantity), 0);
 
+  const customerOrders = React.useMemo(() => {
+    if (!customer) return orders;
+    const email = customer.email?.toLowerCase();
+    const phone = customer.phone;
+    return orders.filter((o: any) => {
+      if (o.customerId && o.customerId === customer.id) return true;
+      if (email && (o.customerEmail?.toLowerCase() === email || o.email?.toLowerCase() === email || o.customer?.email?.toLowerCase() === email)) return true;
+      if (phone && (o.customerPhone === phone || o.phone === phone)) return true;
+      return false;
+    });
+  }, [customer, orders]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div 
@@ -133,7 +145,7 @@ export const CustomerAccountModal: React.FC = () => {
               }`}
             >
               <Package className="w-4 h-4" />
-              <span>Orders ({orders.length})</span>
+              <span>Orders ({customerOrders.length})</span>
             </button>
 
             <button
@@ -174,8 +186,8 @@ export const CustomerAccountModal: React.FC = () => {
         {/* Orders list */}
         {accountTab === 'orders' && (
           <div className="space-y-3">
-            {orders.length > 0 ? (
-              orders.map((ord: any) => (
+            {customerOrders.length > 0 ? (
+              customerOrders.map((ord: any) => (
                 <div key={ord.orderId} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
