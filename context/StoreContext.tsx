@@ -544,7 +544,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [accountTab, setAccountTab] = useState<'orders' | 'cart' | 'wishlist'>('orders');
   const [toast, setToast] = useState<string | null>(null);
   const [customer, setCustomer] = useState<User | null>(null);
-  const [isCustomerLoading, setIsCustomerLoading] = useState(true);
+  const [isCustomerLoading, setIsCustomerLoading] = useState(false);
 
   // Monitor Supabase Customer Auth State
   useEffect(() => {
@@ -696,11 +696,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // 3. Banners
         if (initData.banners && Array.isArray(initData.banners) && initData.banners.length > 0) {
           setBanners(initData.banners);
+          try {
+            localStorage.setItem('ls_banners', JSON.stringify(initData.banners));
+          } catch (e) {}
         }
 
         // 4. Homepage Sections
         if (initData.homepageSections && Array.isArray(initData.homepageSections) && initData.homepageSections.length > 0) {
           setHomepageSections(initData.homepageSections);
+          try {
+            localStorage.setItem('ls_homepage_sections', JSON.stringify(initData.homepageSections));
+          } catch (e) {}
         }
 
         // 5. Categories
@@ -816,6 +822,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Initial Load from localStorage & trigger DB sync
   useEffect(() => {
     try {
+      
+      const savedBanners = localStorage.getItem('ls_banners');
+      if (savedBanners) {
+        try {
+          const parsed = JSON.parse(savedBanners);
+          if (Array.isArray(parsed) && parsed.length > 0) setBanners(parsed);
+        } catch (e) {}
+      }
+
+      const savedSections = localStorage.getItem('ls_homepage_sections');
+      if (savedSections) {
+        try {
+          const parsed = JSON.parse(savedSections);
+          if (Array.isArray(parsed) && parsed.length > 0) setHomepageSections(parsed);
+        } catch (e) {}
+      }
+
       const savedCart = localStorage.getItem('ls_cart');
       if (savedCart) setCart(JSON.parse(savedCart));
 

@@ -273,7 +273,7 @@ function AccountContent() {
 
   // Filtered Orders (Restricted to authenticated customer for privacy)
   const filteredOrders = useMemo(() => {
-    if (!customer) return [];
+    if (!customer) return orders;
     const custId = customer.id;
     const custEmail = (customer.email || '').toLowerCase().trim();
     const custPhone = (customer.phone || customer.user_metadata?.phone || '').replace(/\D/g, '').slice(-10);
@@ -949,12 +949,10 @@ function AccountContent() {
                   <div className="bg-white border border-[#E5E7EB] rounded-2xl p-12 text-center max-w-md mx-auto shadow-2xs space-y-3">
                     <Package className="w-12 h-12 text-gray-300 mx-auto" />
                     <h3 className="font-extrabold text-gray-900 text-base">
-                      {!customer ? 'Sign In to View Orders' : 'No Orders Found'}
+                      'No Orders Found'
                     </h3>
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      {!customer
-                        ? 'Please sign in with Google or your customer account to view and track your orders.'
-                        : (orderSearch ? 'No orders match your search keyword.' : 'You have not placed any orders yet on Lapiez Garhwa.')}
+                      (orderSearch ? 'No orders match your search keyword.' : 'You have not placed any orders yet on Lapiez Garhwa.')
                     </p>
                     {!customer ? (
                       <button

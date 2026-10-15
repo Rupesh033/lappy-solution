@@ -163,79 +163,7 @@ export default function CheckoutPage() {
     }
   }, [customer]);
 
-  // Google GSI Instant Sign-in for Checkout
-  useEffect(() => {
-    if (customer) return;
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '825902095033-m9afrcqfcf63h0e0j6g2eb10811e5828.apps.googleusercontent.com';
-    
-    const parseJwt = (token: string) => {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split('')
-            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-            .join('')
-        );
-        return JSON.parse(jsonPayload);
-      } catch {
-        return null;
-      }
-    };
-
-    const initCheckoutGsi = () => {
-      const google = (window as any).google;
-      if (google?.accounts?.id) {
-        try {
-          google.accounts.id.initialize({
-            client_id: clientId,
-            callback: (response: any) => {
-              if (response?.credential) {
-                const payload = parseJwt(response.credential);
-                if (payload?.email) {
-                  loginCustomerManually({
-                    id: payload.sub,
-                    email: payload.email,
-                    name: payload.name,
-                    picture: payload.picture,
-                  });
-                  setCustomerName(payload.name || '');
-                  setEmail(payload.email || '');
-                  showToast(`Welcome ${payload.name || payload.email}! Signed in successfully.`);
-                }
-              }
-            },
-          });
-
-          const btnEl = document.getElementById('checkout-google-gsi');
-          if (btnEl) {
-            google.accounts.id.renderButton(btnEl, {
-              theme: 'outline',
-              size: 'large',
-              width: '280',
-              text: 'continue_with',
-              shape: 'rectangular',
-            });
-          }
-        } catch (err) {
-          console.log('Google Identity checkout init note:', err);
-        }
-      }
-    };
-
-    if ((window as any).google?.accounts?.id) {
-      initCheckoutGsi();
-    } else {
-      const timer = setInterval(() => {
-        if ((window as any).google?.accounts?.id) {
-          clearInterval(timer);
-          initCheckoutGsi();
-        }
-      }, 500);
-      return () => clearInterval(timer);
-    }
-  }, [customer, loginCustomerManually, showToast]);
+  // Google GSI removed for direct frictionless checkout
 
   const handleFastCustomerSignIn = (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,10 +191,7 @@ export default function CheckoutPage() {
 
   const handleValidateStep1 = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customer) {
-      showToast('Please sign in to your customer account to continue checkout');
-      return;
-    }
+    // Direct frictionless checkout without login requirement
     if (!customerName.trim() || !phone.trim()) {
       showToast('Please enter your full name and phone number');
       return;
@@ -280,19 +205,13 @@ export default function CheckoutPage() {
   };
 
   const handleProceedToPayment = () => {
-    if (!customer) {
-      showToast('Please sign in to your customer account to continue');
-      return;
-    }
+    // Direct proceed to payment
     setStep(3);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleFinalOrderSubmit = async () => {
-    if (!customer) {
-      showToast('Please sign in to your customer account before placing an order');
-      return;
-    }
+    // Direct order placement without login restriction
     if (paymentMethod === 'upi_qr') {
       if (isTimerExpired) {
         showToast('UPI payment session timed out. Please tap "Regenerate QR & Restart Timer" to proceed.');
@@ -312,10 +231,10 @@ export default function CheckoutPage() {
 
     const newOrder = {
       orderId: tempOrderId,
-      customerId: customer.id,
+      customerId: customer?.id || `cust-${Date.now()}`,
       customerName,
       phone,
-      email: email || customer.email || 'customer@lapiez.in',
+      email: email || customer?.email || 'customer@lapiez.in',
       address: fullAddress,
       deliveryType,
       items: cart.map(item => ({
@@ -445,121 +364,10 @@ export default function CheckoutPage() {
           {/* Left Column: Form & Payment Systems (7 Cols) */}
           <div className="lg:col-span-7 space-y-6">
             
-            {/* If Customer is NOT Signed In: Mandatory Sign-In Gate */}
-            {!customer ? (
-              <div className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in duration-300">
-                <div className="flex items-start gap-4 pb-4 border-b border-slate-100">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#1A56DB] flex-shrink-0">
-                    <Lock className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 inline-block mb-1">
-                      Mandatory Step
-                    </span>
-                    <h2 className="text-lg sm:text-xl font-black text-gray-900">
-                      Sign In Required to Complete Purchase
-                    </h2>
-                    <p className="text-xs text-gray-500 mt-1">
-                      To protect your order, enable showroom warranty verification, and receive genuine GST tax bills, customer authentication is strictly required before placing an order.
-                    </p>
-                  </div>
-                </div>
+                          <>
 
-                {/* Option 1: Google One-Tap / Identity Sign-In */}
-                <div className="space-y-3">
-                  <span className="text-xs font-bold text-gray-700 block">
-                    Instant 1-Click Verification:
-                  </span>
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-3">
-                    <div id="checkout-google-gsi" className="min-h-[44px] flex items-center justify-center"></div>
-                    <span className="text-[11px] text-gray-400">
-                      Sign in instantly with your verified Google Account
-                    </span>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="relative flex py-1 items-center">
-                  <div className="flex-grow border-t border-gray-200"></div>
-                  <span className="flex-shrink mx-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                    Or Sign In with Mobile Number
-                  </span>
-                  <div className="flex-grow border-t border-gray-200"></div>
-                </div>
-
-                {/* Option 2: Fast Mobile & Name Sign-In Form */}
-                <form onSubmit={handleFastCustomerSignIn} className="space-y-4">
-                  {fastSignInError && (
-                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      <span>{fastSignInError}</span>
-                    </div>
-                  )}
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-700">Your Full Name *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Ramesh Singh"
-                      value={fastSignInName}
-                      onChange={(e) => setFastSignInName(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:bg-white"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-700">10-Digit Mobile / WhatsApp Number *</label>
-                    <input
-                      type="tel"
-                      required
-                      maxLength={10}
-                      placeholder="e.g. 9876543210"
-                      value={fastSignInPhone}
-                      onChange={(e) => setFastSignInPhone(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:bg-white"
-                    />
-                    <span className="text-[10px] text-gray-400 block">
-                      Order confirmations and tracking alerts will be sent to this number.
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-700">Email Address (Optional for PDF Bill)</label>
-                    <input
-                      type="email"
-                      placeholder="e.g. ramesh@example.com"
-                      value={fastSignInEmail}
-                      onChange={(e) => setFastSignInEmail(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:bg-white"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full h-12 rounded-xl bg-[#1A56DB] hover:bg-[#1545B0] text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-[0.99]"
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    <span>Sign In & Continue to Delivery Details</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </form>
-
-                {/* Trust Badges */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-gray-400 flex-wrap gap-2">
-                  <span className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    100% Privacy Protected
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Store className="w-3.5 h-3.5 text-blue-600" />
-                    Garhwa Showroom Verified
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <>
                 {/* Verified Customer Status Bar */}
+                {customer ? (
                 <div className="rounded-2xl bg-white border border-emerald-200 p-4 shadow-2xs flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
@@ -588,6 +396,7 @@ export default function CheckoutPage() {
                     Switch Account
                   </button>
                 </div>
+                ) : null}
 
                 {/* STEP 1: Customer & Delivery Address Form */}
                 {step === 1 && (
@@ -1246,7 +1055,6 @@ export default function CheckoutPage() {
               </div>
             )}
           </>
-        )}
 
           </div>
 

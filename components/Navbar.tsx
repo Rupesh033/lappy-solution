@@ -477,7 +477,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             <Link
               href="/account"
               className="p-2 rounded-full text-gray-600 hover:text-[#1A56DB] hover:bg-gray-100 transition-colors"
-              title={customer ? `Account (${customer.email})` : 'Account & Sign In'}
+              title="My Orders & Wishlist"
             >
               {customer?.user_metadata?.avatar_url ? (
                 <img 
