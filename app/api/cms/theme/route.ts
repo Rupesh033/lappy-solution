@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hasAdminSession } from '@/lib/adminAuth';
+import { invalidateInitCache } from '@/app/api/cms/init/route';
 
 export async function GET() {
   try {
@@ -26,6 +27,7 @@ export async function PUT(request: Request) {
       update: safeTheme,
       create: { id: 'default', ...safeTheme },
     });
+    invalidateInitCache();
     return NextResponse.json({ success: true, themeSettings: updated });
   } catch (error) {
     console.error('Error updating theme settings:', error);

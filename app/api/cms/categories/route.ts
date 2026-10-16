@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hasAdminSession } from '@/lib/adminAuth';
+import { invalidateInitCache } from '@/app/api/cms/init/route';
 import { CATEGORIES } from '@/data/categories';
 
 // Helper to seed categories & subcategories from default taxonomy if empty
@@ -140,6 +141,7 @@ export async function PUT(request: Request) {
           });
         }
       }
+      invalidateInitCache();
       return NextResponse.json({ success: true, message: 'Categories updated successfully' });
     }
 
@@ -161,6 +163,7 @@ export async function PUT(request: Request) {
       data: updateData,
     });
 
+    invalidateInitCache();
     return NextResponse.json({ success: true, category });
   } catch (error) {
     console.error('Error updating category:', error);
@@ -185,6 +188,7 @@ export async function DELETE(request: Request) {
       where: { id },
     });
 
+    invalidateInitCache();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting category:', error);

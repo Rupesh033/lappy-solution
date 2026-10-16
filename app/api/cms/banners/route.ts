@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hasAdminSession } from '@/lib/adminAuth';
+import { invalidateInitCache } from '@/app/api/cms/init/route';
 
 export async function GET() {
   try {
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     const banner = await prisma.banner.create({
       data: body,
     });
+    invalidateInitCache();
     return NextResponse.json({ success: true, banner });
   } catch (error) {
     console.error('Error creating banner:', error);
@@ -37,6 +39,7 @@ export async function PUT(request: Request) {
       where: { id },
       data,
     });
+    invalidateInitCache();
     return NextResponse.json({ success: true, banner });
   } catch (error) {
     console.error('Error updating banner:', error);
@@ -52,6 +55,7 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
     await prisma.banner.delete({ where: { id } });
+    invalidateInitCache();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting banner:', error);

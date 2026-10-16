@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hasAdminSession } from '@/lib/adminAuth';
+import { invalidateInitCache } from '@/app/api/cms/init/route';
 
 export async function GET() {
   try {
@@ -113,6 +114,7 @@ export async function PUT(request: Request) {
       updatedAt: updatedSite.updatedAt,
     } : null;
 
+    invalidateInitCache();
     return NextResponse.json({
       success: true,
       siteSettings: safeSiteResponse,

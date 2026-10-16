@@ -46,8 +46,8 @@ export default function ProductDetailPage() {
     );
     if (foundInStore) return foundInStore;
 
-    // Check static catalog fallback
-    if (staticItem) return staticItem;
+    // Check static catalog fallback only if store products haven't loaded yet
+    if (products.length === 0 && staticItem) return staticItem;
 
     return dbProduct || undefined;
   }, [productId, products, dbProduct]);

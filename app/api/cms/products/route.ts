@@ -53,33 +53,14 @@ export async function GET(request: Request) {
       return formatProductPayload(p, rich);
     });
 
-    // If query is for full or filtered catalog list (not a specific single product lookup),
-    // ensure any static catalog products not yet in the DB are seamlessly included
-    if (!id && !slug && !limit) {
-      const seenSkus = new Set(enrichedProducts.map(p => p.sku?.trim().toLowerCase()).filter(Boolean));
-      const seenIds = new Set(enrichedProducts.map(p => p.id?.trim().toLowerCase()).filter(Boolean));
-
-      for (const staticProd of PRODUCTS) {
-        const skuKey = staticProd.sku?.trim().toLowerCase();
-        const idKey = staticProd.id?.trim().toLowerCase();
-        if ((!skuKey || !seenSkus.has(skuKey)) && (!idKey || !seenIds.has(idKey))) {
-          if (category && category !== 'All' && category !== 'All Products') {
-            if (staticProd.category?.toLowerCase() !== category.toLowerCase()) continue;
-          }
-          if (search) {
-            const q = search.toLowerCase();
-            const matches = staticProd.name.toLowerCase().includes(q) ||
-              staticProd.brand.toLowerCase().includes(q) ||
-              staticProd.specs?.toLowerCase().includes(q) ||
-              staticProd.sku?.toLowerCase().includes(q);
-            if (!matches) continue;
-          }
-          enrichedProducts.push(formatProductPayload(staticProd));
-        }
-      }
+    // If database returned products, DB is the authoritative catalog.
+    // Only if DB returned 0 products (offline/unseeded), fallback to static PRODUCTS.
+    let finalProducts = enrichedProducts;
+    if (finalProducts.length === 0 && !id && !slug && !limit) {
+      finalProducts = PRODUCTS.map(p => formatProductPayload(p));
     }
 
-    return NextResponse.json({ products: enrichedProducts });
+    return NextResponse.json({ products: finalProducts });
   } catch (error) {
     console.error('Error fetching products from DB, serving static fallback:', error);
     // Fallback to static PRODUCTS
@@ -283,18 +264,28 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
+    const matchFilter: Prisma.ProductWhereInput = {
+      OR: [
+        { id },
+        { sku: id },
+        { slug: id }
+      ]
+    };
+
     try {
-      await prisma.product.delete({ where: { id } });
-    } catch {
-      const found = await prisma.product.findFirst({
-        where: { OR: [{ id }, { sku: id }, { slug: id }] }
+      await prisma.product.deleteMany({
+        where: matchFilter
       });
-      if (found) {
-        await prisma.product.delete({ where: { id: found.id } });
-      }
+    } catch (dbErr) {
+      console.warn('Prisma hard delete failed, marking status deleted:', dbErr);
+      await prisma.product.updateMany({
+        where: matchFilter,
+        data: { status: 'deleted' }
+      }).catch(() => {});
     }
+
     invalidateInitCache();
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {
     console.error('Error deleting product:', error);
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hasAdminSession } from '@/lib/adminAuth';
+import { invalidateInitCache } from '@/app/api/cms/init/route';
 
 export async function GET() {
   try {
@@ -41,6 +42,7 @@ export async function PUT(request: Request) {
       const updated = await prisma.homepageSection.findMany({
         orderBy: { position: 'asc' },
       });
+      invalidateInitCache();
       return NextResponse.json({ success: true, sections: updated });
     }
 
@@ -67,6 +69,7 @@ export async function PUT(request: Request) {
       orderBy: { position: 'asc' },
     });
 
+    invalidateInitCache();
     return NextResponse.json({ success: true, sections: updated });
   } catch (error) {
     console.error('Error updating homepage sections:', error);

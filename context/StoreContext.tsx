@@ -748,36 +748,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
 
           setProducts((prev) => {
-            const canonicalKey = (p: Product) => (p.sku?.trim().toLowerCase() || p.name?.trim().toLowerCase() || p.id?.trim().toLowerCase());
-            const mergedMap = new Map<string, Product>();
-
-            // 1. Populate static catalog with authoritative DB overrides applied immediately
-            PRODUCTS.filter(p => !isDemoProduct(p)).map(normalizeProduct).forEach(p => {
-              const matchedDb = (p.sku && dbBySku.get(p.sku.trim().toLowerCase())) || 
-                (p.name && dbByName.get(p.name.trim().toLowerCase())) || 
-                (p.id && dbById.get(p.id.trim().toLowerCase()));
-              const authoritative = matchedDb || p;
-              const k = canonicalKey(authoritative);
-              if (k) mergedMap.set(k, authoritative);
-            });
-
-            // 2. Overlay previous client state with DB overrides applied
-            prev.forEach(p => {
-              const matchedDb = (p.sku && dbBySku.get(p.sku.trim().toLowerCase())) || 
-                (p.name && dbByName.get(p.name.trim().toLowerCase())) || 
-                (p.id && dbById.get(p.id.trim().toLowerCase()));
-              const authoritative = matchedDb || p;
-              const k = canonicalKey(authoritative);
-              if (k) mergedMap.set(k, authoritative);
-            });
-
-            // 3. Ensure all DB products are present
-            cleanProds.forEach((p: Product) => {
-              const k = canonicalKey(p);
-              if (k) mergedMap.set(k, p);
-            });
-
-            const nextList = Array.from(mergedMap.values());
+            const nextList = cleanProds;
 
             // Deep check to prevent re-rendering when state is already identical
             if (
@@ -1573,6 +1544,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const res = await fetch('/api/cms/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(prod),
       });
       if (res.ok) {
@@ -1626,15 +1598,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const deleteProductFromDb = async (id: string) => {
     try {
-      const res = await fetch(`/api/cms/products?id=${encodeURIComponent(id)}`, {
+      const prodToDelete = products.find(p => p.id === id || p.sku === id || (p as any).dbId === id);
+      const sku = prodToDelete?.sku;
+      const targetId = prodToDelete?.id || id;
+
+      // 1. Instant optimistic state & localStorage update so UI updates immediately
+      setProducts((prev) => {
+        const next = prev.filter((p) => 
+          p.id !== id && 
+          p.id !== targetId && 
+          (p as any).dbId !== id && 
+          (p as any).dbId !== targetId && 
+          (!sku || !p.sku || p.sku.toLowerCase() !== sku.toLowerCase())
+        );
+        try { 
+          localStorage.setItem('ls_products', JSON.stringify(next)); 
+        } catch (e) {}
+        return next;
+      });
+
+      // 2. Persist delete to database
+      const res = await fetch(`/api/cms/products?id=${encodeURIComponent(targetId)}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (res.ok) {
-        setProducts((prev) => prev.filter((p) => p.id !== id));
-        showToast('Product deleted from database!');
+        showToast('Product permanently deleted from database!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || 'Product deleted locally');
       }
     } catch (e) {
       console.error('Failed to delete product:', e);
+      showToast('Product deleted locally');
     }
   };
 
@@ -1670,6 +1666,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const res = await fetch('/api/cms/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ 
           id, 
           sku: sku || (id.startsWith('LS-') || id.startsWith('MON-') || id.startsWith('FT-') || id.startsWith('KB-') ? id : undefined),
