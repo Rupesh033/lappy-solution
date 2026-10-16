@@ -1,4 +1,18 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lapiez Solution (E-Commerce Platform)
+
+## 🌐 Production Live Domains
+- **Live Store:** [https://www.lapiez.com](https://www.lapiez.com) (or [https://lapiez.com](https://lapiez.com))
+- **Production Vercel Domain:** [https://lappy-solution.vercel.app](https://lappy-solution.vercel.app)
+- **Live Admin Panel:** [https://www.lapiez.com/admin](https://www.lapiez.com/admin) or [https://lappy-solution.vercel.app/admin](https://lappy-solution.vercel.app/admin)
+
+## 🚀 One-Command Live Deployment
+To deploy changes live to production and verify health across both domains:
+```bash
+npm run live
+```
+This automatically commits changes, pushes to `origin master` (triggering Vercel CI/CD for `www.lapiez.com` and `lappy-solution.vercel.app`), and runs automated health checks.
+
+---
 
 ## Getting Started
 
