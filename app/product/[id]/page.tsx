@@ -16,13 +16,19 @@ import { ProductCard } from '../../../components/ProductCard';
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const rawId = (params?.id as string) || '';
-  const productId = decodeURIComponent(rawId).trim();
+  const rawId = Array.isArray(params?.id) ? params.id[0] : ((params?.id as string) || '');
+  let productId = rawId;
+  try {
+    productId = decodeURIComponent(rawId).trim();
+  } catch (e) {
+    productId = String(rawId || '').trim();
+  }
 
   const { products, addToCart, toggleWishlist, wishlistIds, showToast, siteSettings } = useStore();
 
   const [dbProduct, setDbProduct] = useState<Product | null>(null);
   const [isFetchingDirect, setIsFetchingDirect] = useState(false);
+  const attemptedFetchRef = React.useRef<string | null>(null);
 
   // 1. Dynamic product matching across useStore products (DB + admin added), static catalog, and direct DB query
   const product: Product | undefined = useMemo(() => {
@@ -54,7 +60,8 @@ export default function ProductDetailPage() {
 
   // 2. Direct database query fallback if product is not yet in memory
   React.useEffect(() => {
-    if (!product && productId && !isFetchingDirect && !dbProduct) {
+    if (!product && productId && !isFetchingDirect && !dbProduct && attemptedFetchRef.current !== productId) {
+      attemptedFetchRef.current = productId;
       setIsFetchingDirect(true);
       fetch(`/api/cms/products?id=${encodeURIComponent(productId)}`)
         .then(res => res.json())
@@ -110,7 +117,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const isWishlisted = wishlistIds.includes(product.id);
+  const isWishlisted = Array.isArray(wishlistIds) && wishlistIds.includes(product.id);
   const images = useMemo(() => {
     if (!product) return [];
     let list: string[] = [];
@@ -134,9 +141,11 @@ export default function ProductDetailPage() {
     }
     return list.length > 0 ? list : (product.image ? [product.image] : []);
   }, [product]);
-  const activeImage = images[activeImageIndex] || images[0] || product.image;
+  const activeImage = images[activeImageIndex] || images[0] || product.image || '/images/categories/laptop-adapters.png';
 
-  const savings = product.mrp > product.price ? product.mrp - product.price : 0;
+  const priceNum = Number(product.price || 0);
+  const mrpNum = Number(product.mrp || 0);
+  const savings = mrpNum > priceNum ? mrpNum - priceNum : 0;
 
   // Related products from same category or brand
   const allCatalog = products.length > 0 ? products : PRODUCTS;
@@ -166,8 +175,8 @@ export default function ProductDetailPage() {
   const handleWhatsApp = () => {
     const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
     const text = isOutOfStock
-      ? `Hello ${storeTitle}! I am interested in:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nThis item is currently marked Out of Stock on your website. When is it expected back in stock at your Chiniya Road showroom?`
-      : `Hello ${storeTitle}! I am interested in purchasing:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${product.price.toLocaleString('en-IN')}\n\nIs this in stock for same-day pickup at your showroom?`;
+      ? `Hello ${storeTitle}! I am interested in:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${priceNum.toLocaleString('en-IN')}\n\nThis item is currently marked Out of Stock on your website. When is it expected back in stock at your Chiniya Road showroom?`
+      : `Hello ${storeTitle}! I am interested in purchasing:\n\n*Product:* ${product.name}\n*SKU:* ${product.sku}\n*Price:* ₹${priceNum.toLocaleString('en-IN')}\n\nIs this in stock for same-day pickup at your showroom?`;
     const waNumber = getCleanWhatsAppNumber(siteSettings?.whatsapp);
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -176,7 +185,7 @@ export default function ProductDetailPage() {
     if (navigator.share) {
       navigator.share({
         title: product.name,
-        text: `Check out ${product.name} at Lapiez Garhwa for ₹${product.price.toLocaleString('en-IN')}`,
+        text: `Check out ${product.name} at Lapiez Garhwa for ₹${priceNum.toLocaleString('en-IN')}`,
         url: window.location.href
       }).catch(() => {});
     } else {
@@ -346,11 +355,11 @@ export default function ProductDetailPage() {
               <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-gray-200 space-y-1">
                 <div className="flex items-baseline gap-2.5">
                   <span className="text-2xl sm:text-3xl font-extrabold text-[#111827]">
-                    ₹{product.price.toLocaleString('en-IN')}
+                    ₹{priceNum.toLocaleString('en-IN')}
                   </span>
-                  {product.mrp > product.price && (
+                  {mrpNum > priceNum && (
                     <span className="text-sm text-gray-400 line-through">
-                      ₹{product.mrp.toLocaleString('en-IN')}
+                      ₹{mrpNum.toLocaleString('en-IN')}
                     </span>
                   )}
                   {product.discount > 0 && !isOutOfStock && (
@@ -650,7 +659,7 @@ export default function ProductDetailPage() {
                       <span className="text-slate-400 text-[11px]">{rev.date}</span>
                     </div>
                     <div className="flex items-center text-amber-400">
-                      {[...Array(rev.rating || 5)].map((_, i) => (
+                      {[...Array(Math.max(1, Math.min(5, Math.round(Number(rev.rating) || 5))))].map((_, i) => (
                         <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                       ))}
                     </div>

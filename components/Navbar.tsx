@@ -601,23 +601,48 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 {searchResults.map((p) => (
                   <div
                     key={p.id}
-                    onMouseDown={() => {
-                      setSelectedProduct(p);
+                    onMouseDown={(e) => {
+                      e.preventDefault();
                       setIsSearchFocused(false);
                       setIsSearchOpen(false);
+                      setSearchQuery('');
+                      setSelectedProduct(null);
+                      router.push(`/product/${encodeURIComponent(p.id)}`);
                     }}
-                    className="p-2.5 hover:bg-blue-50/60 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
+                    className="p-2.5 hover:bg-blue-50/60 rounded-lg cursor-pointer flex items-center justify-between transition-colors group"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-gray-50 rounded-md border border-gray-100 p-0.5 flex-shrink-0 flex items-center justify-center">
-                        <img src={p.image} alt={p.name} className="max-h-full max-w-full object-contain" />
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
+                      <div className="w-10 h-10 bg-gray-50 rounded-lg border border-gray-100 p-1 flex-shrink-0 flex items-center justify-center">
+                        <img 
+                          src={p.image || '/images/categories/laptop-adapters.png'} 
+                          alt={p.name} 
+                          className="max-h-full max-w-full object-contain" 
+                        />
                       </div>
-                      <div>
-                        <div className="text-xs font-bold text-gray-900">{p.name}</div>
-                        <div className="text-[10px] text-gray-500 font-semibold">{p.category} • {p.brand}</div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-gray-900 group-hover:text-[#1A56DB] transition-colors truncate">{p.name}</div>
+                        <div className="text-[10px] text-gray-500 font-semibold truncate">{p.category} • {p.brand}</div>
                       </div>
                     </div>
-                    <div className="text-xs font-extrabold text-[#1A56DB]">₹{p.price.toLocaleString('en-IN')}</div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs font-extrabold text-[#1A56DB]">
+                        ₹{Number(p.price || 0).toLocaleString('en-IN')}
+                      </span>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setIsSearchFocused(false);
+                          setIsSearchOpen(false);
+                          setSelectedProduct(p);
+                        }}
+                        className="hidden sm:inline-flex text-[10px] font-bold text-gray-500 hover:text-blue-700 bg-gray-100 hover:bg-blue-100 px-2 py-1 rounded transition-colors"
+                        title="Quick View"
+                      >
+                        Quick View
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

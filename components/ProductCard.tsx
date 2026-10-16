@@ -30,8 +30,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.stopPropagation();
     const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
     const text = isOutOfStock
-      ? `Hello ${storeTitle}, I am interested in:\n*${product.name}*\nPrice: ₹${product.price.toLocaleString('en-IN')}\nSKU: ${product.sku}\nThis product is currently marked as Out of Stock on your website. When will it be available for purchase at your showroom?`
-      : `Hello ${storeTitle}, I want to purchase:\n*${product.name}*\nPrice: ₹${product.price.toLocaleString('en-IN')}\nSKU: ${product.sku}\nIs this in stock at your Chiniya Road showroom?`;
+      ? `Hello ${storeTitle}, I am interested in:\n*${product.name}*\nPrice: ₹${Number(product.price || 0).toLocaleString('en-IN')}\nSKU: ${product.sku}\nThis product is currently marked as Out of Stock on your website. When will it be available for purchase at your showroom?`
+      : `Hello ${storeTitle}, I want to purchase:\n*${product.name}*\nPrice: ₹${Number(product.price || 0).toLocaleString('en-IN')}\nSKU: ${product.sku}\nIs this in stock at your Chiniya Road showroom?`;
     const waNumber = getCleanWhatsAppNumber(siteSettings?.whatsapp);
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -136,16 +136,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="mb-2.5">
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-[18px] sm:text-[20px] font-extrabold text-[#111827] tracking-tight">
-              ₹{product.price.toLocaleString('en-IN')}
+              ₹{Number(product.price || 0).toLocaleString('en-IN')}
             </span>
-            {product.mrp > product.price && (
+            {Number(product.mrp || 0) > Number(product.price || 0) && (
               <span className="text-[12px] sm:text-[13px] text-gray-400 line-through">
-                ₹{product.mrp.toLocaleString('en-IN')}
+                ₹{Number(product.mrp || 0).toLocaleString('en-IN')}
               </span>
             )}
             {savings > 0 && !isOutOfStock && (
               <span className="text-[11px] font-bold text-[#15803D]">
-                Save ₹{savings.toLocaleString('en-IN')}
+                Save ₹{Number(savings || 0).toLocaleString('en-IN')}
               </span>
             )}
           </div>

@@ -49,15 +49,17 @@ export const ProductDetailModal: React.FC = () => {
     return list.length > 0 ? list : (selectedProduct.image ? [selectedProduct.image] : []);
   }, [selectedProduct]);
 
-  const currentImg = activeImage || imagesList[0] || selectedProduct.image;
-  const isWishlisted = wishlistIds.includes(selectedProduct.id);
+  const currentImg = activeImage || imagesList[0] || selectedProduct.image || '/images/categories/laptop-adapters.png';
+  const isWishlisted = Array.isArray(wishlistIds) && wishlistIds.includes(selectedProduct.id);
   const isOutOfStock = selectedProduct.inStock === false || (selectedProduct.stockQuantity !== undefined && selectedProduct.stockQuantity !== null && Number(selectedProduct.stockQuantity) <= 0);
+  const priceNum = Number(selectedProduct.price || 0);
+  const mrpNum = Number(selectedProduct.mrp || 0);
 
   const handleWhatsApp = () => {
     const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
     const text = isOutOfStock
-      ? `Hello ${storeTitle}, I am interested in:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nThis product is currently marked as Out of Stock on your website. When will it be available for purchase at your showroom?`
-      : `Hello ${storeTitle}, I want to inquire about:\n*${selectedProduct.name}*\nPrice: ₹${selectedProduct.price.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nCan I inspect or pick this up at your Chiniya Road showroom?`;
+      ? `Hello ${storeTitle}, I am interested in:\n*${selectedProduct.name}*\nPrice: ₹${priceNum.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nThis product is currently marked as Out of Stock on your website. When will it be available for purchase at your showroom?`
+      : `Hello ${storeTitle}, I want to inquire about:\n*${selectedProduct.name}*\nPrice: ₹${priceNum.toLocaleString('en-IN')}\nSKU: ${selectedProduct.sku}\nCan I inspect or pick this up at your Chiniya Road showroom?`;
     const waNumber = getCleanWhatsAppNumber(siteSettings?.whatsapp);
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -147,7 +149,7 @@ export const ProductDetailModal: React.FC = () => {
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex items-center text-amber-500">
                   <Star className="w-4 h-4 fill-amber-400" />
-                  <span className="ml-1 text-xs font-bold text-slate-700">{selectedProduct.rating || '4.8'}</span>
+                  <span className="ml-1 text-xs font-bold text-slate-700">{Number(selectedProduct.rating || 4.8).toFixed(1)}</span>
                 </div>
                 <span className="text-slate-300">•</span>
                 <span className="text-xs text-slate-500">{selectedProduct.reviewsCount || 18} Verified Local Reviews</span>
@@ -158,11 +160,11 @@ export const ProductDetailModal: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-black text-slate-900 font-mono">
-                  ₹{selectedProduct.price.toLocaleString('en-IN')}
+                  ₹{priceNum.toLocaleString('en-IN')}
                 </span>
-                {selectedProduct.mrp > selectedProduct.price && (
+                {mrpNum > priceNum && (
                   <span className="text-sm text-slate-400 line-through font-mono">
-                    ₹{selectedProduct.mrp.toLocaleString('en-IN')}
+                    ₹{mrpNum.toLocaleString('en-IN')}
                   </span>
                 )}
                 {selectedProduct.discount > 0 && !isOutOfStock && (
@@ -185,18 +187,18 @@ export const ProductDetailModal: React.FC = () => {
             </div>
 
             {/* Top Verified Review */}
-            {selectedProduct.reviews && selectedProduct.reviews.length > 0 && (
+            {selectedProduct.reviews && selectedProduct.reviews.length > 0 && selectedProduct.reviews[0] && (
               <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-lg p-2.5 text-xs">
                 <div className="flex items-center justify-between text-[11px] mb-1">
                   <div className="flex items-center gap-1.5 font-bold text-emerald-950">
-                    <span>{selectedProduct.reviews[0].author}</span>
+                    <span>{selectedProduct.reviews[0].author || 'Verified Buyer'}</span>
                     {selectedProduct.reviews[0].location && (
                       <span className="text-slate-400 font-normal text-[10px]">({selectedProduct.reviews[0].location})</span>
                     )}
                     <span className="text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded text-[9.5px] font-semibold">Verified Buyer</span>
                   </div>
                   <div className="flex items-center text-amber-500">
-                    {[...Array(selectedProduct.reviews[0].rating || 5)].map((_, i) => (
+                    {[...Array(Math.max(1, Math.min(5, Math.round(Number(selectedProduct.reviews[0].rating) || 5))))].map((_, i) => (
                       <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
