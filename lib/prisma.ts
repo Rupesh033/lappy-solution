@@ -4,7 +4,7 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const dbUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+const dbUrl = process.env.DATABASE_URL || process.env.DIRECT_URL;
 
 export const prisma =
   globalForPrisma.prisma ??

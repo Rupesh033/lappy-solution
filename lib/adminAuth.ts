@@ -121,11 +121,14 @@ export async function verifyAndCheckAdminPassword(password: string): Promise<{ i
     if (settings && (settings as any).adminPassword) {
       const dbPass = sanitizeString((settings as any).adminPassword);
       if (dbPass) {
-        runtimeAdminPassword = dbPass;
         if (isBcryptHash(dbPass)) {
           const match = await bcrypt.compare(cleanSubmitted, dbPass);
-          if (match) return { isValid: true, needsMigration: false };
+          if (match) {
+            runtimeAdminPassword = dbPass;
+            return { isValid: true, needsMigration: false };
+          }
         } else if (safeCompare(cleanSubmitted, dbPass)) {
+          runtimeAdminPassword = dbPass;
           return { isValid: true, needsMigration: true };
         }
       }
@@ -134,13 +137,21 @@ export async function verifyAndCheckAdminPassword(password: string): Promise<{ i
     // Silently continue to fallback
   }
 
-  // 3. Fallback to process.env.ADMIN_PASSWORD
-  const config = getConfig();
-  if (config) {
-    if (isBcryptHash(config.password)) {
-      const match = await bcrypt.compare(cleanSubmitted, config.password);
-      if (match) return { isValid: true, needsMigration: false };
-    } else if (safeCompare(cleanSubmitted, config.password)) {
+  // 3. Fallback to process.env.ADMIN_PASSWORD or default Lapiez@2026#
+  const envPasswords = [
+    sanitizeString(process.env.ADMIN_PASSWORD || ''),
+    'Lapiez@2026#'
+  ].filter(Boolean);
+
+  for (const candidate of envPasswords) {
+    if (isBcryptHash(candidate)) {
+      const match = await bcrypt.compare(cleanSubmitted, candidate);
+      if (match) {
+        runtimeAdminPassword = candidate;
+        return { isValid: true, needsMigration: false };
+      }
+    } else if (safeCompare(cleanSubmitted, candidate)) {
+      runtimeAdminPassword = candidate;
       return { isValid: true, needsMigration: true };
     }
   }
