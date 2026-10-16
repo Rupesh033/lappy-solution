@@ -1,4 +1,3 @@
-import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 import { ClientShell } from "../components/ClientShell";
@@ -37,31 +36,22 @@ export const metadata: Metadata = {
   }
 };
 
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  display: "swap",
-  variable: "--font-plus-jakarta",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--font-inter",
-});
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`h-full antialiased ${plusJakartaSans.variable} ${inter.variable}`}>
+    <html lang="en" className="h-full antialiased">
       <head>
-        </head>
-      <body className={`${plusJakartaSans.className} min-h-full flex flex-col bg-[#F1F3F6] text-[#111827]`}>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-full flex flex-col bg-[#F1F3F6] text-[#111827]">
         <ClientShell>
           {children}
         </ClientShell>
