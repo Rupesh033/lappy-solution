@@ -30,12 +30,6 @@ export const CustomerAccountModal: React.FC = () => {
     showToast
   } = useStore();
 
-  if (!isAccountOpen) return null;
-
-  const wishlistProducts = products.filter(p => wishlistIds.includes(p.id));
-  const totalCartCount = cart.reduce((s, i) => s + i.quantity, 0);
-  const totalCartAmount = cart.reduce((s, i) => s + (i.product.price * i.quantity), 0);
-
   const customerOrders = React.useMemo(() => {
     if (!customer) return orders;
     const email = customer.email?.toLowerCase();
@@ -47,6 +41,12 @@ export const CustomerAccountModal: React.FC = () => {
       return false;
     });
   }, [customer, orders]);
+
+  if (!isAccountOpen) return null;
+
+  const wishlistProducts = products.filter(p => wishlistIds.includes(p.id));
+  const totalCartCount = cart.reduce((s, i) => s + i.quantity, 0);
+  const totalCartAmount = cart.reduce((s, i) => s + (i.product.price * i.quantity), 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">

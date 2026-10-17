@@ -606,13 +606,15 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 {searchResults.map((p) => (
                   <div
                     key={p.id}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       setIsSearchFocused(false);
                       setIsSearchOpen(false);
                       setSearchQuery('');
                       setSelectedProduct(null);
                       router.push(`/product/${encodeURIComponent(p.id)}`);
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
                     }}
                     className="p-2.5 hover:bg-blue-50/60 rounded-lg cursor-pointer flex items-center justify-between transition-colors group"
                   >
@@ -635,12 +637,16 @@ export const Navbar: React.FC<NavbarProps> = () => {
                       </span>
                       <button
                         type="button"
-                        onMouseDown={(e) => {
+                        onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
                           setIsSearchFocused(false);
                           setIsSearchOpen(false);
                           setSelectedProduct(p);
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
                         }}
                         className="hidden sm:inline-flex text-[10px] font-bold text-gray-500 hover:text-blue-700 bg-gray-100 hover:bg-blue-100 px-2 py-1 rounded transition-colors"
                         title="Quick View"

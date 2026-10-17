@@ -23,7 +23,10 @@ export const ProductDetailModal: React.FC = () => {
 
   const [activeImage, setActiveImage] = useState<string | null>(null);
 
-  if (!selectedProduct) return null;
+  // Reset active image on product switch
+  React.useEffect(() => {
+    setActiveImage(null);
+  }, [selectedProduct?.id]);
 
   const imagesList = React.useMemo(() => {
     if (!selectedProduct) return [];
@@ -49,11 +52,21 @@ export const ProductDetailModal: React.FC = () => {
     return list.length > 0 ? list : (selectedProduct.image ? [selectedProduct.image] : []);
   }, [selectedProduct]);
 
+  if (!selectedProduct) return null;
+
   const currentImg = activeImage || imagesList[0] || selectedProduct.image || '/images/categories/laptop-adapters.png';
   const isWishlisted = Array.isArray(wishlistIds) && wishlistIds.includes(selectedProduct.id);
   const isOutOfStock = selectedProduct.inStock === false || (selectedProduct.stockQuantity !== undefined && selectedProduct.stockQuantity !== null && Number(selectedProduct.stockQuantity) <= 0);
   const priceNum = Number(selectedProduct.price || 0);
   const mrpNum = Number(selectedProduct.mrp || 0);
+
+  const displaySpecs = typeof selectedProduct.specs === 'object' && selectedProduct.specs !== null
+    ? Object.entries(selectedProduct.specs).map(([k, v]) => `${k}: ${v}`).join(' | ')
+    : String(selectedProduct.specs || selectedProduct.description || 'Genuine Hardware Specifications');
+
+  const topReview = Array.isArray(selectedProduct.reviews) && selectedProduct.reviews.length > 0 && typeof selectedProduct.reviews[0] === 'object'
+    ? selectedProduct.reviews[0]
+    : null;
 
   const handleWhatsApp = () => {
     const storeTitle = siteSettings?.siteName || 'Lapiez Garhwa';
@@ -182,29 +195,29 @@ export const ProductDetailModal: React.FC = () => {
             <div>
               <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Specifications</h4>
               <p className="text-xs text-slate-600 bg-slate-50 rounded-lg p-2.5 border border-slate-100 font-mono">
-                {selectedProduct.specs}
+                {displaySpecs}
               </p>
             </div>
 
             {/* Top Verified Review */}
-            {selectedProduct.reviews && selectedProduct.reviews.length > 0 && selectedProduct.reviews[0] && (
+            {topReview && (
               <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-lg p-2.5 text-xs">
                 <div className="flex items-center justify-between text-[11px] mb-1">
                   <div className="flex items-center gap-1.5 font-bold text-emerald-950">
-                    <span>{selectedProduct.reviews[0].author || 'Verified Buyer'}</span>
-                    {selectedProduct.reviews[0].location && (
-                      <span className="text-slate-400 font-normal text-[10px]">({selectedProduct.reviews[0].location})</span>
+                    <span>{topReview.author || 'Verified Buyer'}</span>
+                    {topReview.location && (
+                      <span className="text-slate-400 font-normal text-[10px]">({topReview.location})</span>
                     )}
                     <span className="text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded text-[9.5px] font-semibold">Verified Buyer</span>
                   </div>
                   <div className="flex items-center text-amber-500">
-                    {[...Array(Math.max(1, Math.min(5, Math.round(Number(selectedProduct.reviews[0].rating) || 5))))].map((_, i) => (
+                    {[...Array(Math.max(1, Math.min(5, Math.round(Number(topReview.rating) || 5))))].map((_, i) => (
                       <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-700 italic leading-relaxed">
-                  "{selectedProduct.reviews[0].comment}"
+                  "{topReview.comment}"
                 </p>
               </div>
             )}
