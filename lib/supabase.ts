@@ -6,10 +6,17 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 function getSafeTarget(redirectTo?: string): string {
-  if (redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//') && !redirectTo.startsWith('/\\')) {
-    return typeof window !== 'undefined' ? `${window.location.origin}${redirectTo}` : redirectTo;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  if (!redirectTo) {
+    return origin ? `${origin}/auth/callback` : '/auth/callback';
   }
-  return typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '/auth/callback';
+  if (redirectTo.startsWith('/auth/callback')) {
+    return origin ? `${origin}${redirectTo}` : redirectTo;
+  }
+  const cleanNext = redirectTo.startsWith('/') && !redirectTo.startsWith('//') && !redirectTo.startsWith('/\\')
+    ? redirectTo
+    : '/account';
+  return origin ? `${origin}/auth/callback?next=${encodeURIComponent(cleanNext)}` : `/auth/callback?next=${encodeURIComponent(cleanNext)}`;
 }
 
 export async function signInWithGoogle(redirectTo?: string) {

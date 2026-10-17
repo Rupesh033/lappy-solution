@@ -488,8 +488,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
             {/* User Account Button */}
             <Link
               href="/account"
-              className="p-2 rounded-full text-gray-600 hover:text-[#1A56DB] hover:bg-gray-100 transition-colors"
-              title="My Orders & Wishlist"
+              className="px-2 sm:px-2.5 py-1.5 rounded-xl text-gray-700 hover:text-[#1A56DB] hover:bg-gray-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+              title={customer ? `Signed in as ${customer.user_metadata?.full_name || customer.email}` : "Sign In / My Account"}
             >
               {customer?.user_metadata?.avatar_url ? (
                 <img 
@@ -498,8 +498,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   className="w-5 h-5 rounded-full object-cover border border-blue-400"
                 />
               ) : (
-                <User className="w-5 h-5" />
+                <User className="w-4 h-4 text-gray-600" />
               )}
+              <span className="hidden sm:inline text-xs font-bold">
+                {customer?.user_metadata?.full_name 
+                  ? customer.user_metadata.full_name.split(' ')[0] 
+                  : (customer ? 'Account' : 'Sign In')}
+              </span>
             </Link>
 
             {/* WhatsApp Support Button */}
@@ -996,9 +1001,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
             <Link
               href="/account"
               onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-sm font-bold text-gray-800 hover:text-[#1A56DB]"
+              className="py-2 text-sm font-bold text-gray-800 hover:text-[#1A56DB] flex items-center justify-between"
             >
-              My Account & Orders
+              <span>{customer ? 'My Account & Orders' : 'Sign In / My Account'}</span>
+              {!customer && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                  Google Login
+                </span>
+              )}
             </Link>
           </div>
 
