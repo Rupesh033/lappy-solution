@@ -4,7 +4,7 @@ import { PRODUCTS } from '@/data/products';
 import { CATEGORIES } from '@/data/categories';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.lapiez.in';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.lapiez.com';
   const currentDate = new Date();
 
   // Core storefront routes

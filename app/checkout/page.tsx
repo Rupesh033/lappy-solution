@@ -154,7 +154,7 @@ export default function CheckoutPage() {
       if (fullName && !customerName) {
         setCustomerName(fullName);
       }
-      if (customer.email && !email && !customer.email.includes('@customer.lapiez.in') && !customer.email.includes('@guest.')) {
+      if (customer.email && !email && !customer.email.includes('@customer.lapiez.com') && !customer.email.includes('@guest.')) {
         setEmail(customer.email);
       }
       const custPhone = customer.phone || customer.user_metadata?.phone;
@@ -178,7 +178,7 @@ export default function CheckoutPage() {
       setFastSignInError('Please enter a valid 10-digit Indian mobile number (starting with 6, 7, 8 or 9)');
       return;
     }
-    const emailToUse = fastSignInEmail.trim() || `${cleanPhone}@customer.lapiez.in`;
+    const emailToUse = fastSignInEmail.trim() || `${cleanPhone}@customer.lapiez.com`;
     loginCustomerManually({
       id: `usr-${Date.now()}`,
       name: fastSignInName.trim(),
@@ -235,7 +235,7 @@ export default function CheckoutPage() {
       customerId: customer?.id || `cust-${Date.now()}`,
       customerName,
       phone,
-      email: email || customer?.email || 'customer@lapiez.in',
+      email: email || customer?.email || 'customer@lapiez.com',
       address: fullAddress,
       deliveryType,
       items: cart.map(item => ({
@@ -385,7 +385,7 @@ export default function CheckoutPage() {
                         </span>
                       </div>
                       <p className="text-[11px] text-gray-500">
-                        {customer.email && !customer.email.includes('@customer.lapiez.in') ? customer.email : phone ? `Mobile: ${phone}` : 'Active Account'}
+                        {customer.email && !customer.email.includes('@customer.lapiez.com') ? customer.email : phone ? `Mobile: ${phone}` : 'Active Account'}
                       </p>
                     </div>
                   </div>

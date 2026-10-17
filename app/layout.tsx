@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Lapiez Garhwa | Best Deals on Laptops, Desktops & CCTV",
     description: "100% Original Products, 18% GST Invoicing, Direct Brand Warranty & Showroom Counter in Garhwa.",
-    url: "https://www.lapiez.in",
+    url: "https://www.lapiez.com",
     siteName: "Lapiez",
     locale: "en_IN",
     type: "website",

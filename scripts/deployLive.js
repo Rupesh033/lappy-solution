@@ -47,7 +47,7 @@ async function main() {
   }
 
   // 2. Push to origin master
-  console.log('\n📡 Step 2: Pushing to GitHub origin master (Triggers Lapiez Vercel CI/CD)...');
+  console.log('\n📡 Step 2: Pushing to GitHub origin master (Triggers Lapiez Vercel CI/CD for www.lapiez.com & lappy-solution.vercel.app)...');
   try {
     execSync('git push origin master', { stdio: 'inherit' });
     console.log('✅ Successfully pushed to origin master.');
@@ -56,22 +56,8 @@ async function main() {
     process.exit(1);
   }
 
-  // 3. Deploy to CLI project alias (lappysolution.vercel.app)
-  console.log('\n🌐 Step 3: Syncing secondary Vercel CLI deployment...');
-  try {
-    const deployOutput = execSync('npx vercel --prod --yes', { encoding: 'utf8' });
-    const match = deployOutput.match(/https:\/\/[a-z0-9\-]+\.vercel\.app/i);
-    const deployUrl = match ? match[0] : null;
-    if (deployUrl) {
-      console.log(`Aliasing ${deployUrl} to lappysolution.vercel.app...`);
-      execSync(`npx vercel alias set ${deployUrl} lappysolution.vercel.app`, { stdio: 'inherit' });
-    }
-  } catch (err) {
-    console.warn('⚠️ CLI sync note (Git push is primary):', err.message);
-  }
-
-  // 4. Verification polling
-  console.log('\n🔍 Step 4: Verifying health on live production domains...');
+  // 3. Verification polling exclusively on authoritative domains
+  console.log('\n🔍 Step 3: Verifying health on authoritative live production domains...');
   console.log('Waiting 10s for Vercel edge deployment propagation...');
   await new Promise(r => setTimeout(r, 10000));
 

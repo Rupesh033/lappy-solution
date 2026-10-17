@@ -198,7 +198,7 @@ function AccountContent() {
     };
     setProfile(updatedProfile);
     loginCustomerManually({
-      email: `${quickPhone.trim()}@guest.lapiez.in`,
+      email: `${quickPhone.trim()}@guest.lapiez.com`,
       name: quickName.trim(),
     });
     try {
