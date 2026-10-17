@@ -5,7 +5,6 @@ import { StoreProvider, useStore } from '../context/StoreContext';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 import { CartDrawer } from './CartDrawer';
-import { CheckoutModal } from './CheckoutModal';
 import { ProductDetailModal } from './ProductDetailModal';
 import { CustomerAccountModal } from './CustomerAccountModal';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -95,7 +94,6 @@ export const ClientShell: React.FC<{ children: React.ReactNode }> = ({ children 
 
         {/* Global Modals & Drawers */}
         <CartDrawer />
-        <CheckoutModal />
         <ProductDetailModal />
         <CustomerAccountModal />
         <AppDownloadModalContainer />
